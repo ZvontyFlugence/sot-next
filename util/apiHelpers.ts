@@ -24,7 +24,7 @@ export function jsonify(data: any) {
 export function buildLevelUpAlert(level: number) {
   return {
     read: false,
-    type: UserAction.LEVEL_UP,
+    type: UserActions.LEVEL_UP,
     message: `Congrats! You have leveled up to level ${level} and received 5 gold`,
     timestamp: new Date(Date.now()),
   };
