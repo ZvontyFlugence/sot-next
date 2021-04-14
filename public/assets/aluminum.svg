@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs" version="1.1" width="512" height="512" x="0" y="0" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512" xml:space="preserve" class="">
+  <g>
+    <g xmlns="http://www.w3.org/2000/svg" id="Flat">
+      <path d="m488 392h-352l96-104h224z" fill="#ccdce8" data-original="#eedc9a" style="" class=""/>
+      <path d="m184 392h-160l32-104h96z" fill="#aabfcf" data-original="#eebe33" style="" class=""/>
+      <path d="m488 392h-160l32-104h96z" fill="#aabfcf" data-original="#eebe33" style="" class=""/>
+      <path d="m152 288 168-168 88 40-224 232z" fill="#849eb1" data-original="#e88604" style="" class=""/>
+      <path d="m320 120h-96l-168 168h96z" fill="#ccdce8" data-original="#eedc9a" style="" class=""/>
+      <g fill="#eebe33">
+        <path d="m224 144h32v16h-32z" fill="#aabfcf" data-original="#eebe33" style="" class=""/>
+        <path d="m200 168h32v16h-32z" fill="#aabfcf" data-original="#eebe33" style="" class=""/>
+        <path d="m80 216h.00005a48 48 0 0 0 48-48 48 48 0 0 0 48 48 48 48 0 0 0 -48 48 48 48 0 0 0 -47.99995-48z" fill="#aabfcf" data-original="#eebe33" style="" class=""/>
+        <path d="m352 168a48 48 0 0 0 48-47.99995 48 48 0 0 0 48 48 48 48 0 0 0 -48 48 48 48 0 0 0 -48-48z" fill="#aabfcf" data-original="#eebe33" style="" class=""/>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,9 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 html,
 body {
   padding: 0;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+}
+
+body {
+  background-image: url(/background-light.jpg) !important;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 a {
@@ -13,4 +23,47 @@ a {
 
 * {
   box-sizing: border-box;
+}
+
+.sot-icon {
+  width: 25px;
+  padding: 0px;
+  margin: 0px auto;
+  vertical-align: middle;
+}
+
+.sot-coin {
+  content: url(/assets/coin.svg);
+}
+
+.sot-iron {
+  content: url(/assets/iron.svg);
+}
+
+.sot-bread {
+  content: url(/assets/bread.svg);
+}
+
+.sot-wheat {
+  content: url(/assets/wheat.svg);
+}
+
+.sot-str {
+  content: url(/assets/strong.svg);
+}
+
+.sot-oil {
+  content: url(/assets/oil.svg);
+}
+
+.sot-uranium {
+  content: url(/assets/uranium.svg);
+}
+
+.sot-aluminum {
+  content: url(/assets/aluminum.svg);
+}
+
+.sot-steel {
+  content: url(/assets/steel.svg);
 }
