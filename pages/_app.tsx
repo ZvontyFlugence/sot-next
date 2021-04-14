@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import colors from '../util/theme';
+import 'tailwindcss/tailwind.css';
 import '../styles/globals.css';
 import 'flag-icon-css/css/flag-icon.min.css';
 
