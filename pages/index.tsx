@@ -31,7 +31,7 @@ export default function Index(props: IIndexProps) {
     <div className='w-full max-h-full overflow-hidden'>
       <Nav />
       <div className='flex flex-col items-center mt-8'>
-        <Image boxSize='11.0rem' src={process.env.LOGO} alt='State of Turmoil Logo' />
+        <Image boxSize='11.0rem' src={process.env.NEXT_PUBLIC_LOGO} alt='State of Turmoil Logo' />
         <h1 className='text-4xl font-semibold'>State of Turmoil</h1>
         <Button
           className='mt-4'

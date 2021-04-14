@@ -31,7 +31,7 @@ const Nav: React.FC<INav> = ({ user }) => {
     <div className='flex w-full justify-between px-8 py-2 shadow-md border-solid border-black border border-opacity-25 bg-white'>
       <div>
         <div className='flex items-center max-w-max cursor-pointer' onClick={goHome}>
-          <Avatar size='md' src={process.env.LOGO} name='State of Turmoil Logo' />
+          <Avatar size='md' src={process.env.NEXT_PUBLIC_LOGO} name='State of Turmoil Logo' />
           <span className='text-2xl font-semibold ml-4'>State of Turmoil</span>
         </div>
       </div>
