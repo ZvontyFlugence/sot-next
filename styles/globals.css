@@ -1,6 +1,6 @@
-@import "tailwind/base";
-@import "tailwind/components";
-@import "tailwind/utilities";
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
 html,
 body {
