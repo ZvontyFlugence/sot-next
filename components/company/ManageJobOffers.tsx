@@ -6,12 +6,13 @@ import { Input, InputGroup, InputLeftAddon } from '@chakra-ui/input';
 import { List, ListItem } from '@chakra-ui/layout';
 import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from '@chakra-ui/modal';
 import React, { useState } from 'react';
-import { useMutation } from 'react-query';
+import { useMutation, UseMutationResult } from 'react-query';
 import { parseCookies } from 'nookies';
 import { useToast } from '@chakra-ui/toast';
-import { refreshData } from '@/util/ui';
+import { refreshData, request, showToast } from '@/util/ui';
 import { useRouter } from 'next/router';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/table';
+import { data } from 'autoprefixer';
 
 interface IManageJobOffers {
   jobOffers: IJobOffer[],
@@ -23,69 +24,152 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isCreateOpen, onOpen: onOpenCreate, onClose: onCloseCreate } = useDisclosure();
+  const { isOpen: isEditOpen, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
+  const { isOpen: isDeleteOpen, onOpen: onOpenDelete, onClose: onCloseDelete } = useDisclosure();
+  const [selected, setSelected] = useState(-1);
   const [title, setTitle] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [wage, setWage] = useState(1.00);
 
-  const mutation = useMutation(() => {
+  const createJobMutation = useMutation(async () => {
     let payload = {
       action: 'create_job',
       data: {
-        company_id: company_id,
+        company_id,
         offer: { title, quantity, wage },
       }
     };
 
-    return fetch('/api/companies/doAction', {
+    let data = await request({
+      url: '/api/companies/doAction',
       method: 'POST',
-      headers: {
-        authorization: `Bearer ${cookies.token}`,
-      },
-      body: JSON.stringify(payload),
-    }).then(res => res.json());
+      payload,
+      token: cookies.token,
+    });
+
+    if (!data.success)
+      throw new Error(data?.error || 'Unknown Error');
+    return data;
   }, {
-    onSuccess: (data) => {
-      if (data.success) {
-        toast({
-          position: 'top-right',
-          title: 'Job Offer Created',
-          status: 'success',
-          duration: 2500,
-          isClosable: true,
-        });
-        refreshData(router);
-      } else {
-        toast({
-          position: 'top-right',
-          title: 'Create Job Offer Failed',
-          description: data.error,
-          status: 'error',
-          duration: 2500,
-          isClosable: true
-        });
-      }
+    onSuccess: () => {
+      showToast(toast, 'success', 'Job Offer Created');
+      onCloseCreate();
+      refreshData(router);
     },
     onError: (e) => {
-      toast({
-        position: 'top-right',
-        title: 'Create Job Offer Failed',
-        description: e,
-        status: 'error',
-        duration: 2500,
-        isClosable: true
-      });
+      showToast(toast, 'error', 'Create Job Offer Failed', e as string);
     }
   });
 
+  const editJobMutation = useMutation(async (jobOffer) => {
+    let payload = {
+      action: 'edit_job',
+      data: { company_id, offer: jobOffer },
+    };
+
+    let data = await request({
+      url: '/api/companies/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    });
+
+    if (!data.success)
+      throw new Error(data?.error || 'Unknown Error');
+    return data;
+  }, {
+    onMutate: async (jobOffer: IJobOffer) => {},
+    onSuccess: () => {
+      showToast(toast, 'success', 'Job Offer Updated');
+      handleClose('edit');
+      refreshData(router);
+    },
+    onError: (e) => {
+      showToast(toast, 'error', 'Create Job Offer Failed', e as string);
+    }
+  });
+
+  const deleteJobMutation = useMutation(async ({ job_id }) => {
+    let payload = { action: 'delete_job', data: { company_id, job_id: job_id } };
+    
+    let data = await request({
+      url: '/api/companies/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    });
+
+    if (!data.success)
+      throw new Error(data?.error);
+    return data;
+  }, {
+    onMutate: async ({ job_id }: { job_id: string }) => {},
+    onSuccess: (data) => {
+      showToast(toast, 'success', 'Job Offer Revoked');
+      handleClose('delete');
+      refreshData(router);
+    },
+    onError: () => {
+      showToast(toast, 'error', 'Delete Job Offer Failed');
+    },
+  });
+
   const createJobOffer = () => {
-    mutation.mutate();
+    createJobMutation.mutate();
   }
+
+  const editJobOffer = () => {
+    let id = jobOffers[selected]?.id;
+    editJobMutation.mutate({ id, title, quantity, wage });
+  }
+
+  const deleteJobOffer = () => {
+    let id = jobOffers[selected]?.id;
+    deleteJobMutation.mutate({ job_id: id });
+  }
+
+  const handleOpen = (index: number, modal: string) => {
+    setSelected(index);
+    switch (modal.toLowerCase()) {
+      case 'edit': {
+        onOpenEdit();
+        return;
+      }
+      case 'delete': {
+        onOpenDelete();
+        return;
+      }
+      default: {
+        setSelected(-1);
+        return;
+      }
+    }
+  }
+
+  const handleClose = (modal: string) => {
+    setSelected(-1);
+    switch (modal.toLowerCase()) {
+      case 'edit': {
+        onCloseEdit();
+        return;
+      }
+      case 'delete': {
+        onCloseDelete();
+        return;
+      }
+      default: {
+        return;
+      }
+    }
+  }
+
+
 
   return (
     <div className='bg-red flex flex-col'>
       <div className='flex justify-end'>
-        <Button variant='solid' colorScheme='green' onClick={onOpen}>Create Job Offer</Button>
+        <Button variant='solid' colorScheme='green' onClick={onOpenCreate}>Create Job Offer</Button>
       </div>
       {(!jobOffers || jobOffers.length === 0) ? (
         <p>Company has no job offers.</p>
@@ -108,8 +192,8 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
                   <Td>{offer.quantity}</Td>
                   <Td>{offer.wage.toFixed(2)} {currency}</Td>
                   <Td className='flex gap-4'>
-                    <Button variant='solid' colorScheme='blue'>Edit</Button>
-                    <Button variant='solid' colorScheme='red'>Delete</Button>
+                    <Button variant='solid' colorScheme='blue' onClick={() => handleOpen(i, 'edit')}>Edit</Button>
+                    <Button variant='solid' colorScheme='red' onClick={() => handleOpen(i, 'delete')}>Delete</Button>
                   </Td>
                 </Tr>
               ))}
@@ -117,7 +201,10 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
           </Table>
         </div>
       )}
-      <Modal isOpen={isOpen} onClose={onClose}>
+
+      {/* Create Job Offer Modal */}
+
+      <Modal isOpen={isCreateOpen} onClose={onCloseCreate}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Create Job Offer</ModalHeader>
@@ -141,7 +228,57 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
           </ModalBody>
           <ModalFooter className='flex gap-4'>
             <Button variant='solid' colorScheme='green' onClick={createJobOffer}>Create</Button>
-            <Button variant='outline' onClick={onClose}>Cancel</Button>
+            <Button variant='outline' onClick={onCloseCreate}>Cancel</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Edit Job Offer Modal */}
+      {selected >= 0 && jobOffers.length > 0 && (
+        <Modal isOpen={isEditOpen} onClose={() => handleClose('edit')}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Edit Job Offer</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody className='flex flex-col gap-2'>
+              <FormControl>
+                <FormLabel>Job Title</FormLabel>
+                <Input type='text' defaultValue={jobOffers[selected]?.title} onChange={e => setTitle(e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Available Positions</FormLabel>
+                <Input type='number' min={1} defaultValue={jobOffers[selected]?.quantity} onChange={e => setQuantity(e.target.valueAsNumber)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Position Wage</FormLabel>
+                <InputGroup>
+                  <InputLeftAddon children={currency} />
+                  <Input type='number' defaultValue={jobOffers[selected]?.wage.toFixed(2)} min={1.00} step={0.01} onChange={e => setWage(e.target.valueAsNumber)} />
+                </InputGroup>
+              </FormControl>
+            </ModalBody>
+            <ModalFooter className='flex gap-4'>
+              <Button variant='solid' colorScheme='blue' onClick={editJobOffer}>Update</Button>
+              <Button variant='outline' onClick={() => handleClose('edit')}>Cancel</Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
+
+      {/* Delete Job Offer Modal */}
+      <Modal isOpen={isDeleteOpen} onClose={() => handleClose('delete')}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Delete Job Offer</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <p>
+              Are you sure you want to delete this job offer?
+            </p>
+          </ModalBody>
+          <ModalFooter className='flex gap-4'>
+            <Button variant='solid' colorScheme='red' onClick={deleteJobOffer}>Delete</Button>
+            <Button variant='outline' onClick={() => handleClose('delete')}>Cancel</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

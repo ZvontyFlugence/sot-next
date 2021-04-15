@@ -1,3 +1,4 @@
+import { IItem } from '@/util/apiHelpers';
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface ICompany extends Document {
@@ -9,9 +10,9 @@ export interface ICompany extends Document {
   location: number,
   gold: number,
   funds: Array<Object>,
-  inventory: Array<Object>,
-  employees: Array<Object>,
-  productOffers: Array<Object>,
+  inventory: IItem[],
+  employees: IEmployee[],
+  productOffers: IProductOffer[],
   jobOffers: IJobOffer[],
   location_info?: {
     region_id: number,
@@ -26,6 +27,19 @@ export interface IJobOffer {
   id?: string,
   title: string,
   quantity: number,
+  wage: number,
+}
+
+export interface IProductOffer {
+  id?: string,
+  product_id: number,
+  quantity: number,
+  price: number,
+}
+
+export interface IEmployee {
+  user_id: number,
+  title: string,
   wage: number,
 }
 

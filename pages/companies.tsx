@@ -16,7 +16,7 @@ import { useToast } from "@chakra-ui/toast";
 import { useRouter } from "next/router";
 import { destroyCookie, parseCookies } from 'nookies';
 import { useState } from "react";
-import { useQuery, useMutation, UseMutationResult } from 'react-query';
+import { useQuery, useMutation, UseMutationResult, useQueryClient } from 'react-query';
 
 interface IMyCompaniesProps {
   user: IUser,
@@ -28,10 +28,16 @@ interface IMyCompsResponse {
   error?: string,
 }
 
+interface ICreateCompParams {
+  name: string,
+  type: number,
+}
+
 export default function Companies({ user, ...props }: IMyCompaniesProps) {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const queryClient = useQueryClient();
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [name, setName] = useState('');
@@ -45,7 +51,7 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
     }).then(res => res.json());
   });
 
-  const mutation: UseMutationResult<any, Object> = useMutation('createCompany', formData => {
+  const mutation = useMutation<any, unknown, ICreateCompParams>('createCompany', formData => {
     return fetch('/api/companies', {
       method: 'POST',
       headers: {
@@ -63,6 +69,7 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
           duration: 2500,
           isClosable: true,
         });
+        queryClient.invalidateQueries('getUserCompanies');
         router.push(`/company/${data.company_id}`);
       } else {
         toast({
@@ -89,7 +96,7 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
 
   const handleCreateComp = () => {
     if (user.gold >= 25 && type !== 0 && name) {
-      mutation.mutate({ name, type });
+      mutation.mutate({ name, type } as ICreateCompParams);
     }
   }
 

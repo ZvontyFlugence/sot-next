@@ -15,6 +15,11 @@ export interface ICEOInfo {
   ceo_image: string,
 }
 
+export interface IItem {
+  item_id: number,
+  quantity: number,
+}
+
 /* Functions */
 
 export function jsonify(data: any) {

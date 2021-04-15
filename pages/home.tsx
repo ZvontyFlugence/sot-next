@@ -7,7 +7,7 @@ import Card from "@/components/Card";
 import { Button } from "@chakra-ui/button";
 import { useMutation } from 'react-query';
 import { useToast } from "@chakra-ui/toast";
-import { refreshData } from "@/util/ui";
+import { refreshData, request, showToast } from "@/util/ui";
 import { useRouter } from "next/router";
 
 interface IHomeProps {
@@ -21,47 +21,25 @@ export default function Home({ user, ...props }: IHomeProps) {
   const cookies = parseCookies();
   const hasTrained = new Date(user.canTrain) > new Date(Date.now());
 
-  const mutation = useMutation(() => {
+  const mutation = useMutation(async () => {
     let payload = { action: 'train' };
-    return fetch('/api/me/doAction', {
+    let data = await request({
+      url: '/api/me/doAction',
       method: 'POST',
-      headers: {
-        authorization: `Bearer ${cookies.token}`,
-      },
-      body: JSON.stringify(payload),
-    }).then(res => res.json());
+      payload,
+      token: cookies.token,
+    });
+
+    if (!data.success)
+      throw new Error(data?.error);
+    return data;
   }, {
     onSuccess: (data) => {
-      if (data.success) {
-        toast({
-          position: 'top-right',
-          title: 'Training Complete',
-          description: data.message,
-          status: 'success',
-          duration: 2500,
-          isClosable: true,
-        });
-        refreshData(router);
-      } else {
-        toast({
-          position: 'top-right',
-          title: 'Training Failed',
-          description: data.error,
-          status: 'error',
-          duration: 2500,
-          isClosable: true,
-        });
-      }
+      showToast(toast, 'success', 'Training Complete', data.message);
+      refreshData(router);
     },
     onError: (e) => {
-      toast({
-        position: 'top-right',
-        title: 'Training Failed',
-        description: e,
-        status: 'error',
-        duration: 2500,
-        isClosable: true,
-      });
+      showToast(toast, 'error', 'Training Failed', e as string);
     },
   });
 
