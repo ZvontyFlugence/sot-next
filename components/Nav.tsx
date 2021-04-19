@@ -4,6 +4,7 @@ import { ChevronDownIcon, CalendarIcon, TimeIcon } from '@chakra-ui/icons';
 import { destroyCookie } from 'nookies';
 import { IUser } from '@/models/User';
 import { addMinutes, format } from 'date-fns';
+import { refreshData } from '@/util/ui';
 
 interface INav {
   user?: IUser,
@@ -24,6 +25,7 @@ const Nav: React.FC<INav> = ({ user }) => {
 
   const logout = () => {
     destroyCookie(null, 'token');
+    refreshData(router);
     router.push('/');
   }
 
@@ -63,7 +65,7 @@ const Nav: React.FC<INav> = ({ user }) => {
             </MenuButton>
             <MenuList>
               <MenuItem>Goods</MenuItem>
-              <MenuItem>Jobs</MenuItem>
+              <MenuItem onClick={() => router.push('/markets/job')}>Jobs</MenuItem>
               <MenuItem>Exchange</MenuItem>
               <MenuItem>Companies</MenuItem>
             </MenuList>

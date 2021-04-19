@@ -86,12 +86,12 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
       refreshData(router);
     },
     onError: (e) => {
-      showToast(toast, 'error', 'Create Job Offer Failed', e as string);
+      showToast(toast, 'error', 'Update Job Offer Failed', e as string);
     }
   });
 
   const deleteJobMutation = useMutation(async ({ job_id }) => {
-    let payload = { action: 'delete_job', data: { company_id, job_id: job_id } };
+    let payload = { action: 'delete_job', data: { company_id, job_id } };
     
     let data = await request({
       url: '/api/companies/doAction',

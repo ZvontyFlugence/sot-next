@@ -1,11 +1,11 @@
 import { validateToken } from "@/util/auth";
 import { NextApiRequest, NextApiResponse } from "next";
 import { UserActions } from '@/util/actions';
-import User, { IUser, IUserUpdates } from "@/models/User";
+import User, { IUser, IUserUpdates, IWalletItem } from "@/models/User";
 import { neededXP } from "@/util/ui";
 import { buildLevelUpAlert } from "@/util/apiHelpers";
 import { connectToDB } from "@/util/mongo";
-import Company, { ICompany } from "@/models/Company";
+import Company, { ICompany, IEmployee } from "@/models/Company";
 
 interface IUserActionResult {
   status_code: number,
@@ -40,7 +40,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     case 'POST': {
       const { user_id } = validation_res;
       const { action, data } = JSON.parse(req.body) as IRequestBody;
-      data.user_id = user_id;
+      
+      if (data)
+        data.user_id = user_id;
+
       let result: IUserActionResult;
 
       // Ensure DB Conn
@@ -49,6 +52,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       switch (action) {
         case UserActions.APPLY_JOB: {
           result = await apply_for_job(data as IApplyJobParams)
+          return res.status(result.status_code).json(result.payload);
         }
         case UserActions.HEAL: {
           result = await heal(user_id);
@@ -56,6 +60,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
         case UserActions.TRAIN: {
           result = await train(user_id);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.WORK: {
+          result = await work(user_id);
           return res.status(result.status_code).json(result.payload);
         }
         default:
@@ -155,6 +163,86 @@ async function apply_for_job({user_id, company_id, job_id }: IApplyJobParams): P
   let updatedUser = await user.updateOne({ $set: { ...userUpdates } });
   if (updatedUser) {
     return { status_code: 200, payload: { success: true, message: 'Job Application Sent' } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function work(user_id: number): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'Employee Not Found' } };
+  } else if (!user.job || user.job === 0) {
+    return { status_code: 400, payload: { success: false, error: 'You Are Not Employed' } };
+  } else if (user.health < 10) {
+    return { status_code: 400, payload: { success: false, error: 'Insufficient Health' } };
+  }
+
+  let job: ICompany = await Company.findOne({ _id: user.job }).exec();
+
+  if (!job) {
+    return { status_code: 404, payload: { success: false, error: 'Employer Not Found' } };
+  }
+
+  // Get Employee Record
+  let employee: IEmployee = job.employees.find(emp => emp.user_id === user_id);
+
+  if (!employee) {
+    return { status_code: 400, payload: { success: false, error: 'You Are Not Employed By That Company' } };
+  }
+
+  // Deduct Wage from Company Treasury
+  if (job.funds.amount < employee.wage) {
+    return { status_code: 400, payload: { success: false, error: 'Company Doesn\'t Have Sufficient Funds to Pay You' } };
+  }
+
+  job.funds.amount -= employee.wage;
+
+  // Add wage to user wallet
+  let walletIndex: number = user.wallet.findIndex(money => money.currency === job.funds.currency);
+  if (walletIndex > -1) {
+    user.wallet[walletIndex].amount += employee.wage;
+  } else {
+    user.wallet.push({ currency: job.funds.currency, amount: employee.wage });
+  }
+
+  // Produce Items
+  let itemIndex: number = job.inventory.findIndex(item => item.item_id === job.type);
+  // TODO: Update Formula for non-raw companies to consume raws
+  let tempFormula = Math.round(((user.health / 100) + 1) * 10);
+  
+  // Add items to company inventory
+  if (itemIndex > -1) {
+    job.inventory[itemIndex].quantity += tempFormula;
+  } else {
+    job.inventory.push({ item_id: job.type, quantity: tempFormula });
+  }
+
+  // Update Company
+  let compUpdates = { inventory: [...job.inventory], funds: job.funds };
+  let updatedComp = await job.updateOne({ $set: compUpdates }).exec();
+  if (!updatedComp) {
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+  }
+
+  // Update User
+  let userUpdates: IUserUpdates = {
+    xp: user.xp + 1,
+    health: user.health - 10,
+    wallet: [...user.wallet],
+    canWork: new Date(new Date().setUTCHours(24, 0, 0, 0)),
+  };
+
+  if (userUpdates.xp >= neededXP(user.level)) {
+    userUpdates.level = user.level + 1;
+    userUpdates.gold = user.gold + 5.0;
+    userUpdates.alerts = [...user.alerts, buildLevelUpAlert(userUpdates.level)];
+  }
+
+  let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
+  if (updatedUser) {
+    return { status_code: 200, payload: { success: true, message: 'Received +1 XP and salary' } };
   }
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };

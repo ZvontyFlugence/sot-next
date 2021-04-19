@@ -1,3 +1,4 @@
+import { IItem } from '@/util/apiHelpers';
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 // TODO: create interfaces or wallet, inventory, alerts, & messages array type
@@ -24,12 +25,19 @@ export interface IUser extends Document {
   canWork: Date,
   canCollectRewards: Date,
   canHeal: Date,
-  wallet: Array<Object>,
-  inventory: Array<Object>,
-  alerts: Array<Object>,
+  wallet: IWalletItem[],
+  inventory: IItem[],
+  alerts: IAlert[],
   messages: Array<Object>,
-  pendingFriends: Array<number>,
-  friends: Array<number>,
+  pendingFriends: number[],
+  friends: number[],
+}
+
+export interface IAlert {
+  read: boolean,
+  type: string,
+  message: string,
+  timestamp: Date,
 }
 
 export interface IUserStats {
@@ -47,6 +55,11 @@ export interface IUserStats {
 
 export interface IUserUpdates {
   [key: string]: any
+}
+
+export interface IWalletItem {
+  currency: string,
+  amount: number,
 }
 
 const UserSchema: Schema = new Schema({

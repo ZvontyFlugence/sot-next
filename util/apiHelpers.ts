@@ -1,3 +1,4 @@
+import { IJobOffer } from '@/models/Company';
 import { UserActions } from '@/util/actions';
 
 /* Interfaces */
@@ -18,6 +19,16 @@ export interface ICEOInfo {
 export interface IItem {
   item_id: number,
   quantity: number,
+}
+
+export interface IJobMarketOffer extends IJobOffer {
+  company: {
+    id: number,
+    image: string,
+    name: string,
+    type: number,
+    ceo: number,
+  }
 }
 
 /* Functions */

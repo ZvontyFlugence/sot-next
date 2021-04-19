@@ -11,10 +11,18 @@ import { useState } from "react";
 import { useQuery, useMutation, UseMutationResult } from 'react-query';
 import { getCurrentUser } from "@/util/auth";
 import { IUser } from "@/models/User";
+import { request } from "@/util/ui";
 
 interface IRegProps {
   user: IUser,
   isAuthenticated: boolean,
+}
+
+interface IRegForm {
+  email: string,
+  username: string,
+  password: string,
+  country: number,
 }
 
 export default function Register(props: IRegProps) {
@@ -31,10 +39,14 @@ export default function Register(props: IRegProps) {
     .then(res => res.json());
   });
 
-  const mutation: UseMutationResult<any, Object> = useMutation(formData => {
-    return fetch('/api/users', { method: 'POST', body: JSON.stringify(formData) })
-      .then(res => res.json());
+  const mutation = useMutation(formData => {
+    return request({
+      url: '/api/users',
+      method: 'POST',
+      payload: formData,
+    });
   }, {
+    onMutate: (formData: IRegForm) => {},
     onSuccess: (data) => {
       if (data.success) {
         router.push('/login');

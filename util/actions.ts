@@ -3,6 +3,7 @@ export const UserActions = {
   HEAL: 'heal',
   LEVEL_UP: 'level_up',
   TRAIN: 'train',
+  WORK: 'work',
 }
 
 export const CompanyActions = {

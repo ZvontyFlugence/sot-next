@@ -9,7 +9,7 @@ export interface ICompany extends Document {
   ceo: number,
   location: number,
   gold: number,
-  funds: Array<Object>,
+  funds: IFunds,
   inventory: IItem[],
   employees: IEmployee[],
   productOffers: IProductOffer[],
@@ -41,6 +41,11 @@ export interface IEmployee {
   user_id: number,
   title: string,
   wage: number,
+}
+
+export interface IFunds {
+  currency: string,
+  amount: number,
 }
 
 const CompanySchema = new Schema({

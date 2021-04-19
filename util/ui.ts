@@ -37,12 +37,14 @@ export function request(params: IRequest): Promise<any> {
   }
 
   return fetch(params.url, opts).then(res => {
+    let result: Promise<any> | Error
     try {
-      let promise = res.json();
-      return promise;
+      result = res.json();
     } catch (e) {
-      return new Error('Request Failed to Parse');
+      result = new Error('Request Failed to Parse');
     }
+
+    return Promise.resolve(result);
   });
 }
 
