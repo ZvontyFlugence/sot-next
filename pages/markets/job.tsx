@@ -84,7 +84,7 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
           </Select>
         </div>
       </h1>
-      <div className='mx-12 mt-4 p-2 bg-white rounded-lg shadow-md border border-1 border-black border-opacity-25'>
+      <div className='mx-12 mt-4 p-2 bg-white rounded-lg shadow-md border border-solid border-black border-opacity-25'>
         {/* Job Offer Filters */}
         {query.isLoading && (
           <div className='w-full'>
