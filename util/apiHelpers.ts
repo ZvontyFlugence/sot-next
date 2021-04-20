@@ -1,4 +1,4 @@
-import { IJobOffer } from '@/models/Company';
+import { IEmployee, IJobOffer } from '@/models/Company';
 import { UserActions } from '@/util/actions';
 
 /* Interfaces */
@@ -29,6 +29,11 @@ export interface IJobMarketOffer extends IJobOffer {
     type: number,
     ceo: number,
   }
+}
+
+export interface IEmployeeInfo extends IEmployee {
+  name: string,
+  image: string,
 }
 
 /* Functions */

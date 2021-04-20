@@ -167,7 +167,7 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
 
 
   return (
-    <div className='bg-red flex flex-col'>
+    <div className='flex flex-col'>
       <div className='flex justify-end'>
         <Button variant='solid' colorScheme='green' onClick={onOpenCreate}>Create Job Offer</Button>
       </div>

@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/util/auth";
 import { Grid, GridItem } from "@chakra-ui/layout";
 import Card from "@/components/Card";
 import { Button } from "@chakra-ui/button";
-import { useMutation } from 'react-query';
+import { useMutation, useQueryClient } from 'react-query';
 import { useToast } from "@chakra-ui/toast";
 import { refreshData, request, showToast } from "@/util/ui";
 import { useRouter } from "next/router";
@@ -25,6 +25,7 @@ export default function Home({ user, job, ...props }: IHomeProps) {
   const toast = useToast();
   const router = useRouter();
   const cookies = parseCookies();
+  const queryClient = useQueryClient();
   const hasTrained = new Date(user.canTrain) > new Date(Date.now());
   const hasWorked = new Date(user.canWork) > new Date(Date.now());
 
@@ -64,6 +65,7 @@ export default function Home({ user, job, ...props }: IHomeProps) {
     return data;
   }, {
     onSuccess: (data) => {
+      queryClient.invalidateQueries('getWalletInfo');
       showToast(toast, 'success', 'Working Complete', data.message);
       refreshData(router);
     },
@@ -130,7 +132,14 @@ export default function Home({ user, job, ...props }: IHomeProps) {
               ): (
                 <div className='flex flex-col justify-center items-center'>
                   <p>You do not have a job</p>
-                  <Button className='mt-2' variant='solid' colorScheme='green'>Find Job</Button>
+                  <Button
+                    className='mt-2'
+                    variant='solid'
+                    colorScheme='green'
+                    onClick={() => router.push('/markets/job')}
+                  >
+                    Find Job
+                  </Button>
                 </div>
               )}
             </Card.Content>

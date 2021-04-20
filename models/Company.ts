@@ -9,7 +9,7 @@ export interface ICompany extends Document {
   ceo: number,
   location: number,
   gold: number,
-  funds: IFunds,
+  funds: IFunds[],
   inventory: IItem[],
   employees: IEmployee[],
   productOffers: IProductOffer[],

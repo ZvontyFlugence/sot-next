@@ -6,6 +6,8 @@ import { neededXP } from "@/util/ui";
 import { buildLevelUpAlert } from "@/util/apiHelpers";
 import { connectToDB } from "@/util/mongo";
 import Company, { ICompany, IEmployee } from "@/models/Company";
+import Region, { IRegion } from "@/models/Region";
+import Country, { ICountry } from "@/models/Country";
 
 interface IUserActionResult {
   status_code: number,
@@ -51,7 +53,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
       switch (action) {
         case UserActions.APPLY_JOB: {
-          result = await apply_for_job(data as IApplyJobParams)
+          result = await apply_for_job(data as IApplyJobParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.COLLECT_REWARDS: {
+          result = await collect_rewards(user_id);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.HEAL: {
@@ -80,10 +86,13 @@ async function heal(user_id: number): Promise<IUserActionResult> {
 
   if (user.health >= 100) {
     return { status_code: 400, payload: { success: false, error: 'Health Already At Maximum' } };
+  } else if (new Date(user.canHeal) > new Date(Date.now())) {
+    return { status_code: 400, payload: { success: false, error: 'You\'ve Healed Already Today' } };
   }
 
   let updates: IUserUpdates = {
     health: Math.min(user.health + 50, 100),
+    canHeal: new Date(new Date().setUTCHours(24, 0, 0, 0)),
   };
 
   let updated: IUser = await user.updateOne({ $set: { ...updates } }).exec();
@@ -185,6 +194,19 @@ async function work(user_id: number): Promise<IUserActionResult> {
     return { status_code: 404, payload: { success: false, error: 'Employer Not Found' } };
   }
 
+  // Get Company Current Country to get Currency
+  let compLocation: IRegion = await Region.findOne({ _id: job.location }).exec();
+  
+  if (!compLocation) {
+    return { status_code: 404, payload: { success: false, error: 'Company Location Not Found' } };
+  }
+
+  let compCountry: ICountry = await Country.findOne({ _id: compLocation.owner }).exec();
+
+  if (!compCountry) {
+    return { status_code: 404, payload: { success: false, error: 'Company Country Not Found' } };
+  }
+
   // Get Employee Record
   let employee: IEmployee = job.employees.find(emp => emp.user_id === user_id);
 
@@ -193,18 +215,23 @@ async function work(user_id: number): Promise<IUserActionResult> {
   }
 
   // Deduct Wage from Company Treasury
-  if (job.funds.amount < employee.wage) {
+  let fundsIndex = job.funds.findIndex(cc => cc.currency === compCountry.currency);
+  if (fundsIndex === -1) {
     return { status_code: 400, payload: { success: false, error: 'Company Doesn\'t Have Sufficient Funds to Pay You' } };
   }
 
-  job.funds.amount -= employee.wage;
+  if (job.funds[fundsIndex].amount < employee.wage) {
+    return { status_code: 400, payload: { success: false, error: 'Company Doesn\'t Have Sufficient Funds to Pay You' } };
+  }
+
+  job.funds[fundsIndex].amount -= employee.wage;
 
   // Add wage to user wallet
-  let walletIndex: number = user.wallet.findIndex(money => money.currency === job.funds.currency);
+  let walletIndex: number = user.wallet.findIndex(money => money.currency === job.funds[fundsIndex].currency);
   if (walletIndex > -1) {
     user.wallet[walletIndex].amount += employee.wage;
   } else {
-    user.wallet.push({ currency: job.funds.currency, amount: employee.wage });
+    user.wallet.push({ currency: job.funds[fundsIndex].currency, amount: employee.wage });
   }
 
   // Produce Items
@@ -243,6 +270,34 @@ async function work(user_id: number): Promise<IUserActionResult> {
   let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
   if (updatedUser) {
     return { status_code: 200, payload: { success: true, message: 'Received +1 XP and salary' } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function collect_rewards(user_id: number): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  } else if (new Date(user.canCollectRewards) > new Date(Date.now())) {
+    return { status_code: 400, payload: { success: false, error: 'You\'ve Already Collected Daily Rewards Today' } };
+  }
+
+  let updates: IUserUpdates = {
+    xp: user.xp + 1,
+    canCollectRewards: new Date(new Date().setUTCHours(24, 0, 0, 0)),
+  }
+
+  if (updates.xp >= neededXP(user.level)) {
+    updates.level = user.level + 1;
+    updates.gold = user.gold + 5.0;
+    updates.alerts = [...user.alerts, buildLevelUpAlert(updates.level)];
+  }
+
+  let updated = await user.updateOne({ $set: updates }).exec();
+  if (updated) {
+    return { status_code: 200, payload: { success: true, message: 'Received bonus +1 XP' } };
   }
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };

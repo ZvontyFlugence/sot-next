@@ -37,7 +37,7 @@ export default function CompanyPage({ user, company, location_info, ceo_info, ..
           {!isManageMode ? (
             <CompanyDetails company={company} currency={props.currency} user={user} />
           ) : (
-            <CompanyManagement company={company} currency={props.currency} />
+            <CompanyManagement company={company} currency={props.currency} locationInfo={location_info} />
           )}
         </div>
       </div>

@@ -1,5 +1,6 @@
 export const UserActions = {
   APPLY_JOB: 'apply_job',
+  COLLECT_REWARDS: 'collect_rewards',
   HEAL: 'heal',
   LEVEL_UP: 'level_up',
   TRAIN: 'train',

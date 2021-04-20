@@ -26,7 +26,7 @@ const Nav: React.FC<INav> = ({ user }) => {
   const logout = () => {
     destroyCookie(null, 'token');
     refreshData(router);
-    router.push('/');
+    router.push('/login');
   }
 
   return (

@@ -87,7 +87,9 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
       <div className='mx-12 mt-4 p-2 bg-white rounded-lg shadow-md border border-1 border-black border-opacity-25'>
         {/* Job Offer Filters */}
         {query.isLoading && (
-          <Spinner className='flex justify-center items-center' colorScheme='red' />
+          <div className='w-full'>
+            <Spinner className='flex justify-center items-center' colorScheme='red' />
+          </div>
         )}
         {query.isSuccess && query.data?.jobOffers.length === 0 && (
           <p>Country has no job offers</p>
