@@ -1,7 +1,9 @@
 import { ICompany } from "@/models/Company";
 import { ILocationInfo } from "@/util/apiHelpers";
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/tabs";
+import Inventory from "../shared/Inventory";
 import ManageEmployees from "./ManageEmployees";
+import ManageInventory from "./ManageInventory";
 import ManageJobOffers from "./ManageJobOffers";
 import ManageProductOffers from "./ManageProductOffers";
 import ManageTreasury from "./ManageTreasury";
@@ -37,7 +39,7 @@ const CompanyManagement: React.FC<ICompManagement> = ({ company, currency, locat
               <ManageEmployees company_id={company._id} employees={company.employees} currency={currency} />
             </TabPanel>
             <TabPanel>
-
+              <ManageInventory inventory={company.inventory} />
             </TabPanel>
             <TabPanel>
               <ManageTreasury

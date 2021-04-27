@@ -3,6 +3,7 @@ export const UserActions = {
   COLLECT_REWARDS: 'collect_rewards',
   HEAL: 'heal',
   LEVEL_UP: 'level_up',
+  SEND_FR: 'send_fr',
   TRAIN: 'train',
   WORK: 'work',
 }

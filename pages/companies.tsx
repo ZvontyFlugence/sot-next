@@ -16,7 +16,7 @@ import { useToast } from "@chakra-ui/toast";
 import { useRouter } from "next/router";
 import { destroyCookie, parseCookies } from 'nookies';
 import { useState } from "react";
-import { useQuery, useMutation, UseMutationResult, useQueryClient } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 
 interface IMyCompaniesProps {
   user: IUser,

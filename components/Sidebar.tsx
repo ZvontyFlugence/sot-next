@@ -101,6 +101,7 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
             colorScheme={user.alerts.length > 0 ? 'red' : 'gray'}
             size='sm'
             leftIcon={<BellIcon />}
+            onClick={() => router.push('/alerts')}
           >{user.alerts.length}</Button>
         </div>
         <div className='mt-2'>

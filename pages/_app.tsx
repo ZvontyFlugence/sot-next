@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import colors from '../util/theme';
 import '../styles/globals.css';
 import 'flag-icon-css/css/flag-icon.min.css';
+import 'react-contexify/dist/ReactContexify.css';
 
 const queryClient = new QueryClient();
 const theme = extendTheme({ colors });

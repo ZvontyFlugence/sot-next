@@ -1369,6 +1369,11 @@ classnames@2.2.6:
   resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.2.6.tgz#43935bffdd291f326dad0a205309b38d00f650ce"
   integrity sha512-JR/iSQOSt+LQIWwrwEzJ9uk0xfN3mTVYMwt1Ir5mUcSN6pU+V4zQFFaJsclJbPuAUQH+yfWef6tm7l1quW3C8Q==
 
+clsx@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/clsx/-/clsx-1.1.1.tgz#98b3134f9abbdf23b2663491ace13c5c03a73188"
+  integrity sha512-6/bPho624p3S2pMyvP5kKBPXnI3ufHLObBFCfgx+LkeR5lg2XYy2hqZqUf45ypD8COn2bhgGJSUE+l5dhNBieA==
+
 code-point-at@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/code-point-at/-/code-point-at-1.1.0.tgz#0d070b4d043a5bea33a2f1a40e2edb3d9a4ccf77"
@@ -3095,6 +3100,13 @@ react-clientside-effect@^1.2.2:
   integrity sha512-2bL8qFW1TGBHozGGbVeyvnggRpMjibeZM2536AKNENLECutp2yfs44IL8Hmpn8qjFQ2K7A9PnYf3vc7aQq/cPA==
   dependencies:
     "@babel/runtime" "^7.12.13"
+
+react-contexify@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/react-contexify/-/react-contexify-5.0.0.tgz#11b477550a0ee5a9a144399bc17c7c56bbc60057"
+  integrity sha512-2FIp7lxJ6dtfGr8EZ4uVV5p5TQjd0n2h/JU7PrejNIMiCeZWvSVPFh4lj1ZvjXosglBvP7q5JQQ8yUCdSaMSaw==
+  dependencies:
+    clsx "^1.1.1"
 
 react-dom@17.0.2:
   version "17.0.2"
