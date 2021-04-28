@@ -67,6 +67,28 @@ const AlertItem: React.FC<IAlertItem> = ({ alert, index }) => {
     }
   });
 
+  const acceptMutation = useMutation(async () => {
+    let payload = { action: UserActions.ACCEPT_FR, data: { alert_index: index } };
+    let data = await request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    });
+
+    if (!data.success)
+      throw new Error(data?.error);
+    return data;
+  }, {
+    onSuccess: (data) => {
+      showToast(toast, 'success', 'Sent Request', data?.message);
+      refreshData(router);
+    },
+    onError: (e: Error) => {
+      showToast(toast, 'error', 'Request Not Sent', e.message);
+    }
+  });
+
   const getTimestamp = () => (
     <span>{ formatDistance(new Date(alert.timestamp), new Date(Date.now()), { addSuffix: true }) }</span>
   );
@@ -75,21 +97,25 @@ const AlertItem: React.FC<IAlertItem> = ({ alert, index }) => {
     switch (alert.type) {
       case UserActions.SEND_FR: {
         return (
-          <div className='flex justify-end gap-4'>
-            <IconButton
-              as={IoCheckmarkOutline}
-              variant='solid'
-              colorScheme='green'
-              onClick={acceptFR}
-              aria-label='Accept Friend Request Button'
-            />
-            <IconButton
-              as={IoCloseOutline}
-              variant='solid'
-              colorScheme='red'
-              onClick={declineFR}
-              aria-label='Declne Friend Request Button'
-            />
+          <div className='flex w-full'>
+            <div className='flex justify-end gap-4 w-full'>
+              <IconButton
+                as={IoCheckmarkOutline}
+                size='sm'
+                variant='solid'
+                colorScheme='green'
+                onClick={acceptFR}
+                aria-label='Accept Friend Request Button'
+              />
+              <IconButton
+                as={IoCloseOutline}
+                size='sm'
+                variant='solid'
+                colorScheme='red'
+                onClick={declineFR}
+                aria-label='Declne Friend Request Button'
+              />
+            </div>
           </div>
         );
       }
@@ -98,7 +124,9 @@ const AlertItem: React.FC<IAlertItem> = ({ alert, index }) => {
     }
   };
 
-  const acceptFR = () => {}
+  const acceptFR = () => {
+    acceptMutation.mutate();
+  }
 
   const declineFR = () => {}
 
@@ -113,11 +141,11 @@ const AlertItem: React.FC<IAlertItem> = ({ alert, index }) => {
   return (
     <>
       <div className={`flex py-2 px-4 alert-item border-b border-solid border-black border-opacity-25 ${alert.read ? 'bg-gray-500 bg-opacity-25' : ''}`} onContextMenu={show}>
-        { getActions() }
-        <div className='flex justify-start gap-4 py-1 cursor-pointer'>
+        <div className='flex justify-start gap-4 py-1 cursor-pointer w-full'>
           <div className='px-4'>{getTimestamp()}</div>
           <div style={{ fontWeight: alert.read ? 'lighter' : 'bold'}}>{alert.message}</div>
         </div>
+        { !alert.read && getActions() }
       </div>
 
       <Menu id={`alert-${index}`}>

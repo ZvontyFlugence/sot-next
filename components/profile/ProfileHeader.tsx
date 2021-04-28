@@ -1,13 +1,18 @@
 import { IUser } from "@/models/User";
+import { UserActions } from "@/util/actions";
 import { ILocationInfo } from "@/util/apiHelpers";
+import { refreshData, request, showToast } from "@/util/ui";
 import { IconButton } from "@chakra-ui/button";
 import { useDisclosure } from "@chakra-ui/hooks";
 import { SettingsIcon } from "@chakra-ui/icons";
 import { Image } from "@chakra-ui/image";
 import { VStack } from "@chakra-ui/layout";
+import { useToast } from "@chakra-ui/toast";
 import { useRouter } from "next/router";
+import { parseCookies } from "nookies";
 import { AiOutlineDollar, AiOutlineUsergroupAdd, AiOutlineUsergroupDelete } from 'react-icons/ai';
 import { IoGiftOutline, IoMailOutline } from 'react-icons/io5';
+import { useMutation } from "react-query";
 
 interface IProfileHeader {
   user: IUser,
@@ -16,12 +21,40 @@ interface IProfileHeader {
 }
 
 const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }) => {
+  const cookies = parseCookies();
   const router = useRouter();
+  const toast = useToast();
+
   const { isOpen: isSendMsgOpen, onOpen: onOpenSendMsg, onClose: onCloseSendMsg } = useDisclosure();
   const { isOpen: isDonateOpen, onOpen: onOpenDonate, onClose: onCloseDonate } = useDisclosure();
   const { isOpen: isGiftOpen, onOpen: onOpenGift, onClose: onCloseGift } = useDisclosure();
 
   // TODO: Mutations for Add/Remove Friend
+  const addMutation = useMutation(async () => {
+    let payload = { action: UserActions.SEND_FR, data: { profile_id: profile._id } };
+    let data = await request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    });
+
+    if (!data.success)
+      throw new Error(data?.error);
+    return data;
+  }, {
+    onSuccess: (data) => {
+      showToast(toast, 'success', 'Friend Request Sent', data?.message);
+      refreshData(router);
+    },
+    onError: (e: Error) => {
+      showToast(toast, 'error', 'Failed to Send', e.message);
+    }
+  });
+
+  const addFriend = () => {
+    addMutation.mutate();
+  }
 
   return (
     <div className='bg-white p-4 shadow-md rounded-lg border border-solid border-black border-opacity-25'>
@@ -69,7 +102,7 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
                   title='Add Friend'
                   icon={<AiOutlineUsergroupAdd />}
                   disabled={user.pendingFriends.includes(profile._id)}
-                  onClick={() => {}}
+                  onClick={addFriend}
                 />
               ) : (
                 <IconButton

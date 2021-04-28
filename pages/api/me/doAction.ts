@@ -1,7 +1,7 @@
 import { validateToken } from "@/util/auth";
 import { NextApiRequest, NextApiResponse } from "next";
 import { UserActions } from '@/util/actions';
-import User, { IUser, IUserUpdates, IWalletItem } from "@/models/User";
+import User, { IAlert, IUser, IUserUpdates, IWalletItem } from "@/models/User";
 import { neededXP } from "@/util/ui";
 import { buildLevelUpAlert } from "@/util/apiHelpers";
 import { connectToDB } from "@/util/mongo";
@@ -20,7 +20,7 @@ interface IUserActionResult {
 
 interface IRequestBody {
   action: string,
-  data?: IApplyJobParams | IHandleAlertParams
+  data?: IApplyJobParams | IHandleAlertParams | ISendFRParams
 }
 
 interface IApplyJobParams {
@@ -34,10 +34,15 @@ interface IHandleAlertParams {
   alert_index: number,
 }
 
+interface ISendFRParams {
+  user_id?: number,
+  profile_id: number,
+}
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const validation_res = await validateToken(req, res);
-  if (validation_res.error) {
-    return res.status(401).json({ error: validation_res.error });
+  if (!validation_res || validation_res.error) {
+    return res.status(401).json({ error: validation_res?.error || 'Unauthorized?' });
   }
 
   switch (req.method) {
@@ -54,6 +59,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       await connectToDB();
 
       switch (action) {
+        case UserActions.ACCEPT_FR: {
+          result = await accept_fr(data as IHandleAlertParams);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.APPLY_JOB: {
           result = await apply_for_job(data as IApplyJobParams);
           return res.status(result.status_code).json(result.payload);
@@ -72,6 +81,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
         case UserActions.READ_ALERT: {
           result = await read_alert(data as IHandleAlertParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.SEND_FR: {
+          result = await send_fr(data as ISendFRParams);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.TRAIN: {
@@ -344,6 +357,87 @@ async function delete_alert({ user_id, alert_index }: IHandleAlertParams): Promi
   let updated = await user.updateOne({ $set: updates }).exec();
   if (updated) {
     return { status_code: 200, payload: { success: true } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function send_fr({ user_id, profile_id }: ISendFRParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  } else if (user.friends.includes(profile_id)) {
+    return { status_code: 400, payload: { success: false, error: 'Already Friends With User' } };
+  } else if (user.pendingFriends.includes(profile_id)) {
+    return { status_code: 400, payload: { success: false, error: 'You\'ve Already Sent A Friend Request' } };
+  }
+
+  let profile: IUser = await User.findOne({ _id: profile_id }).exec();
+  if (!profile) {
+    return { status_code: 400, payload: { success: false, error: 'User Not Found' } };
+  }
+
+  let alert: IAlert = {
+    read: false,
+    type: UserActions.SEND_FR,
+    message: `You've received a friend request from ${user.username}`,
+    from: user_id,
+    timestamp: new Date(Date.now()),
+  };
+
+  let profileUpdates = { alerts: [...profile.alerts, alert] };
+  let updatedProfile = await profile.updateOne({ $set: profileUpdates });
+  if (!updatedProfile) {
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong'} };
+  }
+
+  let updates = { pendingFriends: [...user.pendingFriends, profile_id] };
+  let updated = await user.updateOne({ $set: updates }).exec();
+  if (updated) {
+    return { status_code: 200, payload: { success: true } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function accept_fr({ user_id, alert_index }: IHandleAlertParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  } else if (alert_index < 0 || alert_index > (user.alerts.length - 1)) {
+    return { status_code: 400, payload: { success: false, error: 'Invalid Alert' } };
+  }
+
+  const alert = user.alerts[alert_index];
+  user.alerts[alert_index].read = true;
+  const profile_id = alert?.from;
+  if (!profile_id) {
+    return { status_code: 400, payload: { success: false, error: 'Invalid Alert' } };
+  }
+
+  let profile: IUser = await User.findOne({ _id: profile_id }).exec();
+  if (!profile) {
+    return { status_code: 400, payload: { success: false, error: 'User Not Found' } };
+  } else if (!profile.pendingFriends.includes(user_id)) {
+    return { status_code: 400, payload: { success: false, error: 'Invalid Friend Request' } };
+  }
+
+  let frIndex = profile.pendingFriends.findIndex(pfr => pfr === user_id);
+  profile.pendingFriends.splice(frIndex, 1);
+
+  let profileUpdates = {
+    pendingFriends: [...profile.pendingFriends],
+    friends: [...profile.friends, user_id],
+  };
+  let updatedProfile = await profile.updateOne({ $set: profileUpdates }).exec();
+  if (!updatedProfile) {
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+  }
+
+  let updates = { friends: [...user.friends, profile_id], alerts: [...user.alerts] };
+  let updated = await user.updateOne({ $set: updates }).exec();
+  if (updated) {
+    return { status_code: 200, payload: { success: true, message: 'Friend Added' } };
   }
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };

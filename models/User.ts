@@ -37,6 +37,7 @@ export interface IAlert {
   read: boolean,
   type: string,
   message: string,
+  from?: number,
   timestamp: Date,
 }
 
