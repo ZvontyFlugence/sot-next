@@ -1,5 +1,6 @@
 import { IAlert } from '@/models/User';
 import { UserActions } from '@/util/actions';
+import { refreshData, request, showToast } from '@/util/ui';
 import { IconButton } from '@chakra-ui/button';
 import { useToast } from '@chakra-ui/toast';
 import { formatDistance } from 'date-fns';
@@ -7,6 +8,7 @@ import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
 import { Menu, Item, useContextMenu } from 'react-contexify';
 import { IoCheckmarkOutline, IoCloseOutline } from 'react-icons/io5';
+import { useMutation } from 'react-query';
 
 interface IAlertItem {
   alert: IAlert,
@@ -19,6 +21,51 @@ const AlertItem: React.FC<IAlertItem> = ({ alert, index }) => {
   const router = useRouter();
 
   const { show } = useContextMenu({ id: `alert-${index}` });
+
+  // Mutations
+  const readMutation = useMutation(async () => {
+    let payload = { action: 'read_alert', data: { alert_index: index } };
+    let data = await request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    });
+
+    if (!data.success)
+      throw new Error(data?.error);
+    return data;
+  }, {
+    onSuccess: (data) => {
+      showToast(toast, 'success', 'Alert Marked as Read', data?.message);
+      refreshData(router);
+    },
+    onError: (e: Error) => {
+      showToast(toast, 'error', 'Error', e.message);
+    }
+  });
+
+  const deleteMutation = useMutation(async () => {
+    let payload = { action: 'delete_alert', data: { alert_index: index } };
+    let data = await request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    });
+
+    if (!data.success)
+      throw new Error(data?.error);
+    return data;
+  }, {
+    onSuccess: (data) => {
+      showToast(toast, 'success', 'Alert Deleted', data?.message);
+      refreshData(router);
+    },
+    onError: (e: Error) => {
+      showToast(toast, 'error', 'Error', e.message);
+    }
+  });
 
   const getTimestamp = () => (
     <span>{ formatDistance(new Date(alert.timestamp), new Date(Date.now()), { addSuffix: true }) }</span>
@@ -55,22 +102,26 @@ const AlertItem: React.FC<IAlertItem> = ({ alert, index }) => {
 
   const declineFR = () => {}
 
-  const readAlert = () => {}
+  const readAlert = () => {
+    readMutation.mutate();
+  }
 
-  const deleteAlert = () => {}
+  const deleteAlert = () => {
+    deleteMutation.mutate();
+  }
 
   return (
     <>
-      <div className='flex py-2 px-4 alert-item border-b border-solid border-black border-opacity-25' onContextMenu={show}>
+      <div className={`flex py-2 px-4 alert-item border-b border-solid border-black border-opacity-25 ${alert.read ? 'bg-gray-500 bg-opacity-25' : ''}`} onContextMenu={show}>
         { getActions() }
         <div className='flex justify-start gap-4 py-1 cursor-pointer'>
           <div className='px-4'>{getTimestamp()}</div>
-          <div style={{ fontWeight: !alert.read ? 'lighter' : 'bold'}}>{alert.message}</div>
+          <div style={{ fontWeight: alert.read ? 'lighter' : 'bold'}}>{alert.message}</div>
         </div>
       </div>
 
       <Menu id={`alert-${index}`}>
-        <Item onClick={readAlert}>
+        <Item onClick={readAlert} disabled={alert.read}>
           Mark as Read
         </Item>
         <Item onClick={deleteAlert}>

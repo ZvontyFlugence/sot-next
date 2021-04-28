@@ -98,11 +98,11 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
           <Button
             variant='outline'
             aria-label='View Alerts'
-            colorScheme={user.alerts.length > 0 ? 'red' : 'gray'}
+            colorScheme={user.alerts.filter(a => !a.read).length > 0 ? 'red' : 'gray'}
             size='sm'
             leftIcon={<BellIcon />}
             onClick={() => router.push('/alerts')}
-          >{user.alerts.length}</Button>
+          >{user.alerts.filter(a => !a.read).length}</Button>
         </div>
         <div className='mt-2'>
           <div className='mb-2'>

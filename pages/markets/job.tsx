@@ -14,7 +14,7 @@ import { Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/table';
 import { useToast } from '@chakra-ui/toast';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 
 interface IJobMarket {
@@ -38,8 +38,8 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
     });
   });
 
-  // TODO: Apply For Job Mutation
-  // (Take From components/company/CompanyDetails.tsx)
+  useEffect(() => { query.refetch() }, [country]);
+
   const mutation = useMutation(async ({ company_id, job_id }) => {
     let payload = { action: 'apply_job', data: { company_id, job_id } };
 

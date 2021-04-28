@@ -20,16 +20,18 @@ interface IUserActionResult {
 
 interface IRequestBody {
   action: string,
-  data?: IApplyJobParams
+  data?: IApplyJobParams | IHandleAlertParams
 }
 
-interface IBaseParams {
+interface IApplyJobParams {
   user_id?: number,
   company_id: number,
+  job_id: string,
 }
 
-interface IApplyJobParams extends IBaseParams {
-  job_id: string,
+interface IHandleAlertParams {
+  user_id?: number,
+  alert_index: number,
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -60,8 +62,16 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await collect_rewards(user_id);
           return res.status(result.status_code).json(result.payload);
         }
+        case UserActions.DELETE_ALERT: {
+          result = await delete_alert(data as IHandleAlertParams);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.HEAL: {
           result = await heal(user_id);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.READ_ALERT: {
+          result = await read_alert(data as IHandleAlertParams);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.TRAIN: {
@@ -298,6 +308,42 @@ async function collect_rewards(user_id: number): Promise<IUserActionResult> {
   let updated = await user.updateOne({ $set: updates }).exec();
   if (updated) {
     return { status_code: 200, payload: { success: true, message: 'Received bonus +1 XP' } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function read_alert({ user_id, alert_index }: IHandleAlertParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user) {
+    return { status_code: 500, payload: { success: false, error: 'User Not Found' } };
+  } else if (alert_index < 0 || alert_index > (user.alerts.length - 1)) {
+    return { status_code: 500, payload: { success: false, error: 'Invalid Alert' } };
+  }
+
+  user.alerts[alert_index].read = true;
+  let updates = { alerts: [...user.alerts] };
+  let updated = await user.updateOne({ $set: updates }).exec();
+  if (updated) {
+    return { status_code: 200, payload: { success: true } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function delete_alert({ user_id, alert_index }: IHandleAlertParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user) {
+    return { status_code: 500, payload: { success: false, error: 'User Not Found' } };
+  } else if (alert_index < 0 || alert_index > (user.alerts.length - 1)) {
+    return { status_code: 500, payload: { success: false, error: 'Invalid Alert' } };
+  }
+
+  user.alerts.splice(alert_index, 1);
+  let updates = { alerts: [...user.alerts] };
+  let updated = await user.updateOne({ $set: updates }).exec();
+  if (updated) {
+    return { status_code: 200, payload: { success: true } };
   }
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };

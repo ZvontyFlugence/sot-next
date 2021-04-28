@@ -14,7 +14,7 @@ const Alerts: React.FC<IAlerts> = ({ user, ...props }) => {
   return user ? (
     <Layout user={user}>
       <h1 className='text-2xl font-semibold pl-4'>My Alerts</h1>
-      <div className='flex justify-end'>
+      <div className='flex justify-end gap-4 pr-12'>
         <Button variant='solid' colorScheme='blue'>Mark All as Read</Button>
         <Button variant='solid' colorScheme='red'>Delete All</Button>
       </div>

@@ -1,8 +1,12 @@
 export const UserActions = {
+  ACCEPT_FR: 'accept_fr',
   APPLY_JOB: 'apply_job',
   COLLECT_REWARDS: 'collect_rewards',
+  DECLINE_FR: 'decline_fr',
+  DELETE_ALERT: 'delete_alert',
   HEAL: 'heal',
   LEVEL_UP: 'level_up',
+  READ_ALERT: 'read_alert',
   SEND_FR: 'send_fr',
   TRAIN: 'train',
   WORK: 'work',
