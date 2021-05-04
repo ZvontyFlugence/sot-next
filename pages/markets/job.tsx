@@ -16,6 +16,7 @@ import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
+import CustomSelect from '@/components/Select';
 
 interface IJobMarket {
   user: IUser,
@@ -76,12 +77,19 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
     <Layout user={user}>
       <h1 className='flex justify-between pl-4 pr-8'>
         <span className='text-2xl font-semibold text-accent'>Job Market</span>
-        <div>
+        {/* <div>
           <Select className='cursor-pointer' bg='night' color='white' border='none' defaultValue={country} onChange={e => setCountry(Number.parseInt(e.target.value))}>
             {props.countries.map((country, i) => (
               <option style={{ backgroundColor: 'hsla(258, 14%, 20%, 1)' }} value={country._id} key={i}>{country.name}</option>
             ))}
           </Select>
+        </div> */}
+        <div>
+          <CustomSelect onChange={(val) => setCountry(val as number)}>
+            {props.countries.map((country, i) => (
+              <CustomSelect.Option value={country._id} key={i}>{country.name}</CustomSelect.Option>
+            ))}
+          </CustomSelect>
         </div>
       </h1>
       <div className='mx-12 mt-4 p-2 bg-night rounded shadow-md'>
@@ -92,7 +100,7 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
           </div>
         )}
         {query.isSuccess && query.data?.jobOffers.length === 0 && (
-          <p>Country has no job offers</p>
+          <p className='text-white'>Country has no job offers</p>
         )}
         {query.isSuccess && query.data?.jobOffers.length > 0 && (
           <Table bgColor='night' color='white'>
