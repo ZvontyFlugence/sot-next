@@ -90,12 +90,12 @@ export default function Home({ user, job, ...props }: IHomeProps) {
 
   return user ? (
     <Layout user={user}>
-      <h1 className='text-2xl pl-4 font-semibold'>My Home</h1>
+      <h1 className='text-2xl pl-4 font-semibold text-accent'>My Home</h1>
       <Grid className='mt-8 pl-8 pr-24' templateColumns='repeat(5, 1fr)' gap={12}>
         <GridItem colSpan={2}>
           <Card>
-            <Card.Header className='text-xl font-semibold'>Gym</Card.Header>
-            <Card.Content>
+            <Card.Header className='text-xl font-semibold text-white h-brand'>Gym</Card.Header>
+            <Card.Content className='text-white'>
               <p>Current Strength: {user.strength}</p>
               <Button
                 className='mt-2'
@@ -111,8 +111,8 @@ export default function Home({ user, job, ...props }: IHomeProps) {
         </GridItem>
         <GridItem colStart={3} colEnd={6}>
           <Card>
-            <Card.Header className='text-xl font-semibold'>Work</Card.Header>
-            <Card.Content>
+            <Card.Header className='text-xl font-semibold text-white h-brand'>Work</Card.Header>
+            <Card.Content className='text-white'>
               {job ? (
                 <div className='flex justify-between items-center mt-2'>
                   <div className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/company/${job._id}`)}>
@@ -147,8 +147,8 @@ export default function Home({ user, job, ...props }: IHomeProps) {
         </GridItem>
         <GridItem colSpan={5}>
           <Card>
-            <Card.Header className='text-xl font-semibold'>Inventory</Card.Header>
-            <Card.Content>
+            <Card.Header className='text-xl font-semibold text-white h-brand'>Inventory</Card.Header>
+            <Card.Content className='text-white'>
               <Inventory inventory={user.inventory} />
             </Card.Content>
           </Card>

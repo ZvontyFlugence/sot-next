@@ -16,7 +16,9 @@ function MyApp({ Component, pageProps }) {
       <ChakraProvider theme={theme}>
         <Head>
           <title>State of Turmoil</title>
-          <link rel='icon' type='image/svg' href='/SoT.svg' />
+          <link rel='icon' type='image/png' href='/favicon.png' />
+          <link rel="preconnect" href="https://fonts.gstatic.com" />
+          <link href="https://fonts.googleapis.com/css2?family=Unica+One&display=swap" rel="stylesheet" />
         </Head>
         <Component {...pageProps} />
       </ChakraProvider>

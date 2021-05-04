@@ -79,32 +79,33 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
   return (
     <Card>
       <Card.Header
-        className='flex flex-col justify-center items-center cursor-pointer'
+        className='flex flex-col justify-center items-center cursor-pointer text-white'
         onClick={() => router.push(`/profile/${user._id}`)}
       >
         <Avatar size='2xl' name={user.username} src={user.image} />
         <span>{ user.username } <Tag variant='solid' colorScheme='blue'>{user.level}</Tag></span>
       </Card.Header>
-      <Card.Content>
-        <hr className='mt-2 mb-2' />
+      <Card.Content className='text-white mt-4'>
         <div className='flex justify-center gap-5'>
           <Button
+            className={user.messages.length > 0 ? 'text-accent' : 'text-accent-alt'}
             variant='outline'
             aria-label='View Mail'
-            colorScheme={user.messages.length > 0 ? 'red' : 'gray'}
+            colorScheme=''
             leftIcon={<EmailIcon />}
             size='sm'
           >{user.messages.length}</Button>
           <Button
+            className={user.alerts.filter(a => !a.read).length > 0 ? 'text-accent' : 'text-accent-alt'}
             variant='outline'
             aria-label='View Alerts'
-            colorScheme={user.alerts.filter(a => !a.read).length > 0 ? 'red' : 'gray'}
+            colorScheme=''
             size='sm'
             leftIcon={<BellIcon />}
             onClick={() => router.push('/alerts')}
           >{user.alerts.filter(a => !a.read).length}</Button>
         </div>
-        <div className='mt-2'>
+        <div className='mt-4'>
           <div className='mb-2'>
             <span className='text-sm'>XP: {user.xp} / {neededXP(user.level)} </span> 
             <Progress value={user.xp} min={0} max={neededXP(user.level)} size='sm' colorScheme='orange' hasStripe isAnimated />
@@ -128,7 +129,7 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
           </Button>
         </div>
         {(!locationQuery.isLoading && !locationQuery.isError) && (
-          <div className='flex justify-between mt-2'>
+          <div className='flex justify-between mt-4'>
             <p>
               <span className='cursor-pointer' onClick={() => router.push(`/region/${user.location}`)}>
                 {locationQuery.data.locationInfo.region_name}
@@ -143,7 +144,7 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
             ></span>
           </div>
         )}
-        <div className='mt-2'>
+        <div className='mt-4'>
           <List>
             <ListItem className='flex justify-between'>
               <span>Gold</span>

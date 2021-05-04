@@ -57,7 +57,7 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
   }
 
   return (
-    <div className='bg-white p-4 shadow-md rounded-lg border border-solid border-black border-opacity-25'>
+    <div className='bg-night text-white p-4 shadow-md rounded'>
       <div className='flex flex-row items-stretch gap-4'>
         <Image boxSize='12.0rem' borderRadius="full" src={profile.image} alt={profile.username} />
         <div className='flex flex-col w-full items-top'>
@@ -81,7 +81,7 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
           </p>
           <p className='flex flex-col mt-4'>
             <span>Description:</span>
-            <span className='border border-solid border-black border-opacity-25 p-2 w-full rounded-md'>
+            <span className='border border-solid border-white border-opacity-25 p-2 w-full rounded-md'>
               <i>{profile.description}</i>
             </span>
           </p>
@@ -90,6 +90,7 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
           {user._id === profile._id ? (
             <IconButton
               aria-label='Account Settings'
+              colorScheme=''
               icon={<SettingsIcon />}
               disabled={user._id !== profile._id}
               onClick={() => {}}
@@ -99,6 +100,9 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
               {!user.friends.includes(profile._id) ? (
                 <IconButton
                   aria-label='Add Friend'
+                  variant='outline'
+                  color='accent-alt'
+                  colorScheme=''
                   title='Add Friend'
                   icon={<AiOutlineUsergroupAdd />}
                   disabled={user.pendingFriends.includes(profile._id)}
@@ -107,6 +111,9 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
               ) : (
                 <IconButton
                   aria-label='Remove Friend'
+                  variant='outline'
+                  color='accent'
+                  colorScheme=''
                   title='Remove Friend'
                   icon={<AiOutlineUsergroupDelete />}
                   onClick={() => {}}
@@ -114,18 +121,27 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
               )}
               <IconButton
                 aria-label='Send Message'
+                variant='outline'
+                color='accent-alt'
+                colorScheme=''
                 title='Send Message'
                 icon={<IoMailOutline />}
                 onClick={onOpenSendMsg}
               />
               <IconButton
                 aria-label='Donate Money'
+                variant='outline'
+                color='accent-alt'
+                colorScheme=''
                 title='Donate Money'
                 icon={<AiOutlineDollar />}
                 onClick={onOpenDonate}
               />
               <IconButton
                 aria-label='Gift Items'
+                variant='outline'
+                color='accent-alt'
+                colorScheme=''
                 title='Gift Items'
                 icon={<IoGiftOutline />}
                 onClick={onOpenGift}

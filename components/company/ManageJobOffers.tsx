@@ -175,14 +175,14 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
         <p>Company has no job offers.</p>
       ) : (
         <div>
-          <p className='text-xl font-semibold text-center mb-4'>Active Offers</p>
+          <p className='text-xl font-semibold text-center mb-4 h-brand text-accent'>Active Offers</p>
           <Table>
             <Thead>
               <Tr>
-                <Th>Position Title</Th>
-                <Th>Available Positions</Th>
-                <Th>Position Wage</Th>
-                <Th>Actions</Th>
+                <Th color='white'>Position Title</Th>
+                <Th color='white'>Available Positions</Th>
+                <Th color='white'>Position Wage</Th>
+                <Th color='white'>Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -206,7 +206,7 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
 
       <Modal isOpen={isCreateOpen} onClose={onCloseCreate}>
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent bgColor='night' color='white'>
           <ModalHeader>Create Job Offer</ModalHeader>
           <ModalCloseButton />
           <ModalBody className='flex flex-col gap-2'>
@@ -221,14 +221,14 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
               <FormControl>
                 <FormLabel>Position Wage</FormLabel>
                 <InputGroup>
-                  <InputLeftAddon children={currency} />
+                  <InputLeftAddon bgColor='accent-alt' children={currency} />
                   <Input type='number' value={wage.toFixed(2)} min={1.00} step={0.01} onChange={e => setWage(e.target.valueAsNumber)} />
                 </InputGroup>
               </FormControl>
           </ModalBody>
           <ModalFooter className='flex gap-4'>
             <Button variant='solid' colorScheme='green' onClick={createJobOffer}>Create</Button>
-            <Button variant='outline' onClick={onCloseCreate}>Cancel</Button>
+            <Button variant='outline' color='accent' colorScheme='' onClick={onCloseCreate}>Cancel</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

@@ -179,14 +179,14 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
         <p>Company has no product offers</p>
       ) : (
         <div>
-          <p className='text-xl font-semibold text-center'>Active Offers</p>
+          <p className='text-xl font-semibold text-center h-brand text-accent'>Active Offers</p>
           <Table>
             <Thead>
               <Tr>
-                <Th>Item</Th>
-                <Th>Quantity</Th>
-                <Th>Price</Th>
-                <Th>Actions</Th>
+                <Th color='white'>Item</Th>
+                <Th color='white'>Quantity</Th>
+                <Th color='white'>Price</Th>
+                <Th color='white'>Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -209,7 +209,7 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
       {/* TODO: Create Product Offer Modal */}
       <Modal isOpen={isCreateOpen} onClose={onCloseCreate}>
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent bgColor='night' color='white'>
           <ModalHeader>Create Product Offer</ModalHeader>
           <ModalCloseButton />
           <ModalBody className='flex flex-col gap-2'>

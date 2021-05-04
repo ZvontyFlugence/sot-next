@@ -6,7 +6,7 @@ import Card from "../Card";
 export default function TopCountries({ countries }: { countries: ICountryStats[] }) {
   return (
     <Card>
-      <Card.Header className='text-xl text-center font-bold mb-4'>Top Countries</Card.Header>
+      <Card.Header className='text-xl text-center font-bold text-white h-brand'>Top Countries</Card.Header>
       <Card.Content>
         {!countries ? (
           <Spinner color='red.500' size='xl' />
@@ -14,7 +14,7 @@ export default function TopCountries({ countries }: { countries: ICountryStats[]
           <List>
             {countries && countries.map((c: ICountryStats) => {
               return (
-                <ListItem key={c._id} className='flex justify-between mb-4'>
+                <ListItem key={c._id} className='flex justify-between mt-4 text-white'>
                   <div className='flex justify-start items-center'>
                     <span className={`flag-icon flag-icon-${c.flag_code} text-3xl`}></span>
                     <span className='ml-4'>{ c.name }</span>

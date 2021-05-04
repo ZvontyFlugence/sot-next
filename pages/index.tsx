@@ -30,13 +30,12 @@ export default function Index(props: IIndexProps) {
   return (
     <div className='w-full max-h-full overflow-hidden'>
       <Nav />
-      <div className='flex flex-col items-center mt-8'>
-        <Image boxSize='11.0rem' src={process.env.NEXT_PUBLIC_LOGO} alt='State of Turmoil Logo' />
-        <h1 className='text-4xl font-semibold'>State of Turmoil</h1>
+      <div className='flex flex-col items-center'>
+        <Image boxSize='xs' src={process.env.NEXT_PUBLIC_LOGO} alt='State of Turmoil Logo' />
         <Button
-          className='mt-4'
+          className='-mt-8 bg-accent-alt text-white'
           variant='solid'
-          colorScheme='blackAlpha'
+          colorScheme=''
           onClick={() => router.push('/register')}
         >
           Join Today

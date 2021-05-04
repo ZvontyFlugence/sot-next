@@ -141,14 +141,14 @@ const AlertItem: React.FC<IAlertItem> = ({ alert, index }) => {
   return (
     <>
       <div className={`flex py-2 px-4 alert-item border-b border-solid border-black border-opacity-25 ${alert.read ? 'bg-gray-500 bg-opacity-25' : ''}`} onContextMenu={show}>
-        <div className='flex justify-start gap-4 py-1 cursor-pointer w-full'>
+        <div className={`flex justify-start gap-4 py-1 cursor-pointer w-full ${alert.read ? 'text-white' : 'text-accent-alt'}`}>
           <div className='px-4'>{getTimestamp()}</div>
           <div style={{ fontWeight: alert.read ? 'lighter' : 'bold'}}>{alert.message}</div>
         </div>
         { !alert.read && getActions() }
       </div>
 
-      <Menu id={`alert-${index}`}>
+      <Menu id={`alert-${index}`} theme={'brand'}>
         <Item onClick={readAlert} disabled={alert.read}>
           Mark as Read
         </Item>

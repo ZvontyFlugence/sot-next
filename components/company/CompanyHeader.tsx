@@ -21,11 +21,11 @@ const CompanyHeader: React.FC<ICompHeader> = ({ company, locationInfo, ceoInfo, 
   let company_item = ITEMS[company.type];
 
   return (
-    <div className='bg-white p-4 shadow-md rounded-lg border border-solid border-black border-opacity-25'>
+    <div className='bg-night text-white p-4 shadow-md rounded'>
       <div className='flex flex-row items-stretch gap-4'>
         <Image boxSize='12.0rem' src={company.image} alt='' />
         <div className='flex flex-col w-full items-top'>
-          <h3 className='text-xl font-semibold'>{company.name}</h3>
+          <h3 className='text-xl font-semibold text-accent'>{company.name}</h3>
           <p className='flex flex-row items-center mt-4'>
             <p>
               Type:&nbsp;
@@ -66,6 +66,8 @@ const CompanyHeader: React.FC<ICompHeader> = ({ company, locationInfo, ceoInfo, 
         <div className='flex flex-col justify-self-start self-start'>
           <IconButton
             aria-label='Manage Company Button'
+            variant='outline'
+            colorScheme=''
             icon={<EditIcon />}
             disabled={userId !== company.ceo}
             onClick={onManage}

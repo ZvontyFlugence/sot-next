@@ -39,10 +39,10 @@ const ManageEmployees: React.FC<IManageEmployees> = ({ employees, ...props }) =>
         <Table>
           <Thead>
             <Tr>
-              <Th>Employee</Th>
-              <Th>Title</Th>
-              <Th>Wage</Th>
-              <Th>Actions</Th>
+              <Th color='white'>Employee</Th>
+              <Th color='white'>Title</Th>
+              <Th color='white'>Wage</Th>
+              <Th color='white'>Actions</Th>
             </Tr>
           </Thead>
           <Tbody>

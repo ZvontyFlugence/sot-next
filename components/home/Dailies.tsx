@@ -55,8 +55,8 @@ const Dailies: React.FC<IDailies> = ({ user }) => {
   return (
     <div className='mt-4 px-24'>
       <Card>
-        <Card.Header className='text-xl font-semibold'>Daily Tasks</Card.Header>
-        <Card.Content>
+        <Card.Header className='text-xl font-semibold text-white h-brand'>Daily Tasks</Card.Header>
+        <Card.Content className='text-white'>
           <div className='flex flex-row justify-between items-center mt-2 w-full'>
             <div className='flex flex-col'>
               <Checkbox size='sm' isChecked={hasTrained} isReadOnly>Train</Checkbox>

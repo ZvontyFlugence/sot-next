@@ -8,14 +8,14 @@ import { Spinner } from "@chakra-ui/spinner";
 export default function TopCitizens({ citizens }: { citizens: IUserStats[] }) {
   return (
     <Card>
-      <Card.Header className='text-xl text-center font-bold mb-4'>Top Citizens</Card.Header>
+      <Card.Header className='text-xl text-center font-bold text-white h-brand'>Top Citizens</Card.Header>
       <Card.Content>
         {!citizens ? (
           <Spinner color='red.500' size='xl' />
         ) : (
           <List>            
             {citizens && citizens.map((c: IUserStats) => (
-              <ListItem key={c.username} className='flex justify-between mb-4'>
+              <ListItem key={c.username} className='flex justify-between mt-4 text-white'>
                 <div className='flex justify-start items-center'>
                   <Image boxSize='50px' src={c.image} alt={c.username} />
                   <span className='ml-4'>{ c.username }</span>

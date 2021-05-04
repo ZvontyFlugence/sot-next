@@ -81,7 +81,7 @@ export default function Register(props: IRegProps) {
     <div className='h-full w-full overflow-hidden'>
       <Nav />
       <Center h='90vh'>
-        <Container className='bg-white pb-4 rounded-md'>
+        <Container className='bg-night pb-4 rounded text-white'>
           <h1 className='text-2xl text-center font-bold mb-4 mt-8'>Register</h1>
           <Box>
             <FormControl className='mb-4' isRequired>
@@ -111,7 +111,7 @@ export default function Register(props: IRegProps) {
               </Select>
             </FormControl>
             <FormControl className='flex justify-center'>
-              <Button variant='outline' w='50%' onClick={register}>
+              <Button variant='outline' color='accent-alt' borderColor='accent-alt' _hover={{ bg: 'accent-alt', color: 'white' }} w='50%' onClick={register}>
                 Register
               </Button>
             </FormControl>
@@ -119,7 +119,7 @@ export default function Register(props: IRegProps) {
               <span>
                 Already have an account?&nbsp;
                 <Link href='/login'>
-                  <a className='text-blue-400'>Login</a>
+                  <a className='text-accent'>Login</a>
                 </Link>
               </span>
             </div>

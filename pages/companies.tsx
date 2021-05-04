@@ -103,19 +103,27 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
   return (
     <>
     <Layout user={user}>
-      <h1 className='text-2xl font-semibold pl-4'>My Companies</h1>
-      <div className='mt-4 mx-12 bg-white shadow-md rounded-lg border border-solid border-black border-opacity-25'>
-        {isLoading && <Spinner color='red.500' size='xl' />}
+      <h1 className='text-2xl font-semibold pl-4 text-accent'>My Companies</h1>
+      <div className='mt-4 mx-12 bg-night shadow-md rounded text-white'>
+        {isLoading && <Spinner color='accent' size='xl' />}
         {(!isLoading && !isError) && (
           <Table variant='simple' size='md'>
             <TableCaption>
-              <Button variant='outline' colorScheme='blue' onClick={onOpen}>Create New Company</Button>
+              <Button
+                variant='outline'
+                color='accent-alt'
+                borderColor='accent-alt'
+                _hover={{ bg: 'accent-alt', color: 'white' }}
+                onClick={onOpen}
+              >
+                Create New Company
+              </Button>
             </TableCaption>
             <Thead>
               <Tr>
-                <Th>Company</Th>
-                <Th>Type</Th>
-                <Th>Location</Th>
+                <Th color='white'>Company</Th>
+                <Th color='white'>Type</Th>
+                <Th color='white'>Location</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -145,8 +153,8 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
 
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Create Company</ModalHeader>
+      <ModalContent bgColor='night' color='white'>
+        <ModalHeader className='h-brand'>Create Company</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <FormControl>
@@ -164,7 +172,7 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
         </ModalBody>
         <ModalFooter>
           <Button variant='solid' colorScheme='green' onClick={handleCreateComp}>Create</Button>
-          <Button className='ml-4' variant='outline' colorScheme='blackAlpha' onClick={onClose}>Cancel</Button>
+          <Button className='ml-4' variant='outline' color='accent' borderColor='accent' _hover={{ bg: 'accent', color: 'white' }} onClick={onClose}>Cancel</Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

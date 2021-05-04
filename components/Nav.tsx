@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { Avatar, Box, Button, HStack, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
+import { Avatar, Box, Button, HStack, Image, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
 import { ChevronDownIcon, CalendarIcon, TimeIcon } from '@chakra-ui/icons';
 import { destroyCookie } from 'nookies';
 import { IUser } from '@/models/User';
@@ -30,11 +30,11 @@ const Nav: React.FC<INav> = ({ user }) => {
   }
 
   return (
-    <div className='flex w-full justify-between px-8 py-2 shadow-md border-solid border-black border border-opacity-25 bg-white'>
+    <div className='flex w-full justify-between px-8 py-2 shadow-md border-solid border-black border border-opacity-25 bg-night text-white'>
       <div>
         <div className='flex items-center max-w-max cursor-pointer' onClick={goHome}>
-          <Avatar size='md' src={process.env.NEXT_PUBLIC_LOGO} name='State of Turmoil Logo' />
-          <span className='text-2xl font-semibold ml-4'>State of Turmoil</span>
+          <Image boxSize='3rem' src='/logo_banner.png' name='State of Turmoil Logo' />
+          <span className='text-2xl font-semibold ml-4 h-brand'>State of Turmoil</span>
         </div>
       </div>
       {!user && (
@@ -50,12 +50,12 @@ const Nav: React.FC<INav> = ({ user }) => {
               <span className='mr-2'>My Places</span>
               <ChevronDownIcon />
             </MenuButton>
-            <MenuList>
-              <MenuItem onClick={() => router.push('/home')}>My Home</MenuItem>
-              <MenuItem onClick={() => router.push('/companies')}>My Companies</MenuItem>
-              <MenuItem>My Party</MenuItem>
-              <MenuItem>My Newspaper</MenuItem>
-              <MenuItem>My Army</MenuItem>
+            <MenuList bgColor='night'>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/home')}>My Home</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/companies')}>My Companies</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>My Party</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>My Newspaper</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>My Army</MenuItem>
             </MenuList>
           </Menu>
           <Menu>
@@ -63,11 +63,11 @@ const Nav: React.FC<INav> = ({ user }) => {
               <span className='mr-2'>Markets</span>
               <ChevronDownIcon />
             </MenuButton>
-            <MenuList>
-              <MenuItem>Goods</MenuItem>
-              <MenuItem onClick={() => router.push('/markets/job')}>Jobs</MenuItem>
-              <MenuItem>Exchange</MenuItem>
-              <MenuItem>Companies</MenuItem>
+            <MenuList bgColor='night'>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Goods</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/markets/job')}>Jobs</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Exchange</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Companies</MenuItem>
             </MenuList>
           </Menu>
           <Box className='cursor-pointer'>Battles</Box>
@@ -76,10 +76,10 @@ const Nav: React.FC<INav> = ({ user }) => {
               <span className='mr-2'>Social</span>
               <ChevronDownIcon />
             </MenuButton>
-            <MenuList>
-              <MenuItem>My Country</MenuItem>
-              <MenuItem>Elections</MenuItem>
-              <MenuItem>Rankings</MenuItem>
+            <MenuList bgColor='night'>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>My Country</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Elections</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Rankings</MenuItem>
             </MenuList>
           </Menu>
           <Box className='cursor-pointer'>World Map</Box>
@@ -92,11 +92,11 @@ const Nav: React.FC<INav> = ({ user }) => {
             <span className='ml-2'>{formattedTime}</span>
           </Box>
           <Menu>
-            <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>Account</MenuButton>
-            <MenuList>
-              <MenuItem onClick={() => router.push(`/profile/${user._id}`)}>Profile</MenuItem>
-              <MenuItem onClick={() => router.push('/settings')}>Settings</MenuItem>
-              <MenuItem onClick={logout}>Logout</MenuItem>
+            <MenuButton as={Button} bgColor='night' _hover={{ bg: 'accent-alt' }} _active={{ bg: 'accent-alt' }} rightIcon={<ChevronDownIcon />}>Account</MenuButton>
+            <MenuList bgColor='night'>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(`/profile/${user._id}`)}>Profile</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/settings')}>Settings</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={logout}>Logout</MenuItem>
             </MenuList>
           </Menu>
         </HStack>

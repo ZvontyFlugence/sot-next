@@ -15,7 +15,7 @@ interface IDashboardProps {
 export default function Dashboard({ user, ...props }: IDashboardProps) {
   return user ? (
     <Layout user={user}>
-      <h1 className='text-2xl pl-4 font-semibold'>Dashboard</h1>
+      <h1 className='text-2xl text-accent pl-4 font-semibold'>Dashboard</h1>
       <SimpleGrid className='pl-8 pr-12' columns={2}>
         <Box>
           <Dailies user={user} />

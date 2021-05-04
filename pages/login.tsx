@@ -62,7 +62,7 @@ export default function Login(props: ILoginProps) {
     <div className='h-full w-full overflow-hidden'>
       <Nav />
       <Center h='75vh'>
-        <Container className='bg-white pb-4 rounded-md'>
+        <Container className='bg-night pb-4 rounded text-white'>
           <h1 className='text-2xl text-center font-bold mb-4 mt-8'>Login</h1>
           <Box>
             <FormControl className='mb-4' isRequired>
@@ -74,7 +74,7 @@ export default function Login(props: ILoginProps) {
               <Input type='password' onChange={e => setPassword(e.target.value)} />
             </FormControl>
             <FormControl className='flex justify-center'>
-              <Button variant='outline' w='50%' onClick={login}>
+              <Button variant='outline' color='accent-alt' borderColor='accent-alt' _hover={{ bg: 'accent-alt', color: 'white' }} w='50%' onClick={login}>
                 Login
               </Button>
             </FormControl>
@@ -82,7 +82,7 @@ export default function Login(props: ILoginProps) {
               <span>
                 Don't have an account?&nbsp;
                 <Link href='/register'>
-                  <a className='text-blue-400'>Register</a>
+                  <a className='text-accent'>Register</a>
                 </Link>
               </span>
             </div>

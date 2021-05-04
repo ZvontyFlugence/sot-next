@@ -12,15 +12,15 @@ const Shouts: React.FC<IShouts> = ({ user }) => {
   return (
     <div className='mt-4 px-12'>
       <Tabs variant='enclosed' isLazy>
-        <div className='p-1 bg-white rounded-lg shadow-md border border-solid border-black border-opacity-25'>
-          <TabList>
-            <Tab>Global</Tab>
-            <Tab>Country</Tab>
+        <div className='bg-night rounded shadow-md text-white'>
+          <TabList borderColor='accent-alt'>
+            <Tab _selected={{ color: 'accent' }}>Global</Tab>
+            <Tab _selected={{ color: 'accent' }}>Country</Tab>
             <Tab isDisabled>Party</Tab>
             <Tab isDisabled>Unit</Tab>
           </TabList>
         </div>        
-        <div className='mt-2 bg-white rounded-lg shadow-md border border-solid border-black border-opacity-25'>
+        <div className='mt-2 bg-night rounded shadow-md text-white'>
           <div className='p-4'>
             <p className='text-sm font-semibold'>Shout</p>
             <Textarea size='sm' resize='none' placeholder='Enter shout message' />

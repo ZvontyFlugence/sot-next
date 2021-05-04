@@ -11,9 +11,7 @@ body {
 }
 
 body {
-  background-image: url(/background-light.jpg) !important;
-  background-repeat: no-repeat;
-  background-size: cover;
+  background-color: #171923 !important;
 }
 
 a {
@@ -23,6 +21,10 @@ a {
 
 * {
   box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, .h-brand {
+  font-family: 'Unica One', cursive;
 }
 
 .sot-icon {
@@ -86,4 +88,21 @@ a {
 .alert-item:hover {
   backdrop-filter: brightness(90%);
   cursor: pointer;
+}
+
+.react-contexify__theme--brand {
+  background-color: hsla(258, 14%, 20%, 1) !important;
+}
+
+.react-contexify__theme--brand .react-contexify__submenu {
+  background-color: hsla(258, 14%, 20%, 1) !important;
+}
+
+.react-contexify__theme--brand .react-contexify__item__content {
+  color: #ffffff !important;
+}
+
+.react-contexify__theme--brand .react-contexify__item__content:not(.react-contexify__item__content--disabled):hover,
+.react-contexify__theme--brand .react-contexify__item__content:not(.react-contexify__item__content--disabled):focus {
+  background-color: hsla(341, 81%, 63%, 1) !important;
 }

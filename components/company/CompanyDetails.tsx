@@ -55,8 +55,8 @@ const CompanyDetails: React.FC<ICompDetails> = ({ user, company, currency }) => 
       <Grid templateColumns='repeat(2, 1fr)' gap={12}>
         <GridItem>
           <Card>
-            <Card.Header className='text-xl font-semibold'>Product Offers</Card.Header>
-            <Card.Content>
+            <Card.Header className='text-xl font-semibold text-accent h-brand'>Product Offers</Card.Header>
+            <Card.Content className='text-white'>
               {company.productOffers.length === 0 ? (
                 <p>Company has no product offers</p>
               ) : (
@@ -67,18 +67,18 @@ const CompanyDetails: React.FC<ICompDetails> = ({ user, company, currency }) => 
         </GridItem>
         <GridItem>
           <Card>
-            <Card.Header className='text-xl font-semibold'>Job Offers</Card.Header>
-            <Card.Content>
+            <Card.Header className='text-xl font-semibold text-accent h-brand'>Job Offers</Card.Header>
+            <Card.Content className='text-white'>
               {company.jobOffers.length == 0 ? (
                 <p>Company has no job offers</p>
               ) : (
                 <Table>
                   <Thead>
                     <Tr>
-                      <Th>Title</Th>
-                      <Th>Positions</Th>
-                      <Th>Wage</Th>
-                      <Th>Action</Th>
+                      <Th color='white'>Title</Th>
+                      <Th color='white'>Positions</Th>
+                      <Th color='white'>Wage</Th>
+                      <Th color='white'>Action</Th>
                     </Tr>
                   </Thead>
                   <Tbody>

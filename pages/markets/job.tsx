@@ -75,16 +75,16 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
   return user ? (
     <Layout user={user}>
       <h1 className='flex justify-between pl-4 pr-8'>
-        <span className='text-2xl font-semibold'>Job Market</span>
+        <span className='text-2xl font-semibold text-accent'>Job Market</span>
         <div>
-          <Select bg='white' borderColor='black' defaultValue={country} onChange={e => setCountry(Number.parseInt(e.target.value))}>
+          <Select className='cursor-pointer' bg='night' color='white' border='none' defaultValue={country} onChange={e => setCountry(Number.parseInt(e.target.value))}>
             {props.countries.map((country, i) => (
-              <option value={country._id} key={i}>{country.name}</option>
+              <option style={{ backgroundColor: 'hsla(258, 14%, 20%, 1)' }} value={country._id} key={i}>{country.name}</option>
             ))}
           </Select>
         </div>
       </h1>
-      <div className='mx-12 mt-4 p-2 bg-white rounded-lg shadow-md border border-solid border-black border-opacity-25'>
+      <div className='mx-12 mt-4 p-2 bg-night rounded shadow-md'>
         {/* Job Offer Filters */}
         {query.isLoading && (
           <div className='w-full'>
@@ -95,15 +95,15 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
           <p>Country has no job offers</p>
         )}
         {query.isSuccess && query.data?.jobOffers.length > 0 && (
-          <Table>
+          <Table bgColor='night' color='white'>
             <Thead>
               <Tr>
-                <Th>Company</Th>
-                <Th>Job Type</Th>
-                <Th>Job Title</Th>
-                <Th>Available Positions</Th>
-                <Th>Wage</Th>
-                <Th>Action</Th>
+                <Th color='white'>Company</Th>
+                <Th color='white'>Job Type</Th>
+                <Th color='white'>Job Title</Th>
+                <Th color='white'>Available Positions</Th>
+                <Th color='white'>Wage</Th>
+                <Th color='white'>Action</Th>
               </Tr>
             </Thead>
             <Tbody>

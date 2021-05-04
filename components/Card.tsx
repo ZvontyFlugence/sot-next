@@ -13,7 +13,7 @@ interface ICardComponents {
 
 const Card: React.FC & ICardComponents = ({ children }) => {
   return (
-    <div className='w-full p-4 shadow-md rounded-lg border-solid border-black border border-opacity-25 bg-white'>
+    <div className='w-full p-4 shadow-md rounded bg-night'>
       {children}
     </div>
   );

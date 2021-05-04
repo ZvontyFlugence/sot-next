@@ -18,16 +18,16 @@ const CompanyManagement: React.FC<ICompManagement> = ({ company, currency, locat
   return (
     <div className='w-full'>
       <Tabs variant='enclosed'>
-        <div className='bg-white rounded-lg shadow-md border border-solid border-black border-opacity-25'>
-          <TabList>
-            <Tab>Product Offers</Tab>
-            <Tab>Job Offers</Tab>
-            <Tab>Employees</Tab>
-            <Tab>Inventory</Tab>
-            <Tab>Treasury</Tab>
+        <div className='bg-night text-white rounded shadow-md'>
+          <TabList borderColor='accent-alt'>
+            <Tab _selected={{ color: 'accent' }}>Product Offers</Tab>
+            <Tab _selected={{ color: 'accent' }}>Job Offers</Tab>
+            <Tab _selected={{ color: 'accent' }}>Employees</Tab>
+            <Tab _selected={{ color: 'accent' }}>Inventory</Tab>
+            <Tab _selected={{ color: 'accent' }}>Treasury</Tab>
           </TabList>
         </div>
-        <div className='bg-white mt-4 rounded-lg shadow-md border border-solid border-black border-opacity-25'>
+        <div className='bg-night text-white mt-4 rounded shadow-md'>
           <TabPanels>
             <TabPanel>
               <ManageProductOffers productOffers={company.productOffers} company_id={company._id} currency={currency} />
