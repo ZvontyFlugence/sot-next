@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface ICardComponent {
   className?: string,
   onClick?: () => void,

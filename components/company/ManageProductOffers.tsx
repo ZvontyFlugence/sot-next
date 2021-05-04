@@ -210,7 +210,7 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
       <Modal isOpen={isCreateOpen} onClose={onCloseCreate}>
         <ModalOverlay />
         <ModalContent bgColor='night' color='white'>
-          <ModalHeader>Create Product Offer</ModalHeader>
+          <ModalHeader className='h-brand text-accent'>Create Product Offer</ModalHeader>
           <ModalCloseButton />
           <ModalBody className='flex flex-col gap-2'>
 
@@ -221,8 +221,8 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
       {/* TODO: Edit Product Offer Modal */}
       <Modal isOpen={isEditOpen} onClose={() => handleClose('edit')}>
         <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Create Product Offer</ModalHeader>
+        <ModalContent bgColor='night' color='white'>
+          <ModalHeader className='h-brand text-accent'>Create Product Offer</ModalHeader>
           <ModalCloseButton />
           <ModalBody className='flex flex-col gap-2'>
             <FormControl>
@@ -236,7 +236,7 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
           </ModalBody>
           <ModalFooter className='flex gap-4'>
             <Button variant='solid' colorScheme='blue' onClick={editProductOffer}>Update</Button>
-            <Button variant='outline' onClick={() => handleClose('edit')}>Cancel</Button>
+            <Button variant='outline' _hover={{ bg: 'white', color: 'night' }} onClick={() => handleClose('edit')}>Cancel</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -244,15 +244,15 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
       {/* Delete Product Offer Modal */}
       <Modal isOpen={isDeleteOpen} onClose={() => handleClose('delete')}>
         <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Create Product Offer</ModalHeader>
+        <ModalContent bgColor='night' color='white'>
+          <ModalHeader className='h-brand text-accent'>Create Product Offer</ModalHeader>
           <ModalCloseButton />
           <ModalBody className='flex flex-col gap-2'>
             <p>Are you sure you want to delete this product offer?</p>
           </ModalBody>
           <ModalFooter className='flex gap-4'>
             <Button variant='solid' colorScheme='red' onClick={deleteProductOffer}>Delete</Button>
-            <Button variant='outline' onClick={() => handleClose('delete')}>Cancel</Button>
+            <Button variant='outline' _hover={{ bg: 'white', color: 'night' }} onClick={() => handleClose('delete')}>Cancel</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

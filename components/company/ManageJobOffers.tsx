@@ -203,11 +203,10 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
       )}
 
       {/* Create Job Offer Modal */}
-
       <Modal isOpen={isCreateOpen} onClose={onCloseCreate}>
         <ModalOverlay />
         <ModalContent bgColor='night' color='white'>
-          <ModalHeader>Create Job Offer</ModalHeader>
+          <ModalHeader className='h-brand text-accent'>Create Job Offer</ModalHeader>
           <ModalCloseButton />
           <ModalBody className='flex flex-col gap-2'>
               <FormControl>
@@ -228,7 +227,7 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
           </ModalBody>
           <ModalFooter className='flex gap-4'>
             <Button variant='solid' colorScheme='green' onClick={createJobOffer}>Create</Button>
-            <Button variant='outline' color='accent' colorScheme='' onClick={onCloseCreate}>Cancel</Button>
+            <Button variant='outline' _hover={{ bg: 'white', color: 'night' }} onClick={onCloseCreate}>Cancel</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -237,8 +236,8 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
       {selected >= 0 && jobOffers.length > 0 && (
         <Modal isOpen={isEditOpen} onClose={() => handleClose('edit')}>
           <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>Edit Job Offer</ModalHeader>
+          <ModalContent bgColor='night' color='white'>
+            <ModalHeader className='h-brand text-accent'>Edit Job Offer</ModalHeader>
             <ModalCloseButton />
             <ModalBody className='flex flex-col gap-2'>
               <FormControl>
@@ -252,14 +251,14 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
               <FormControl>
                 <FormLabel>Position Wage</FormLabel>
                 <InputGroup>
-                  <InputLeftAddon children={currency} />
+                  <InputLeftAddon bgColor='accent-alt' children={currency} />
                   <Input type='number' defaultValue={jobOffers[selected]?.wage.toFixed(2)} min={1.00} step={0.01} onChange={e => setWage(e.target.valueAsNumber)} />
                 </InputGroup>
               </FormControl>
             </ModalBody>
             <ModalFooter className='flex gap-4'>
               <Button variant='solid' colorScheme='blue' onClick={editJobOffer}>Update</Button>
-              <Button variant='outline' onClick={() => handleClose('edit')}>Cancel</Button>
+              <Button variant='outline' _hover={{ bg: 'white', color: 'night' }} onClick={() => handleClose('edit')}>Cancel</Button>
             </ModalFooter>
           </ModalContent>
         </Modal>
@@ -268,8 +267,8 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
       {/* Delete Job Offer Modal */}
       <Modal isOpen={isDeleteOpen} onClose={() => handleClose('delete')}>
         <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Delete Job Offer</ModalHeader>
+        <ModalContent bgColor='night' color='white'>
+          <ModalHeader className='h-brand text-accent'>Delete Job Offer</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <p>
@@ -278,7 +277,7 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
           </ModalBody>
           <ModalFooter className='flex gap-4'>
             <Button variant='solid' colorScheme='red' onClick={deleteJobOffer}>Delete</Button>
-            <Button variant='outline' onClick={() => handleClose('delete')}>Cancel</Button>
+            <Button variant='outline' _hover={{ bg: 'white', color: 'night' }} onClick={() => handleClose('delete')}>Cancel</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
