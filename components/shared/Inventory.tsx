@@ -6,12 +6,14 @@ interface IInventory {
   inventory: IItem[],
   onSellItem?: () => void,
   setSelected?: React.Dispatch<React.SetStateAction<IItem>>,
+  displayOnly?: boolean,
 }
 
 interface IInventoryItem {
   item: IItem,
   index: number,
   onSellItem?: () => void,
+  displayOnly: boolean,
 }
 
 const Inventory: React.FC<IInventory> = ({ inventory, ...props }) => {
@@ -26,7 +28,7 @@ const Inventory: React.FC<IInventory> = ({ inventory, ...props }) => {
   ) : (
     <div className='grid grid-cols-3 md:grid-cols-8 rounded p-4'>
       {inventory.map((item: IItem, i: number) => (
-        <InventoryItem key={i} item={item} index={i} onSellItem={() => handleSellItem(item)} />
+        <InventoryItem key={i} item={item} index={i} onSellItem={() => handleSellItem(item)} displayOnly={!!props.displayOnly} />
       ))}
     </div>
   );
@@ -38,7 +40,7 @@ const InventoryItem: React.FC<IInventoryItem> = ({ item, index, ...props }) => {
 
   return (
     <>
-      <div className='relative w-full h-20 rounded border border-accent-alt shadow-md cursor-pointer' onContextMenu={show}>
+      <div className='relative w-full h-20 rounded border border-accent-alt shadow-md cursor-pointer' onContextMenu={!props.displayOnly ? show : undefined}>
         <div className='absolute -top-px right-0 h-6 px-1 pb-1 w-auto bg-accent-alt text-white rounded-tr border boder-solid border-blue-500'>
           <span>{item.quantity}</span>
         </div>

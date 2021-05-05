@@ -848,6 +848,11 @@
   dependencies:
     "@types/node" "*"
 
+"@types/googlemaps@^3.43.3":
+  version "3.43.3"
+  resolved "https://registry.yarnpkg.com/@types/googlemaps/-/googlemaps-3.43.3.tgz#70cf962154a160fe78bcd69d6ccc296dd9175b1f"
+  integrity sha512-ZWNoz/O8MPEpiajvj7QiqCY8tTLFNqNZ/a+s+zTV58wFVNAvvqV4bdGfnsjTb5Cs4V6wEsLrX8XRhmnyYJ2Tdg==
+
 "@types/jsonwebtoken@^8.5.1":
   version "8.5.1"
   resolved "https://registry.yarnpkg.com/@types/jsonwebtoken/-/jsonwebtoken-8.5.1.tgz#56958cb2d80f6d74352bd2e501a018e2506a8a84"
@@ -2987,6 +2992,11 @@ pretty-hrtime@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/pretty-hrtime/-/pretty-hrtime-1.0.3.tgz#b7e3ea42435a4c9b2759d99e0f201eb195802ee1"
   integrity sha1-t+PqQkNaTJsnWdmeDyAesZWALuE=
+
+primereact@^6.3.1:
+  version "6.3.1"
+  resolved "https://registry.yarnpkg.com/primereact/-/primereact-6.3.1.tgz#729eec9db1a828802218ed72bd96d092d202a691"
+  integrity sha512-Y5BbZfY2Tm2g+eBtpTd0PwvQJremaJvErybAT7hDJUIG9yBzlqwHLIxZllFYlXrv+m8mE8A2V6PVBxm4A0Jpyg==
 
 process-nextick-args@~2.0.0:
   version "2.0.1"

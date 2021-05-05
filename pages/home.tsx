@@ -149,7 +149,7 @@ export default function Home({ user, job, ...props }: IHomeProps) {
           <Card>
             <Card.Header className='text-xl font-semibold text-white h-brand'>Inventory</Card.Header>
             <Card.Content className='text-white'>
-              <Inventory inventory={user.inventory} />
+              <Inventory inventory={user.inventory} displayOnly />
             </Card.Content>
           </Card>
         </GridItem>

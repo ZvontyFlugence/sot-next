@@ -6,8 +6,14 @@ export interface IRegion extends Document {
   core: number,
   owner: number,
   resource: number,
-  borders: Array<Object>,
-  neighbors: Array<number>,
+  borders: IPath[] | IPath[][],
+  neighbors: number[],
+  type?: string,
+}
+
+export interface IPath {
+  lat: number,
+  lng: number,
 }
 
 const RegionSchema = new Schema({
@@ -18,6 +24,7 @@ const RegionSchema = new Schema({
   resource: { type: Number, required: true },
   borders: { type: Array },
   neighbors: { type: Array },
+  type: { type: String },
 }, { _id: false });
 
 let Region: Model<IRegion> | null;

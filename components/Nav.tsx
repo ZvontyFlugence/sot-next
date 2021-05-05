@@ -82,7 +82,7 @@ const Nav: React.FC<INav> = ({ user }) => {
               <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Rankings</MenuItem>
             </MenuList>
           </Menu>
-          <Box className='cursor-pointer'>World Map</Box>
+          <Box className='cursor-pointer' onClick={() => router.push('/map')}>World Map</Box>
           <Box>
             <CalendarIcon />
             <span className='ml-2'>{formattedDate}</span>

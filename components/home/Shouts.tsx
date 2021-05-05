@@ -14,10 +14,10 @@ const Shouts: React.FC<IShouts> = ({ user }) => {
       <Tabs variant='enclosed' isLazy>
         <div className='bg-night rounded shadow-md text-white'>
           <TabList borderColor='accent-alt'>
-            <Tab _selected={{ color: 'accent' }}>Global</Tab>
-            <Tab _selected={{ color: 'accent' }}>Country</Tab>
-            <Tab isDisabled>Party</Tab>
-            <Tab isDisabled>Unit</Tab>
+            <Tab className='h-brand' _selected={{ color: 'accent' }}>Global</Tab>
+            <Tab className='h-brand' _selected={{ color: 'accent' }}>Country</Tab>
+            <Tab className='h-brand' isDisabled>Party</Tab>
+            <Tab className='h-brand' isDisabled>Unit</Tab>
           </TabList>
         </div>        
         <div className='mt-2 bg-night rounded shadow-md text-white'>
