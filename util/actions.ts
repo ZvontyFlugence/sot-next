@@ -1,6 +1,7 @@
 export const UserActions = {
   ACCEPT_FR: 'accept_fr',
   APPLY_JOB: 'apply_job',
+  BUY_ITEM: 'buy_item',
   COLLECT_REWARDS: 'collect_rewards',
   DECLINE_FR: 'decline_fr',
   DELETE_ALERT: 'delete_alert',

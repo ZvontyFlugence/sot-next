@@ -50,3 +50,7 @@ export function buildLevelUpAlert(level: number) {
     timestamp: new Date(Date.now()),
   };
 }
+
+export function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}

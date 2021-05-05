@@ -3,7 +3,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { UserActions } from '@/util/actions';
 import User, { IAlert, IUser, IUserUpdates, IWalletItem } from "@/models/User";
 import { neededXP } from "@/util/ui";
-import { buildLevelUpAlert } from "@/util/apiHelpers";
+import { buildLevelUpAlert, roundMoney } from "@/util/apiHelpers";
 import { connectToDB } from "@/util/mongo";
 import Company, { ICompany, IEmployee } from "@/models/Company";
 import Region, { IRegion } from "@/models/Region";
@@ -20,7 +20,7 @@ interface IUserActionResult {
 
 interface IRequestBody {
   action: string,
-  data?: IApplyJobParams | IHandleAlertParams | ISendFRParams
+  data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams
 }
 
 interface IApplyJobParams {
@@ -37,6 +37,13 @@ interface IHandleAlertParams {
 interface ISendFRParams {
   user_id?: number,
   profile_id: number,
+}
+
+interface IBuyItemParams {
+  user_id?: number,
+  company_id: number,
+  offer_id: string,
+  quantity: number,
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -65,6 +72,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
         case UserActions.APPLY_JOB: {
           result = await apply_for_job(data as IApplyJobParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.BUY_ITEM: {
+          result = await buy_item(data as IBuyItemParams);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.COLLECT_REWARDS: {
@@ -438,6 +449,85 @@ async function accept_fr({ user_id, alert_index }: IHandleAlertParams): Promise<
   let updated = await user.updateOne({ $set: updates }).exec();
   if (updated) {
     return { status_code: 200, payload: { success: true, message: 'Friend Added' } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function buy_item({ user_id, company_id, offer_id, quantity }: IBuyItemParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  }
+
+  let company: ICompany = await Company.findOne({ _id: company_id }).exec();
+  if (!company) {
+    return { status_code: 404, payload: { success: false, error: 'Company Not Found' } };
+  }
+
+  let region: IRegion = await Region.findOne({ _id: company.location }).exec();
+  if (!region) {
+    return { status_code: 404, payload: { success: false, error: 'Company Location Not Found' } };
+  }
+
+  let country: ICountry = await Country.findOne({ _id: region.owner }).exec();
+  if (!country) {
+    return { status_code: 404, payload: { success: false, error: 'Company Country Not Found' } };
+  }
+
+  // Get Offer and remove items
+  let offerIndex = company.productOffers.findIndex(offer => offer?.id === offer_id);
+  let productID = -1;
+  if (offerIndex === -1) {
+    return { status_code: 400, payload: { success: false, error: 'Offer Not Found' } };
+  } else if (company.productOffers[offerIndex].quantity < quantity) {
+    return { status_code: 400, payload: { success: false, error: 'Company Has Insufficient Quantity' } };
+  } else if (company.productOffers[offerIndex].quantity === quantity) {
+    productID = company.productOffers[offerIndex].product_id;
+    company.productOffers.splice(offerIndex, 1);
+  } else {
+    company.productOffers[offerIndex].quantity -= quantity;
+    productID = company.productOffers[offerIndex].product_id;
+  }
+
+  // Subtract Cost From User
+  let userCCIndex = user.wallet.findIndex(cc => cc.currency === country.currency);
+  let cost = roundMoney(quantity * company.productOffers[offerIndex].price);
+  if (userCCIndex === -1 || user.wallet[userCCIndex].amount < cost) {
+    return { status_code: 400, payload: { success: false, error: 'Insufficient Funds' } };
+  } else if (roundMoney(user.wallet[userCCIndex].amount) > cost) {
+    user.wallet[userCCIndex].amount = roundMoney(user.wallet[userCCIndex].amount - cost);
+  } else {
+    user.wallet.splice(userCCIndex, 1);
+  }
+
+  // Add Cost to Company
+  let compCCIndex = company.funds.findIndex(cc => cc.currency === country.currency);
+  if (compCCIndex === -1) {
+    company.funds.push({ currency: country.currency, amount: cost });
+  } else {
+    company.funds[compCCIndex].amount = roundMoney(company.funds[compCCIndex].amount + cost);
+  }
+
+  // Add Items to User Inventory
+  let itemIndex = user.inventory.findIndex(item => item.item_id === productID);
+  if (itemIndex === -1) {
+    user.inventory.push({ item_id: productID, quantity });
+  } else {
+    user.inventory[itemIndex].quantity += quantity;
+  }
+
+  // Update Company and User
+  let compUpdates = { productOffers: [...company.productOffers], funds: [...company.funds] };
+  let updatedComp = await company.updateOne({ $set: compUpdates }).exec();
+  if (!updatedComp) {
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+  }
+
+  let userUpdates = { wallet: [...user.wallet], inventory: [...user.inventory] };
+  let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
+  if (updatedUser) {
+    return { status_code: 200, payload: { success: true, message: 'Items Purchased' } };
   }
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };

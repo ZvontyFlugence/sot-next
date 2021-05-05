@@ -16,8 +16,7 @@ interface ICompanyActionResult {
 
 interface IRequestBody {
   action: string,
-  data: ICreateJobParams | ICreateProductParams | IDeleteJobParams | IDeleteProductParams |
-    IEditJobParams | IEditProductParams
+  data: ICreateJobParams | IProductParams | IDeleteJobParams | IEditJobParams
 }
 
 interface IBaseParams {
@@ -29,7 +28,7 @@ interface ICreateJobParams extends IBaseParams {
   offer: IJobOffer,
 }
 
-interface ICreateProductParams extends IBaseParams {
+interface IProductParams extends IBaseParams {
   offer: IProductOffer,
 }
 
@@ -37,16 +36,8 @@ interface IDeleteJobParams extends IBaseParams {
   job_id: string,
 }
 
-interface IDeleteProductParams extends IBaseParams {
-  product_id: string,
-}
-
 interface IEditJobParams extends IBaseParams {
   offer: IJobOffer
-}
-
-interface IEditProductParams extends IBaseParams {
-  offer: IProductOffer,
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -71,7 +62,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           return res.status(result.status_code).json(result.payload);
         }
         case CompanyActions.CREATE_PRODUCT: {
-          result = await create_product(data as ICreateProductParams);
+          result = await create_product(data as IProductParams);
           return res.status(result.status_code).json(result.payload);
         }
         case CompanyActions.DELETE_JOB: {
@@ -79,7 +70,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           return res.status(result.status_code).json(result.payload);
         }
         case CompanyActions.DELETE_PRODUCT: {
-          result = await delete_product(data as IDeleteProductParams);
+          result = await delete_product(data as IProductParams);
           return res.status(result.status_code).json(result.payload);
         }
         case CompanyActions.EDIT_JOB: {
@@ -87,7 +78,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           return res.status(result.status_code).json(result.payload);
         }
         case CompanyActions.EDIT_PRODUCT: {
-          result = await edit_product(data as IEditProductParams);
+          result = await edit_product(data as IProductParams);
           return res.status(result.status_code).json(result.payload);
         }
         default:
@@ -126,11 +117,21 @@ const create_job = async (data: ICreateJobParams): Promise<ICompanyActionResult>
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
-const create_product = async (data: ICreateProductParams): Promise<ICompanyActionResult> => {
+const create_product = async (data: IProductParams): Promise<ICompanyActionResult> => {
   let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
 
   if (!company || company.ceo !== data.user_id)
     return { status_code: 400, payload: { success: false, error: 'Invalid Company' } };
+
+  // Check that company has enough quantity then remove
+  let itemIndex = company.inventory.findIndex(item => item.item_id === data.offer.product_id);
+  if (itemIndex < 0 || (company.inventory[itemIndex].quantity < data.offer.quantity)) {
+    return { status_code: 400, payload: { success: false, error: 'Insufficient Quantity In Inventory' } };
+  } else if (company.inventory[itemIndex].quantity === data.offer.quantity) {
+    company.inventory.splice(itemIndex, 1);
+  } else {
+    company.inventory[itemIndex].quantity -= data.offer.quantity;
+  }
 
   // Create Product Offer
   try {
@@ -143,7 +144,7 @@ const create_product = async (data: ICreateProductParams): Promise<ICompanyActio
     return { status_code: 500, payload: { success: false, error: 'Failed to generate offer id' } };
   }
 
-  let updates = { productOffers: [...company.productOffers, data.offer] };
+  let updates = { productOffers: [...company.productOffers, data.offer], inventory: [...company.inventory] };
 
   let updated = await company.updateOne({ $set: { ...updates } });
   if (updated) {
@@ -172,17 +173,24 @@ const delete_job  = async (data: IDeleteJobParams): Promise<ICompanyActionResult
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
-const delete_product = async (data: IDeleteProductParams): Promise<ICompanyActionResult> => {
+const delete_product = async (data: IProductParams): Promise<ICompanyActionResult> => {
   let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
   if (!company || company.ceo !== data.user_id)
     return { status_code: 400, payload: { success: false, error: 'Invalid Company' } };
 
-  let productIndex = company.productOffers.findIndex(offer => offer.id !== data.product_id);
+  let productIndex = company.productOffers.findIndex(offer => offer?.id === data.offer?.id);
   if (productIndex === -1)
     return { status_code: 404, payload: { success: false, error: 'Product Offer Not Found' } };
 
+  let itemIndex = company.inventory.findIndex(item => item.item_id === data.offer.product_id);
+  if (itemIndex === -1) {
+    company.inventory.push({ item_id: data.offer.product_id, quantity: data.offer.quantity });
+  } else {
+    company.inventory[itemIndex].quantity += data.offer.quantity;
+  }
+
   company.productOffers.splice(productIndex, 1);
-  let updates = { productOffers: [...company.productOffers] };
+  let updates = { productOffers: [...company.productOffers], inventory: [...company.inventory] };
   let updated = await company.updateOne({ $set: { ...updates } });
   if (updated)
     return { status_code: 200, payload: { success: true, message: 'Product Offer Revoked' } };
@@ -209,7 +217,7 @@ const edit_job = async (data: IEditJobParams): Promise<ICompanyActionResult> => 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
-const edit_product = async (data: IEditProductParams): Promise<ICompanyActionResult> => {
+const edit_product = async (data: IProductParams): Promise<ICompanyActionResult> => {
   let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
   if (!company || company.ceo !== data.user_id)
     return { status_code: 400, payload: { success: false, error: 'Invalid Company' } };

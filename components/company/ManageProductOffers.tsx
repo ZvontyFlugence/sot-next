@@ -1,10 +1,10 @@
 import { IProductOffer } from '@/models/Company';
+import { ITEMS } from '@/util/constants';
 import { refreshData, request, showToast } from '@/util/ui';
 import { Button } from '@chakra-ui/button';
 import { FormControl, FormLabel } from '@chakra-ui/form-control';
 import { useDisclosure } from '@chakra-ui/hooks';
 import { Input } from '@chakra-ui/input';
-import { List, ListItem } from '@chakra-ui/layout';
 import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from '@chakra-ui/modal';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/table';
 import { useToast } from '@chakra-ui/toast';
@@ -28,39 +28,8 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
   const [quantity, setQuantity] = useState(0);
   const [price, setPrice] = useState(0.01);
 
-  const { isOpen: isCreateOpen, onOpen: onOpenCreate, onClose: onCloseCreate } = useDisclosure();
   const { isOpen: isEditOpen, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
   const { isOpen: isDeleteOpen, onOpen: onOpenDelete, onClose: onCloseDelete } = useDisclosure();
-  
-  const createProductMutation = useMutation(async () => {
-    let payload = {
-      action: 'create_product',
-      data: {
-        company_id,
-        offer: { product_id: productId, quantity, price },
-      }
-    };
-
-    let data = await request({
-      url: '/api/companies/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error || 'Unknown Error');
-    return data;
-  }, {
-    onSuccess: () => {
-      showToast(toast, 'success', 'Product Offer Created');
-      onCloseCreate();
-      refreshData(router);
-    },
-    onError: (e) => {
-      showToast(toast, 'error', 'Create Product Offer Failed', e as string);
-    },
-  });
 
   const editProductMutation = useMutation(async (productOffer) => {
     let payload = {
@@ -90,13 +59,10 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
     }
   });
 
-  const deleteProductMutation = useMutation(async ({ product_id }) => {
+  const deleteProductMutation = useMutation(async ({ productOffer }) => {
     let payload = {
       action: 'delete_product',
-      data: {
-        company_id,
-        product_id,
-      },
+      data: { company_id, offer: productOffer },
     };
 
     let data = await request({
@@ -110,20 +76,16 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
       throw new Error(data?.error);
     return data;
   }, {
-    onMutate: async ({ product_id }: { product_id: string }) => {},
+    onMutate: async ({ productOffer }: { productOffer: IProductOffer }) => {},
     onSuccess: () => {
       showToast(toast, 'success', 'Product Offer Revoked');
       handleClose('delete');
       refreshData(router);
     },
-    onError: (e) => {
-      showToast(toast, 'error', 'Failed to Delete Product Offer', e as string);
+    onError: (e: Error) => {
+      showToast(toast, 'error', 'Failed to Delete Product Offer', e.message);
     },
   });
-
-  const createProductOffer = () => {
-    createProductMutation.mutate();
-  }
 
   const editProductOffer = () => {
     let id = productOffers[selected]?.id;
@@ -131,8 +93,8 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
   }
 
   const deleteProductOffer = () => {
-    let id = productOffers[selected]?.id;
-    deleteProductMutation.mutate({ product_id: id });
+    let offer = productOffers[selected];
+    deleteProductMutation.mutate({ productOffer: offer });
   }
 
   const handleOpen = (index: number, modal: string) => {
@@ -172,9 +134,6 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
   
   return (
     <div className='bg-red flex flex-col'>
-      <div className='flex justify-end'>
-        <Button variant='solid' colorScheme='green' onClick={onOpenCreate}>Create Product Offer</Button>
-      </div>
       {!productOffers || productOffers.length === 0 ? (
         <p>Company has no product offers</p>
       ) : (
@@ -192,7 +151,7 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
             <Tbody>
               {productOffers.map((offer, i) => (
                 <Tr key={i}>
-                  <Td></Td>
+                  <Td><i className={ITEMS[offer.product_id].image} /> {ITEMS[offer.product_id].name}</Td>
                   <Td>{offer.quantity}</Td>
                   <Td>{offer.price.toFixed(2)} {currency}</Td>
                   <Td className='flex gap-4'>
@@ -205,18 +164,6 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
           </Table>
         </div>
       )}
-
-      {/* TODO: Create Product Offer Modal */}
-      <Modal isOpen={isCreateOpen} onClose={onCloseCreate}>
-        <ModalOverlay />
-        <ModalContent bgColor='night' color='white'>
-          <ModalHeader className='h-brand text-accent'>Create Product Offer</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody className='flex flex-col gap-2'>
-
-          </ModalBody>
-        </ModalContent>
-      </Modal>
 
       {/* TODO: Edit Product Offer Modal */}
       <Modal isOpen={isEditOpen} onClose={() => handleClose('edit')}>

@@ -148,7 +148,7 @@ const AlertItem: React.FC<IAlertItem> = ({ alert, index }) => {
         { !alert.read && getActions() }
       </div>
 
-      <Menu id={`alert-${index}`} theme={'brand'}>
+      <Menu id={`alert-${index}`} theme='brand'>
         <Item onClick={readAlert} disabled={alert.read}>
           Mark as Read
         </Item>

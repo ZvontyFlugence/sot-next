@@ -39,7 +39,7 @@ const CompanyManagement: React.FC<ICompManagement> = ({ company, currency, locat
               <ManageEmployees company_id={company._id} employees={company.employees} currency={currency} />
             </TabPanel>
             <TabPanel>
-              <ManageInventory inventory={company.inventory} />
+              <ManageInventory inventory={company.inventory} company_id={company._id} currency={currency} />
             </TabPanel>
             <TabPanel>
               <ManageTreasury
