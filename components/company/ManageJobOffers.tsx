@@ -3,16 +3,14 @@ import { Button } from '@chakra-ui/button';
 import { FormControl, FormLabel } from '@chakra-ui/form-control';
 import { useDisclosure } from '@chakra-ui/hooks';
 import { Input, InputGroup, InputLeftAddon } from '@chakra-ui/input';
-import { List, ListItem } from '@chakra-ui/layout';
 import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from '@chakra-ui/modal';
 import React, { useState } from 'react';
-import { useMutation, UseMutationResult } from 'react-query';
+import { useMutation } from 'react-query';
 import { parseCookies } from 'nookies';
 import { useToast } from '@chakra-ui/toast';
 import { refreshData, request, showToast } from '@/util/ui';
 import { useRouter } from 'next/router';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/table';
-import { data } from 'autoprefixer';
 
 interface IManageJobOffers {
   jobOffers: IJobOffer[],

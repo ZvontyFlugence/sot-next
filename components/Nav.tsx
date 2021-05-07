@@ -64,7 +64,7 @@ const Nav: React.FC<INav> = ({ user }) => {
               <ChevronDownIcon />
             </MenuButton>
             <MenuList bgColor='night'>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Goods</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/markets/goods')}>Goods</MenuItem>
               <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/markets/job')}>Jobs</MenuItem>
               <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Exchange</MenuItem>
               <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Companies</MenuItem>

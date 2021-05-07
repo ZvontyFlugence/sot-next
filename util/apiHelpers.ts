@@ -1,4 +1,4 @@
-import { IEmployee, IJobOffer } from '@/models/Company';
+import { IEmployee, IJobOffer, IProductOffer } from '@/models/Company';
 import { UserActions } from '@/util/actions';
 
 /* Interfaces */
@@ -22,6 +22,16 @@ export interface IItem {
 }
 
 export interface IJobMarketOffer extends IJobOffer {
+  company: {
+    id: number,
+    image: string,
+    name: string,
+    type: number,
+    ceo: number,
+  }
+}
+
+export interface IGoodsMarketOffer extends IProductOffer {
   company: {
     id: number,
     image: string,

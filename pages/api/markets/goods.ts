@@ -1,17 +1,17 @@
-import Company, { ICompany, IJobOffer } from "@/models/Company";
-import Country, { ICountry } from "@/models/Country";
-import Region, { IRegion } from "@/models/Region";
-import { IJobMarketOffer } from "@/util/apiHelpers";
-import { validateToken } from "@/util/auth";
-import { NextApiRequest, NextApiResponse } from "next";
+import Company, { ICompany } from '@/models/Company';
+import Country, { ICountry } from '@/models/Country';
+import Region, { IRegion } from '@/models/Region';
+import { IGoodsMarketOffer } from '@/util/apiHelpers';
+import { validateToken } from '@/util/auth';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 interface IResponse {
   status_code: number,
   payload: {
     error?: string,
-    jobOffers?: IJobMarketOffer[],
+    productOffers?: IGoodsMarketOffer[],
     cc?: string,
-  }
+  },
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -23,14 +23,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   switch (req.method) {
     case 'GET': {
       let country_id: number;
-      
       try {
         country_id = parseInt(req.query.country_id as string);
       } catch (e) {
         return res.status(400).json({ error: 'Invalid Country' });
       }
 
-      let result: IResponse = await getCountryJobOffers(country_id);
+      let result: IResponse = await getCountryProductOffers(country_id);
       return res.status(result.status_code).json(result.payload);
     }
     default:
@@ -38,28 +37,25 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
 }
 
-async function getCountryJobOffers(country_id: number): Promise<IResponse> {
+async function getCountryProductOffers(country_id: number): Promise<IResponse> {
   let country: ICountry = await Country.findOne({ _id: country_id }).exec();
-
-  if (!country) {
+  if (!country)
     return { status_code: 404, payload: { error: 'Country Not Found' } };
-  }
 
   let regions: IRegion[] = await Region.find({})
     .where({ owner: country_id })
     .exec();
 
-  if (!regions || regions.length === 0) {
-    return { status_code: 200, payload: { jobOffers: [] } };
-  }
+  if (!regions || regions.length === 0)
+    return { status_code: 200, payload: { productOffers: [] } };
 
   let companies: ICompany[] = await Company.find({})
     .where({ location: { $in: regions.map(region => region._id) } })
     .exec();
 
-  companies.filter(company => company.jobOffers.length > 0);
-  let jobMarketOffers: IJobMarketOffer[] = companies.reduce((accum: IJobMarketOffer[], company: ICompany) => {
-    let jobOffers: IJobMarketOffer[] = company.jobOffers.map(offer => ({
+  companies.filter(comp => comp.productOffers.length > 0);
+  let goodsMarketOffers: IGoodsMarketOffer[] = companies.reduce((accum: IGoodsMarketOffer[], company: ICompany) => {
+    let productOffers: IGoodsMarketOffer[] = company.productOffers.map(offer => ({
       ...offer,
       company: {
         id: company._id,
@@ -70,8 +66,8 @@ async function getCountryJobOffers(country_id: number): Promise<IResponse> {
       },
     }));
 
-    return [...accum, ...jobOffers];
+    return [...accum, ...productOffers];
   }, []);
 
-  return { status_code: 200, payload: { jobOffers: jobMarketOffers, cc: country.currency } };
+  return { status_code: 200, payload: { productOffers: goodsMarketOffers, cc: country.currency } };
 }

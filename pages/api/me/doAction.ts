@@ -8,6 +8,7 @@ import { connectToDB } from "@/util/mongo";
 import Company, { ICompany, IEmployee } from "@/models/Company";
 import Region, { IRegion } from "@/models/Region";
 import Country, { ICountry } from "@/models/Country";
+import Shout, { IShout } from "@/models/Shout";
 
 interface IUserActionResult {
   status_code: number,
@@ -20,7 +21,8 @@ interface IUserActionResult {
 
 interface IRequestBody {
   action: string,
-  data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams
+  data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams |
+    ICreateShoutParams | IHandleShoutParams
 }
 
 interface IApplyJobParams {
@@ -44,6 +46,21 @@ interface IBuyItemParams {
   company_id: number,
   offer_id: string,
   quantity: number,
+}
+
+interface ICreateShoutParams {
+  user_id?: number,
+  shout: {
+    scope: 'global' | 'country' | 'party' | 'unit',
+    scope_id: number,
+    author: number,
+    message: string,
+  },
+}
+
+interface IHandleShoutParams {
+  user_id?: number,
+  shout_id: number,
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -96,6 +113,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
         case UserActions.SEND_FR: {
           result = await send_fr(data as ISendFRParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.SEND_SHOUT: {
+          result = await send_shout(data as ICreateShoutParams);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.TRAIN: {
@@ -250,20 +271,16 @@ async function work(user_id: number): Promise<IUserActionResult> {
 
   // Deduct Wage from Company Treasury
   let fundsIndex = job.funds.findIndex(cc => cc.currency === compCountry.currency);
-  if (fundsIndex === -1) {
+  if (fundsIndex === -1 || job.funds[fundsIndex].amount < employee.wage) {
     return { status_code: 400, payload: { success: false, error: 'Company Doesn\'t Have Sufficient Funds to Pay You' } };
   }
 
-  if (job.funds[fundsIndex].amount < employee.wage) {
-    return { status_code: 400, payload: { success: false, error: 'Company Doesn\'t Have Sufficient Funds to Pay You' } };
-  }
-
-  job.funds[fundsIndex].amount -= employee.wage;
+  job.funds[fundsIndex].amount = roundMoney(job.funds[fundsIndex].amount - employee.wage);
 
   // Add wage to user wallet
   let walletIndex: number = user.wallet.findIndex(money => money.currency === job.funds[fundsIndex].currency);
   if (walletIndex > -1) {
-    user.wallet[walletIndex].amount += employee.wage;
+    user.wallet[walletIndex].amount = roundMoney(user.wallet[walletIndex].amount + employee.wage);
   } else {
     user.wallet.push({ currency: job.funds[fundsIndex].currency, amount: employee.wage });
   }
@@ -297,7 +314,7 @@ async function work(user_id: number): Promise<IUserActionResult> {
 
   if (userUpdates.xp >= neededXP(user.level)) {
     userUpdates.level = user.level + 1;
-    userUpdates.gold = user.gold + 5.0;
+    userUpdates.gold = roundMoney(user.gold + 5.0);
     userUpdates.alerts = [...user.alerts, buildLevelUpAlert(userUpdates.level)];
   }
 
@@ -325,7 +342,7 @@ async function collect_rewards(user_id: number): Promise<IUserActionResult> {
 
   if (updates.xp >= neededXP(user.level)) {
     updates.level = user.level + 1;
-    updates.gold = user.gold + 5.0;
+    updates.gold = roundMoney(user.gold + 5.0);
     updates.alerts = [...user.alerts, buildLevelUpAlert(updates.level)];
   }
 
@@ -355,6 +372,7 @@ async function read_alert({ user_id, alert_index }: IHandleAlertParams): Promise
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
+// TODO: Handle deleting pending friend requests to cancel them
 async function delete_alert({ user_id, alert_index }: IHandleAlertParams): Promise<IUserActionResult> {
   let user: IUser = await User.findOne({ _id: user_id }).exec();
   if (!user) {
@@ -531,4 +549,26 @@ async function buy_item({ user_id, company_id, offer_id, quantity }: IBuyItemPar
   }
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function send_shout({ user_id, shout }: ICreateShoutParams): Promise<IUserActionResult> {
+  const user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  } else if (shout.scope !== 'global' && shout.scope !== 'country' && shout.scope !== 'party' && shout.scope !== 'unit') {
+    return { status_code: 400, payload: { success: false, error: 'Invalid Scope' } };
+  } else if ((shout.scope === 'global' && shout.scope_id !== 0) || (shout.scope !== 'global' && shout.scope_id === 0)) {
+    return { status_code: 400, payload: { success: false, error: 'Invalid Scope ID' } };
+  } else if (user_id !== shout.author) {
+    return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
+  }
+
+  const doc_count: number = await Shout.estimatedDocumentCount() + 1;
+  const new_shout = new Shout({
+    _id: doc_count,
+    ...shout,
+  });
+  new_shout.save();
+
+  return { status_code: 200, payload: { success: true, message: 'Shout Sent' } };
 }

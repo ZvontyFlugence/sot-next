@@ -2,9 +2,9 @@ import { IUser } from '@/models/User';
 import { destroyCookie } from 'nookies';
 import { getCurrentUser } from '@/util/auth';
 import { Box, SimpleGrid } from '@chakra-ui/layout';
-import Dailies from '@/components/home/Dailies';
-import Shouts from '@/components/home/Shouts';
-import News from '@/components/home/News';
+import Dailies from '@/components/dashboard/Dailies';
+import Shouts from '@/components/dashboard/Shouts';
+import News from '@/components/dashboard/News';
 import Layout from '@/components/Layout';
 
 interface IDashboardProps {

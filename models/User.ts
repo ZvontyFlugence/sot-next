@@ -1,7 +1,7 @@
 import { IItem } from '@/util/apiHelpers';
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-// TODO: create interfaces or wallet, inventory, alerts, & messages array type
+// TODO: create interfaces for  messages array type
 export interface IUser extends Document {
   _id: number,
   email: string,
