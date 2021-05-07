@@ -46,8 +46,8 @@ export default function Home({ user, job, ...props }: IHomeProps) {
       showToast(toast, 'success', 'Training Complete', data.message);
       refreshData(router);
     },
-    onError: (e) => {
-      showToast(toast, 'error', 'Training Failed', e as string);
+    onError: (e: Error) => {
+      showToast(toast, 'error', 'Training Failed', e.message);
     },
   });
 
@@ -69,23 +69,26 @@ export default function Home({ user, job, ...props }: IHomeProps) {
       showToast(toast, 'success', 'Working Complete', data.message);
       refreshData(router);
     },
-    onError: (e) => {
-      showToast(toast, 'error', 'Working Complete', e as string);
+    onError: (e: Error) => {
+      showToast(toast, 'error', 'Working Failed', e.message);
     },
   });
 
+  // TODO: Show Error Toast if already worked
   const handleTrain = () => {
     if (!hasTrained) {
       trainMutation.mutate();
+    } else {
+      showToast(toast, 'error', 'Already Trained Today', 'You can only train once per day');
     }
-    return;
   }
 
   const handleWork = () => {
     if (!hasWorked) {
       workMutation.mutate();
+    } else {
+      showToast(toast, 'error', 'Already Worked Today', 'You can only work once per day');
     }
-    return;
   }
 
   return user ? (

@@ -21,7 +21,9 @@ export const CompanyActions = {
   CREATE_PRODUCT: 'create_product',
   DELETE_JOB: 'delete_job',
   DELETE_PRODUCT: 'delete_product',
+  DEPOSITE_FUNDS: 'deposit_funds',
   EDIT_COMPANY: 'edit_company',
   EDIT_JOB: 'edit_job',
   EDIT_PRODUCT: 'edit_product',
+  WITHDRAW_FUNDS: 'withdraw_funds',
 }

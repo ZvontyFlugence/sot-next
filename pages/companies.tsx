@@ -1,15 +1,17 @@
 import Layout from "@/components/Layout";
+import Select from "@/components/Select";
 import { ICompany } from "@/models/Company";
 import { IUser } from "@/models/User";
 import { getCurrentUser } from "@/util/auth";
 import { COMPANY_TYPES } from "@/util/constants";
+import { showToast } from "@/util/ui";
 import { Button } from "@chakra-ui/button";
 import { FormControl, FormLabel } from "@chakra-ui/form-control";
 import { useDisclosure } from "@chakra-ui/hooks";
 import { Image } from "@chakra-ui/image";
 import { Input } from "@chakra-ui/input";
 import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from "@chakra-ui/modal";
-import { Select } from "@chakra-ui/select";
+// import { Select } from "@chakra-ui/select";
 import { Spinner } from "@chakra-ui/spinner";
 import { Table, TableCaption, Tbody, Td, Th, Thead, Tr } from "@chakra-ui/table";
 import { useToast } from "@chakra-ui/toast";
@@ -97,6 +99,8 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
   const handleCreateComp = () => {
     if (user.gold >= 25 && type !== 0 && name) {
       mutation.mutate({ name, type } as ICreateCompParams);
+    } else {
+      showToast(toast, 'error', 'Create Company Failed', 'Insufficient Funds');
     }
   }
 
@@ -161,18 +165,24 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
             <FormLabel>Company Name</FormLabel>
             <Input type='text' onChange={e => setName(e.target.value)} />
           </FormControl>
-          <FormControl className='mt-2'>
+          <FormControl className='mt-2 justify-start'>
             <FormLabel>Company Type</FormLabel>
-            <Select placeholder='Select Company Type' onChange={e => setType(Number.parseInt(e.target.value))}>
+            <Select className='border border-white rounded w-max' onChange={val => setType(val as number)}>
               {COMPANY_TYPES.map(comp_type => (
-                <option key={comp_type.css} value={comp_type.item}>{comp_type.text}</option>
+                <Select.Option key={comp_type.css} value={comp_type.item}>
+                  <div>
+                    <i className={`${comp_type.css}`} />
+                    &nbsp;
+                    <span>{comp_type.text}</span>
+                  </div>
+                </Select.Option>
               ))}
             </Select>
           </FormControl>
         </ModalBody>
         <ModalFooter>
           <Button variant='solid' colorScheme='green' onClick={handleCreateComp}>Create</Button>
-          <Button className='ml-4' variant='outline' color='accent' borderColor='accent' _hover={{ bg: 'accent', color: 'white' }} onClick={onClose}>Cancel</Button>
+          <Button className='ml-4' variant='outline' _hover={{ bg: 'white', color: 'night' }} onClick={onClose}>Cancel</Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

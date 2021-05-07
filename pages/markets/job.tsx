@@ -79,7 +79,10 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
         <div>
           <Select onChange={(val) => setCountry(val as number)}>
             {props.countries.map((country, i) => (
-              <Select.Option value={country._id} key={i}>{country.name}</Select.Option>
+              <Select.Option value={country._id} key={i}>
+                {country.name}
+                <i className={`ml-2 flag-icon flag-icon-${country.flag_code}`} />
+              </Select.Option>
             ))}
           </Select>
         </div>

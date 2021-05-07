@@ -1,4 +1,5 @@
 import { ICompany } from "@/models/Company";
+import { IUser } from "@/models/User";
 import { ILocationInfo } from "@/util/apiHelpers";
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/tabs";
 import Inventory from "../shared/Inventory";
@@ -12,9 +13,10 @@ interface ICompManagement {
   company: ICompany,
   currency: string,
   locationInfo: ILocationInfo,
+  user: IUser,
 }
 
-const CompanyManagement: React.FC<ICompManagement> = ({ company, currency, locationInfo }) => {
+const CompanyManagement: React.FC<ICompManagement> = ({ company, currency, locationInfo, user }) => {
   return (
     <div className='w-full'>
       <Tabs variant='enclosed'>
@@ -48,6 +50,7 @@ const CompanyManagement: React.FC<ICompManagement> = ({ company, currency, locat
                 gold={company.gold}
                 currency={currency}
                 locationInfo={locationInfo}
+                user={user}
               />
             </TabPanel>
           </TabPanels>

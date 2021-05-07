@@ -1,5 +1,7 @@
 import Company, { ICompany, IJobOffer, IProductOffer } from '@/models/Company';
+import User, { IUser } from '@/models/User';
 import { CompanyActions } from '@/util/actions';
+import { roundMoney } from '@/util/apiHelpers';
 import { validateToken } from '@/util/auth';
 import { connectToDB } from '@/util/mongo';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -16,7 +18,8 @@ interface ICompanyActionResult {
 
 interface IRequestBody {
   action: string,
-  data: ICreateJobParams | IProductParams | IDeleteJobParams | IEditJobParams
+  data: ICreateJobParams | IProductParams | IDeleteJobParams | IEditJobParams |
+    IHandleFundsParams
 }
 
 interface IBaseParams {
@@ -38,6 +41,14 @@ interface IDeleteJobParams extends IBaseParams {
 
 interface IEditJobParams extends IBaseParams {
   offer: IJobOffer
+}
+
+interface IHandleFundsParams extends IBaseParams {
+  gold?: number
+  funds?: {
+    currency: string,
+    amount: number,
+  }
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -73,12 +84,20 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await delete_product(data as IProductParams);
           return res.status(result.status_code).json(result.payload);
         }
+        case CompanyActions.DEPOSITE_FUNDS: {
+          result = await deposit_funds(data as IHandleFundsParams);
+          return res.status(result.status_code).json(result.payload);
+        }
         case CompanyActions.EDIT_JOB: {
           result = await edit_job(data as IEditJobParams);
           return res.status(result.status_code).json(result.payload);
         }
         case CompanyActions.EDIT_PRODUCT: {
           result = await edit_product(data as IProductParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case CompanyActions.WITHDRAW_FUNDS: {
+          result = await withdraw_funds(data as IHandleFundsParams);
           return res.status(result.status_code).json(result.payload);
         }
         default:
@@ -231,6 +250,106 @@ const edit_product = async (data: IProductParams): Promise<ICompanyActionResult>
   let updated = await company.updateOne({ $set: { ...updates } });
   if (updated)
     return { status_code: 200, payload: { success: true, message: 'Product Offer Updated' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+const deposit_funds = async (data: IHandleFundsParams): Promise<ICompanyActionResult> => {
+  let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+  if (!company) {
+    return { status_code: 404, payload: { success: false, error: 'Company Not Found' } };
+  }
+
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  } else if (user._id !== company.ceo) {
+    return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
+  }
+
+  if (data?.gold && user.gold >= data?.gold) {
+    user.gold = roundMoney(user.gold - data?.gold);
+    company.gold = roundMoney(company.gold + data?.gold);
+  } else if (data?.gold) {
+    return { status_code: 400, payload: { success: false, error: 'Insufficient Gold' } };
+  }
+
+  if (data?.funds) {
+    let userCCIndex = user.wallet.findIndex(cc => cc.currency === data.funds.currency);
+    if (userCCIndex > -1 && user.wallet[userCCIndex].amount >= data.funds.amount) {
+      user.wallet[userCCIndex].amount = roundMoney(user.wallet[userCCIndex].amount - data.funds.amount);
+      let compCCIndex = company.funds.findIndex(cc => cc.currency === data.funds.currency);
+      if (compCCIndex === -1) {
+        company.funds.push(data.funds);
+      } else {
+        company.funds[compCCIndex].amount = roundMoney(company.funds[compCCIndex].amount + data.funds.amount);
+      }
+    } else {
+      return { status_code: 400, payload: { success: false, error: 'Insufficient Currency' } };
+    }
+  }
+
+  let compUpdates = { gold: company.gold, funds: [...company.funds] };
+  let userUpdates = { gold: user.gold, wallet: [...user.wallet] };
+  let updatedComp = await company.updateOne({ $set: compUpdates }).exec();
+  if (!updatedComp) {
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+  }
+
+  let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
+  if (updatedUser) {
+    return { status_code: 200, payload: { success: true, message: 'Funds Deposited' } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+const withdraw_funds = async (data: IHandleFundsParams): Promise<ICompanyActionResult> => {
+  let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+  if (!company) {
+    return { status_code: 404, payload: { success: false, error: 'Company Not Found' } };
+  }
+
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  } else if (user._id !== company.ceo) {
+    return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
+  }
+
+  if (data?.gold && company.gold >= data?.gold) {
+    user.gold = roundMoney(user.gold + data?.gold);
+    company.gold = roundMoney(company.gold - data?.gold);
+  } else if (data?.gold) {
+    return { status_code: 400, payload: { success: false, error: 'Insufficient Gold' } };
+  }
+
+  if (data?.funds) {
+    let compCCIndex = company.funds.findIndex(cc => cc.currency === data.funds.currency);    
+    if (compCCIndex > -1 && company.funds[compCCIndex].amount >= data.funds.amount) {
+      company.funds[compCCIndex].amount = roundMoney(company.funds[compCCIndex].amount - data.funds.amount);
+      let userCCIndex = user.wallet.findIndex(cc => cc.currency === data.funds.currency);
+      if (userCCIndex === -1) {
+        user.wallet.push(data.funds);
+      } else {
+        user.wallet[userCCIndex].amount = roundMoney(user.wallet[userCCIndex].amount + data.funds.amount);
+      }
+    } else {
+      return { status_code: 400, payload: { success: false, error: 'Insufficient Currency' } };
+    }
+  }
+
+  let compUpdates = { gold: company.gold, funds: [...company.funds] };
+  let userUpdates = { gold: user.gold, wallet: [...user.wallet] };
+  let updatedComp = await company.updateOne({ $set: compUpdates }).exec();
+  if (!updatedComp) {
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+  }
+
+  let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
+  if (updatedUser) {
+    return { status_code: 200, payload: { success: true, message: 'Funds Withdrawn' } };
+  }
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }

@@ -44,7 +44,7 @@ const Nav: React.FC<INav> = ({ user }) => {
         </HStack>
       )}
       {user && (
-        <HStack className='flex flex-grow-4 justify-end max-w-max' spacing='24px'>
+        <HStack className='flex flex-grow-4 justify-end max-w-max h-brand' spacing='24px'>
           <Menu>
             <MenuButton>
               <span className='mr-2'>My Places</span>

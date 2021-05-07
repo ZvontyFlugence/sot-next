@@ -107,6 +107,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await heal(user_id);
           return res.status(result.status_code).json(result.payload);
         }
+        case UserActions.LIKE_SHOUT: {
+          result = await like_shout(data as IHandleShoutParams);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.READ_ALERT: {
           result = await read_alert(data as IHandleAlertParams);
           return res.status(result.status_code).json(result.payload);
@@ -121,6 +125,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
         case UserActions.TRAIN: {
           result = await train(user_id);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.UNLIKE_SHOUT: {
+          result = await unlike_shout(data as IHandleShoutParams);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.WORK: {
@@ -571,4 +579,53 @@ async function send_shout({ user_id, shout }: ICreateShoutParams): Promise<IUser
   new_shout.save();
 
   return { status_code: 200, payload: { success: true, message: 'Shout Sent' } };
+}
+
+async function like_shout({ user_id, shout_id }: IHandleShoutParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  }
+
+  let shout: IShout = await Shout.findOne({ _id: shout_id }).exec();
+  if (!shout) {
+    return { status_code: 404, payload: { success: false, error: 'Shout Not Found' } };
+  } else if (shout.likes.includes(user._id)) {
+    return { status_code: 400, payload: { success: false, error: 'Shout Already Liked' } };
+  }
+
+  let shoutUpdates = { likes: [...shout.likes, user._id] };
+  let updatedShout = await shout.updateOne({ $set: shoutUpdates }).exec();
+  if (updatedShout) {
+    return { status_code: 200, payload: { success: true, message: 'Shout Liked' } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function unlike_shout({ user_id, shout_id }: IHandleShoutParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  }
+
+  let shout: IShout = await Shout.findOne({ _id: shout_id }).exec();
+  if (!shout) {
+    return { status_code: 404, payload: { success: false, error: 'Shout Not Found' } };
+  }
+
+  let likeIndex = shout.likes.findIndex(like => like === user._id);
+  if (likeIndex === -1) {
+    return { status_code: 400, payload: { success: false, error: 'Shout Already Unliked' } };
+  } else {
+    shout.likes.splice(likeIndex, 1);
+  }
+
+  let shoutUpdates = { likes: [...shout.likes] };
+  let updatedShout = await shout.updateOne({ $set: shoutUpdates }).exec();
+  if (updatedShout) {
+    return { status_code: 200, payload: { success: true, error: 'Shout Unliked' } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
