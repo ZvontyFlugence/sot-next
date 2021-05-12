@@ -23,7 +23,9 @@ export const CompanyActions = {
   DELETE_PRODUCT: 'delete_product',
   DEPOSITE_FUNDS: 'deposit_funds',
   EDIT_COMPANY: 'edit_company',
+  EDIT_EMPLOYEE: 'edit_employee',
   EDIT_JOB: 'edit_job',
   EDIT_PRODUCT: 'edit_product',
+  FIRE_EMPLOYEE: 'fire_employee',
   WITHDRAW_FUNDS: 'withdraw_funds',
 }

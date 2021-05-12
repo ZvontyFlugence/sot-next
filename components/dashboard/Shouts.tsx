@@ -12,6 +12,7 @@ import { parseCookies } from "nookies";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { BsHeart, BsHeartFill } from 'react-icons/bs';
+import { Spinner } from "@chakra-ui/spinner";
 
 interface IShouts {
   user: IUser,
@@ -21,6 +22,8 @@ interface IShoutTab {
   scope: 'global' | 'country' | 'party' | 'unit',
   scope_id: number,
   user: IUser,
+  setParent: (shout: IShout) => void,
+  setAuthor: (author: string) => void,
 }
 
 const Shouts: React.FC<IShouts> = ({ user }) => {
@@ -29,6 +32,8 @@ const Shouts: React.FC<IShouts> = ({ user }) => {
   const router = useRouter();
   const toast = useToast();
   const [tab, setTab] = useState<'global' | 'country' | 'party' | 'unit'>('global');
+  const [parent, setParent] = useState<IShout>(null);
+  const [parentAuthor, setParentAuthor] = useState('');
   const [message, setMessage] = useState('');
 
   const getScopeID = (scope?: string) => {
@@ -50,6 +55,7 @@ const Shouts: React.FC<IShouts> = ({ user }) => {
       action: 'send_shout',
       data: {
         shout: {
+          parent: parent?._id || undefined,
           scope: tab,
           scope_id: getScopeID(),
           author: user._id,
@@ -88,6 +94,14 @@ const Shouts: React.FC<IShouts> = ({ user }) => {
     setMessage('');
   }
 
+  const handleSetParent = (parent: IShout) => {
+    setParent(parent);
+  }
+
+  const handleSetParentAuthor = (author: string) => {
+    setParentAuthor(author);
+  }
+
   return (
     <div className='mt-4 px-12'>
       <Tabs variant='enclosed' isLazy>
@@ -101,17 +115,23 @@ const Shouts: React.FC<IShouts> = ({ user }) => {
         </div>        
         <div className='mt-2 bg-night rounded shadow-md text-white'>
           <div className='p-4'>
-            <p className='text-sm font-semibold'>Shout</p>
+            <p className='text-sm font-semibold'>
+              {parent && parentAuthor ? (
+                <span>Reply To <span className='text-accent-alt' onClick={() => router.push(`/profile/${parent.author}`)}>{parentAuthor}</span></span>
+              ) : (
+                <span>Shout</span>
+              )}
+            </p>
             <Textarea size='sm' resize='none' placeholder='Enter shout message' onChange={e => setMessage(e.target.value)} required />
-            <Button variant='solid' colorScheme='blue' onClick={handleShout}>Shout</Button>
+            <Button size='sm' variant='solid' colorScheme='blue' onClick={handleShout}>Shout</Button>
           </div>
           <hr />
           <TabPanels>
             <TabPanel>
-              <ShoutTabContent scope='global' scope_id={getScopeID('global')} user={user} />
+              <ShoutTabContent scope='global' scope_id={getScopeID('global')} user={user} setParent={handleSetParent} setAuthor={handleSetParentAuthor} />
             </TabPanel>
             <TabPanel>
-              <ShoutTabContent scope='country' scope_id={getScopeID('country')} user={user} />
+              <ShoutTabContent scope='country' scope_id={getScopeID('country')} user={user} setParent={handleSetParent} setAuthor={handleSetParentAuthor} />
             </TabPanel>
             <TabPanel></TabPanel>
             <TabPanel></TabPanel>
@@ -122,11 +142,25 @@ const Shouts: React.FC<IShouts> = ({ user }) => {
   )
 }
 
-const ShoutTabContent: React.FC<IShoutTab> = ({ scope, scope_id, user }) => {
+const ShoutTabContent: React.FC<IShoutTab> = ({ scope, scope_id, user, setParent, setAuthor }) => {
   const cookies = parseCookies();
   const queryClient = useQueryClient();
   const router = useRouter();
   const toast = useToast();
+  const [selected, setSelected] = useState(0);
+  const [replies, setReplies] = useState<IShout[]>([]);
+  const [replyAuthors, setReplyAuthors] = useState([]);
+
+  useEffect(() => {
+    request({
+      url: `/api/shouts?scope=${scope}&scope_id=${scope_id}&parent_id=${selected}`,
+      method: 'GET',
+      token: cookies.token,
+    }).then(data => {
+      setReplies(data?.shouts || []);
+      setReplyAuthors(data?.authors || []);
+    });
+  }, [selected]);
 
   const query = useQuery('getShouts', () => {
     return request({
@@ -193,6 +227,18 @@ const ShoutTabContent: React.FC<IShoutTab> = ({ scope, scope_id, user }) => {
     }
   }
 
+  const handleSelect = (shout: IShout) => {
+    if (selected === shout._id) {
+      setSelected(0);
+      setParent(null);
+      setAuthor('');
+    } else {
+      setSelected(shout._id);
+      setParent(shout);
+      setAuthor(query.data.authors[shout.author].username);
+    }
+  }
+
   return (
     <>
       {query.isSuccess && query.data?.shouts.length === 0 && (
@@ -200,7 +246,7 @@ const ShoutTabContent: React.FC<IShoutTab> = ({ scope, scope_id, user }) => {
       )}
       {query.isSuccess && query.data?.shouts.length > 0 && (
         <div className='flex flex-col gap-4'>
-          {query.data?.shouts.sort((a, b) => new Date(b.timestamp) >= new Date(a.timestamp) ? 1 : -1).map((shout, i) => (
+          {query.data?.shouts.map((shout, i) => (
             <div key={i} className='flex flex-col gap-1'>
               <div className='flex justify-between'>
                 <div className='flex gap-2 items-center cursor-pointer w-max' onClick={() => router.push(`/profile/${shout.author}`)}>
@@ -230,8 +276,48 @@ const ShoutTabContent: React.FC<IShoutTab> = ({ scope, scope_id, user }) => {
                 >
                   {shout.likes.length} Likes
                 </Button>
-                <span className='text-accent-alt cursor-pointer'>Reply</span>
+                <span className='text-accent-alt cursor-pointer' onClick={() => handleSelect(shout)}>Reply</span>
               </div>
+              {selected === shout._id && replies.length === 0 && (
+                <p className='mx-auto'>This Shout Has No Replies</p>
+              )}
+              {selected === shout._id && replies.length > 0 && (
+                <div className='flex flex-col w-5/6 mx-auto'>
+                  {replies.map((reply, i) => (
+                    <div key={i} className='flex flex-col gap-1'>
+                      <div className='flex justify-between'>
+                        <div className='flex gap-2 items-center cursor pointer w-max' onClick={() => router.push(`/profile/${reply.author}`)}>
+                          <Avatar
+                            boxSize='1.8rem'
+                            src={replyAuthors[reply.author]?.image}
+                            name={replyAuthors[reply.author]?.username}
+                          />
+                          <span className='text-accent-alt font-semibold'>
+                            {replyAuthors[reply.author]?.username}
+                          </span>
+                        </div>
+                        <span>
+                          {format(addMinutes(reply.timestamp, new Date(reply.timestamp).getTimezoneOffset()), 'MM/dd/yyyy HH:mm')}
+                        </span>
+                      </div>
+                      <div className='py-2 px-4 rounded' style={{ backdropFilter: 'brightness(90%)' }}>
+                        {reply.message}
+                      </div>
+                      <div className='flex justify-end'>
+                        <Button
+                          variant='ghost'
+                          color={reply.likes.includes(user._id) ? 'accennt' : 'white'}
+                          _hover={{ bg: 'transparent', color: reply.likes.includes(user._id) ? 'white' : 'accent' }}
+                          leftIcon={reply.likes.includes(user._id) ? <BsHeartFill /> : <BsHeart />}
+                          onClick={() => handleLike(reply)}
+                        >
+                          {reply.likes.length} Likes
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

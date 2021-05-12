@@ -1,4 +1,4 @@
-import Company, { ICompany, IJobOffer, IProductOffer } from '@/models/Company';
+import Company, { ICompany, IEmployee, IJobOffer, IProductOffer } from '@/models/Company';
 import User, { IUser } from '@/models/User';
 import { CompanyActions } from '@/util/actions';
 import { roundMoney } from '@/util/apiHelpers';
@@ -19,7 +19,7 @@ interface ICompanyActionResult {
 interface IRequestBody {
   action: string,
   data: ICreateJobParams | IProductParams | IDeleteJobParams | IEditJobParams |
-    IHandleFundsParams
+    IHandleFundsParams | IEditEmployeeParams | IFireEmployeeParams
 }
 
 interface IBaseParams {
@@ -49,6 +49,18 @@ interface IHandleFundsParams extends IBaseParams {
     currency: string,
     amount: number,
   }
+}
+
+interface IEditEmployeeParams extends IBaseParams {
+  employee: {
+    user_id: number,
+    title?: string,
+    wage?: number,
+  }
+}
+
+interface IFireEmployeeParams extends IBaseParams {
+  employee_id: number
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -88,12 +100,20 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await deposit_funds(data as IHandleFundsParams);
           return res.status(result.status_code).json(result.payload);
         }
+        case CompanyActions.EDIT_EMPLOYEE: {
+          result = await edit_employee(data as IEditEmployeeParams);
+          return res.status(result.status_code).json(result.payload);
+        }
         case CompanyActions.EDIT_JOB: {
           result = await edit_job(data as IEditJobParams);
           return res.status(result.status_code).json(result.payload);
         }
         case CompanyActions.EDIT_PRODUCT: {
           result = await edit_product(data as IProductParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case CompanyActions.FIRE_EMPLOYEE: {
+          result = await fire_employee(data as IFireEmployeeParams);
           return res.status(result.status_code).json(result.payload);
         }
         case CompanyActions.WITHDRAW_FUNDS: {
@@ -349,6 +369,67 @@ const withdraw_funds = async (data: IHandleFundsParams): Promise<ICompanyActionR
   let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
   if (updatedUser) {
     return { status_code: 200, payload: { success: true, message: 'Funds Withdrawn' } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+const edit_employee = async (data: IEditEmployeeParams): Promise<ICompanyActionResult> => {
+  const user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  }
+
+  const company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+  if (!company) {
+    return { status_code: 404, payload: { success: false, error: 'Company Not Found' } };
+  } else if (company.ceo !== user._id) {
+    return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
+  }
+
+  let employeeIndex = company.employees.findIndex(emp => emp.user_id === data.employee.user_id);
+  if (employeeIndex === -1) {
+    return { status_code: 400, payload: { success: false, error: 'User Is Not An Employee' } };
+  }
+
+  if (data.employee?.title && data.employee.title !== company.employees[employeeIndex].title)
+    company.employees[employeeIndex].title = data.employee.title;
+
+  if (data.employee?.wage && data.employee.wage !== company.employees[employeeIndex].wage)
+    company.employees[employeeIndex].wage = data.employee.wage;
+
+  let compUpdates = { employees: [...company.employees] };
+  let updatedComp = await company.updateOne({ $set: compUpdates }).exec();
+  if (updatedComp) {
+    return { status_code: 200, payload: { success: true, message: 'Employee Updated' } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+const fire_employee = async (data: IFireEmployeeParams): Promise<ICompanyActionResult> => {
+  const user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  }
+
+  const company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+  if (!company) {
+    return { status_code: 404, payload: { success: false, error: 'Company Not Found' } };
+  } else if (company.ceo !== user._id) {
+    return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
+  }
+
+  let employeeIndex = company.employees.findIndex(emp => emp.user_id === data.employee_id);
+  if (employeeIndex === -1) {
+    return { status_code: 400, payload: { success: false, error: 'User Is Not An Employee' } };
+  }
+
+  company.employees.splice(employeeIndex, 1);
+  let compUpdates = { employees: [...company.employees] };
+  let updatedComp = await company.updateOne({ $set: compUpdates }).exec();
+  if (updatedComp) {
+    return { status_code: 200, payload: { success: true, message: 'Employee Fired' } };
   }
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
