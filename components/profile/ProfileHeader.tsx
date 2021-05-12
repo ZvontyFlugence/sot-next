@@ -61,7 +61,7 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
       <div className='flex flex-row items-stretch gap-4'>
         <Image boxSize='12.0rem' borderRadius="full" src={profile.image} alt={profile.username} />
         <div className='flex flex-col w-full items-top'>
-          <h3 className='flex gap-4 text-xl text-accent font-semibold'>
+          <h3 className='flex gap-4 text-2xl text-accent font-semibold'>
             {profile.username}
             <i className={`flag-icon flag-icon-${locationInfo.owner_flag}`} />
           </h3>
