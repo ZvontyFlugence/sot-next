@@ -12,7 +12,12 @@ export const UserActions = {
   SEND_FR: 'send_fr',
   SEND_SHOUT: 'send_shout',
   TRAIN: 'train',
+  TRAVEL: 'travel',
   UNLIKE_SHOUT: 'unlike_shout',
+  UPDATE_DESC: 'update_desc',
+  UPDATE_NAME: 'update_name',
+  UPDATE_PW: 'update_pw',
+  UPLOAD_PFP: 'upload_pfp',
   WORK: 'work',
 }
 

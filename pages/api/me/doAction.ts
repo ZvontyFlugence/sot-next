@@ -1,14 +1,15 @@
-import { validateToken } from "@/util/auth";
-import { NextApiRequest, NextApiResponse } from "next";
+import { validateToken } from '@/util/auth';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { UserActions } from '@/util/actions';
-import User, { IAlert, IUser, IUserUpdates, IWalletItem } from "@/models/User";
-import { neededXP } from "@/util/ui";
-import { buildLevelUpAlert, roundMoney } from "@/util/apiHelpers";
-import { connectToDB } from "@/util/mongo";
-import Company, { ICompany, IEmployee } from "@/models/Company";
-import Region, { IRegion } from "@/models/Region";
-import Country, { ICountry } from "@/models/Country";
-import Shout, { IShout } from "@/models/Shout";
+import User, { IAlert, IUser, IUserUpdates, IWalletItem } from '@/models/User';
+import { neededXP } from '@/util/ui';
+import { buildLevelUpAlert, getDistance, roundMoney } from '@/util/apiHelpers';
+import { connectToDB } from '@/util/mongo';
+import Company, { ICompany, IEmployee } from '@/models/Company';
+import Region, { IRegion } from '@/models/Region';
+import Country, { ICountry } from '@/models/Country';
+import Shout, { IShout } from '@/models/Shout';
+import bcrypt from 'bcrypt';
 
 interface IUserActionResult {
   status_code: number,
@@ -22,7 +23,8 @@ interface IUserActionResult {
 interface IRequestBody {
   action: string,
   data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams |
-    ICreateShoutParams | IHandleShoutParams
+    ICreateShoutParams | IHandleShoutParams | IUpdateUsernameParams | IUpdatePwParams |
+    ITravelParams | IUpdateDescParams
 }
 
 interface IApplyJobParams {
@@ -61,6 +63,32 @@ interface ICreateShoutParams {
 interface IHandleShoutParams {
   user_id?: number,
   shout_id: number,
+}
+
+interface IUpdateUsernameParams {
+  user_id?: number,
+  username: string,
+}
+
+interface IUpdatePwParams {
+  user_id?: number,
+  currPw: string,
+  newPw: string,
+}
+
+interface ITravelParams {
+  user_id?: number,
+  region_id?: number,
+}
+
+interface IUploadImageParams {
+  user_id?: number,
+  image: any,
+}
+
+interface IUpdateDescParams {
+  user_id?: number,
+  desc: string,
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -127,8 +155,28 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await train(user_id);
           return res.status(result.status_code).json(result.payload);
         }
+        case UserActions.TRAVEL: {
+          result = await travel(data as ITravelParams);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.UNLIKE_SHOUT: {
           result = await unlike_shout(data as IHandleShoutParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.UPDATE_DESC: {
+          result = await update_desc(data as IUpdateDescParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.UPDATE_NAME: {
+          result = await update_username(data as IUpdateUsernameParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.UPDATE_PW: {
+          result = await update_password(data as IUpdatePwParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.UPLOAD_PFP: {
+          result = await upload(data as IUploadImageParams);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.WORK: {
@@ -626,6 +674,103 @@ async function unlike_shout({ user_id, shout_id }: IHandleShoutParams): Promise<
   if (updatedShout) {
     return { status_code: 200, payload: { success: true, error: 'Shout Unliked' } };
   }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+// TODO: Filter for malicious text
+async function update_desc({ user_id, desc }: IUpdateDescParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+
+  let userUpdates = { description: desc };
+  let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
+  if (updatedUser)
+    return { status_code: 200, payload: { success: true, message: 'Description Updated' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function update_username({ user_id, username }: IUpdateUsernameParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  } else if (user.gold < 25) {
+    return { status_code: 400, payload: { success: false, error: 'Insufficient Gold' } };
+  }
+
+  let exists: IUser = await User.findOne({ username }).exec();
+  if (exists) {
+    return { status_code: 400, payload: { success: false, error: 'Username Is Already Taken' } };
+  }
+
+  let userUpdates = { username, gold: roundMoney(user.gold - 25) };
+  let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
+  if (updatedUser) {
+    return { status_code: 200, payload: { success: true, message: 'Username Updated' } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function update_password({ user_id, currPw, newPw }: IUpdatePwParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user) {
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  }
+
+  // Validate Current PW
+  if (!await bcrypt.compare(currPw, user.password)) {
+    return { status_code: 400, payload: { success: false, error: 'Invalid Credentials' } };
+  } else if (newPw !== currPw) {
+    return { status_code: 400, payload: { success: false, error: 'Passwords Are The Same' } };
+  }
+
+  // Hash New PW
+  let hashed_pw = await bcrypt.hash(newPw, await bcrypt.genSalt());
+
+  // Update User
+  let userUpdates = { password: hashed_pw };
+  let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
+  if (updatedUser) {
+    return { status_code: 200, payload: { success: true, message: 'Password Updated' } };
+  }
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function travel({ user_id, region_id }: ITravelParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  else if (user.location === region_id)
+    return { status_code: 400, payload: { success: false, error: 'Already Located In Region' } };
+
+  let regions: IRegion[] = await Region.find({}).exec();
+  let travel_info = getDistance(regions, user.location, region_id);
+
+  if (user.gold < travel_info.cost)
+    return { status_code: 400, payload: { success: false, error: 'Insufficient Gold' } };
+
+  let userUpdates = { gold: roundMoney(user.gold - travel_info.cost), location: region_id };
+  let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
+  if (updatedUser)
+    return { status_code: 200, payload: { success: true, message: 'Successfully Relocated' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function upload({ user_id, image }: IUploadImageParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  else if (!image)
+    return { status_code: 400, payload: { success: false, error: 'Invalid Base64 Image' } };
+
+  let updatedUser = await user.updateOne({ $set: { image } }).exec();
+  if (updatedUser)
+    return { status_code: 200, payload: { success: true, message: 'Image Uploaded' } };
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }

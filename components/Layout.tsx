@@ -9,16 +9,16 @@ interface ILayout {
 
 const Layout: React.FC<ILayout> = ({ user, children }) => {
   return (
-    <div className='h-full w-full overflow-hidden'>
+    <div className='h-screen w-full overflow-hidden'>
       <Nav user={user} />
-      <Grid templateColumns='repeat(5, 1fr)' spacing={48}>
-        <GridItem className='mx-8 my-8' colSpan={1}>
+      <div className='flex h-full overflow-y-auto'>
+        <div className='w-1/5 mx-8 my-8'>
           <Sidebar user={user} />
-        </GridItem>
-        <GridItem className='mt-8' colSpan={4}>
+        </div>
+        <div className='w-4/5 mt-8'>
           {children}
-        </GridItem>
-      </Grid>
+        </div>
+      </div>
     </div>
   );
 }

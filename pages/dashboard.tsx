@@ -40,10 +40,10 @@ export const getServerSideProps = async ctx => {
       Location: '/login',
     });
     res.end();
-    return;
+    return { props: {} };
   }
 
   return {
-    props: { ...result }
+    props: { ...result },
   };
 }

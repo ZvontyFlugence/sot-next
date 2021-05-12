@@ -12,6 +12,8 @@ body {
 
 body {
   background-color: #171923 !important;
+  height: 100vh;
+  overflow: hidden;
 }
 
 a {
@@ -105,4 +107,40 @@ h1, h2, h3, h4, h5, .h-brand {
 .react-contexify__theme--brand .react-contexify__item__content:not(.react-contexify__item__content--disabled):hover,
 .react-contexify__theme--brand .react-contexify__item__content:not(.react-contexify__item__content--disabled):focus {
   background-color: hsla(341, 81%, 63%, 1) !important;
+}
+
+input[type="file"] {
+  width: 100%;
+  background-color: transparent !important;
+  padding-left: 0;
+}
+
+input[type="file"]::file-selector-button {
+  cursor: pointer;
+  background-color: hsla(341, 81%, 63%, 1) !important;
+  color: white !important;
+  border: hsla(341, 81%, 63%, 1);
+  padding: 0.5rem;
+  transition: 1s;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background-color: hsla(341, 81%, 63%, 1) !important;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsla(258, 14%, 20%, 1);
+  backdrop-filter: brightness(90%);
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsla(176, 57%, 58%, 1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsla(341, 81%, 63%, 1);
 }

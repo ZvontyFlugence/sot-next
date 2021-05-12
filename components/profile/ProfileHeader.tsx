@@ -29,7 +29,6 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
   const { isOpen: isDonateOpen, onOpen: onOpenDonate, onClose: onCloseDonate } = useDisclosure();
   const { isOpen: isGiftOpen, onOpen: onOpenGift, onClose: onCloseGift } = useDisclosure();
 
-  // TODO: Mutations for Add/Remove Friend
   const addMutation = useMutation(async () => {
     let payload = { action: UserActions.SEND_FR, data: { profile_id: profile._id } };
     let data = await request({
@@ -52,8 +51,14 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
     }
   });
 
+  // TODO: Mutations for Remove Friend
+
   const addFriend = () => {
     addMutation.mutate();
+  }
+
+  const removeFriend = () => {
+
   }
 
   return (
@@ -90,10 +95,13 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
           {user._id === profile._id ? (
             <IconButton
               aria-label='Account Settings'
-              colorScheme=''
+              variant='outline'
+              color='whiteAlpha.700'
+              colorScheme='whiteAlpha'
+              title='Account Settings'
               icon={<SettingsIcon />}
               disabled={user._id !== profile._id}
-              onClick={() => {}}
+              onClick={() => router.push('/settings')}
             />
           ) : (
             <VStack spacing={2} align='top'>

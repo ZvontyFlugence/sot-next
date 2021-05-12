@@ -2,6 +2,7 @@ import Layout from "@/components/Layout";
 import FriendsList, { IFriendListItem } from "@/components/profile/FriendsList";
 import ProfileActivities from "@/components/profile/ProfileActivities";
 import ProfileHeader from "@/components/profile/ProfileHeader";
+import ProfileStats from "@/components/profile/ProfileStats";
 import Company, { ICompany } from "@/models/Company";
 import Country, { ICountry } from "@/models/Country";
 import Region, { IRegion } from "@/models/Region";
@@ -16,6 +17,9 @@ interface IProfile {
   profile: IUser,
   location_info: ILocationInfo,
   job_info: IActivityInfo,
+  party_info: IActivityInfo,
+  army_info: IActivityInfo,
+  news_info: IActivityInfo,
   friends_info: IFriendListItem[],
 }
 
@@ -34,11 +38,18 @@ const Profile: React.FC<IProfile> = ({ profile, ...props }) => {
         <div className='flex gap-4 mt-4'>
           {/* Profile Body */}
           <div className='w-1/4'>
-            <ProfileActivities profile={profile} jobInfo={props.job_info} />
+            <ProfileActivities
+              profile={profile}
+              jobInfo={props.job_info}
+              partyInfo={props.party_info}
+              armyInfo={props.army_info}
+              newsInfo={props.news_info}
+            />
           </div>
           <div className='w-3/4 flex flex-col gap-4'>
             <div className='bg-night text-white p-4 shadow-md rounded'>
               <p className='h-brand text-accent text-xl'>Stats & Achievements</p>
+              <ProfileStats profile={profile} />
             </div>
             <div className='bg-night text-white p-4 shadow-md rounded'>
               <p className='h-brand text-accent text-xl'>Friends List</p>
@@ -61,7 +72,7 @@ export const getServerSideProps = async ctx => {
       Location: '/login',
     });
     res.end();
-    return;
+    return { props: {} };
   }
 
   const profile_id: number = Number.parseInt(params.id);
@@ -74,7 +85,7 @@ export const getServerSideProps = async ctx => {
       Location: '/404',
     });
     res.end();
-    return;
+    return { props: {} };
   }
 
   delete profile.password;
@@ -90,6 +101,9 @@ export const getServerSideProps = async ctx => {
 
   // TODO: Add Job, Party, Army, and Newspaper Info
   let job_info: IActivityInfo = null;
+  let party_info: IActivityInfo = null;
+  let army_info: IActivityInfo = null;
+  let news_info: IActivityInfo = null;
   let friends_info: IFriendListItem[] = [];
 
   if (profile.job) {
@@ -111,7 +125,19 @@ export const getServerSideProps = async ctx => {
         image: friend.image,
       }
     });
-  } 
+  }
+
+  if (profile.party > 0) {
+
+  }
+
+  if (profile.unit > 0) {
+
+  }
+
+  if (profile.newspaper > 0) {
+    
+  }
 
   return {
     props: {
@@ -119,6 +145,9 @@ export const getServerSideProps = async ctx => {
       profile: jsonify(profile),
       location_info: jsonify(location_info),
       job_info: jsonify(job_info),
+      party_info: jsonify(party_info),
+      army_info: jsonify(army_info),
+      news_info: jsonify(news_info),
       friends_info: jsonify(friends_info),
     }
   }
