@@ -3,6 +3,7 @@ import { IUser } from "@/models/User";
 import { ILocationInfo } from "@/util/apiHelpers";
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/tabs";
 import Inventory from "../shared/Inventory";
+import CompanySettings from "./CompanySettings";
 import ManageEmployees from "./ManageEmployees";
 import ManageInventory from "./ManageInventory";
 import ManageJobOffers from "./ManageJobOffers";
@@ -27,6 +28,7 @@ const CompanyManagement: React.FC<ICompManagement> = ({ company, currency, locat
             <Tab _selected={{ color: 'accent' }}>Employees</Tab>
             <Tab _selected={{ color: 'accent' }}>Inventory</Tab>
             <Tab _selected={{ color: 'accent' }}>Treasury</Tab>
+            <Tab _selected={{ color: 'accent' }}>Settings</Tab>
           </TabList>
         </div>
         <div className='bg-night text-white mt-4 rounded shadow-md'>
@@ -52,6 +54,9 @@ const CompanyManagement: React.FC<ICompManagement> = ({ company, currency, locat
                 locationInfo={locationInfo}
                 user={user}
               />
+            </TabPanel>
+            <TabPanel>
+              <CompanySettings company={company} />
             </TabPanel>
           </TabPanels>
         </div>

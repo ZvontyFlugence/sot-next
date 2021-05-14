@@ -96,7 +96,8 @@ function createNodes(regions: IRegion[]): IRegionNode[] {
   let nodes: IRegionNode[] = [];
   for (let region of regions) {
     nodes.push({
-      ...region,
+      _id: region._id,
+      neighbors: region.neighbors,
       distance: Infinity,
       visited: false,
       previous: null,
@@ -124,10 +125,12 @@ function dijkstras(nodes: IRegionNode[], srcNode: IRegionNode, destNode: IRegion
     else if (closest.distance === shortestDistance && closest._id === destNode._id)
       return visited;
 
-    if (closest.neighbors.includes(destNode._id)) {
+    if (Array.isArray(closest.neighbors) && closest.neighbors.includes(destNode._id)) {
       destNode.distance = closest.distance + 1;
       destNode.previous = closest;
       shortestDistance = destNode.distance;
+    } else if (!Array.isArray(closest.neighbors)) {
+      console.log('Node neighbors field is not an array:', closest);
     }
 
     closest.visited = true;

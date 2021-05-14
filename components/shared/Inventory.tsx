@@ -5,7 +5,7 @@ import { Item, Menu, useContextMenu } from 'react-contexify';
 interface IInventory {
   inventory: IItem[],
   onSellItem?: () => void,
-  setSelected?: React.Dispatch<React.SetStateAction<IItem>>,
+  setSelected?: React.Dispatch<React.SetStateAction<IItem>> | ((item: IItem) => void),
   displayOnly?: boolean,
 }
 
@@ -13,22 +13,34 @@ interface IInventoryItem {
   item: IItem,
   index: number,
   onSellItem?: () => void,
+  onClick?: () => void,
   displayOnly: boolean,
 }
 
 const Inventory: React.FC<IInventory> = ({ inventory, ...props }) => {
 
-  const handleSellItem = (item: IItem) => {
+  const handleSellItem = props.onSellItem ? (item: IItem) => {
     props.setSelected(item);
     props.onSellItem();
-  }
+  } : undefined;
+
+  const handleClick = !props.onSellItem ? (item: IItem) => {
+    props.setSelected(item);
+  } : undefined;
 
   return !inventory || inventory.length === 0 ? (
     <p className='w-full'>There are no items in inventory</p>
   ) : (
     <div className='grid grid-cols-3 md:grid-cols-8 rounded p-4'>
       {inventory.map((item: IItem, i: number) => (
-        <InventoryItem key={i} item={item} index={i} onSellItem={() => handleSellItem(item)} displayOnly={!!props.displayOnly} />
+        <InventoryItem
+          key={i}
+          item={item}
+          index={i}
+          onSellItem={props.onSellItem && (() => handleSellItem(item))}
+          onClick={!props.onSellItem && (() => handleClick(item))}
+          displayOnly={!!props.displayOnly}
+        />
       ))}
     </div>
   );
@@ -36,7 +48,12 @@ const Inventory: React.FC<IInventory> = ({ inventory, ...props }) => {
 
 const InventoryItem: React.FC<IInventoryItem> = ({ item, index, ...props }) => {
   const itemInfo = ITEMS[item.item_id];
-  const { show } = useContextMenu({ id: `item-${index}` });
+  const { show, hideAll } = useContextMenu({ id: `item-${index}` });
+
+  const wrappedClick = (clickFn: () => void) => {
+    clickFn();
+    hideAll();
+  }
 
   return (
     <>
@@ -51,12 +68,16 @@ const InventoryItem: React.FC<IInventoryItem> = ({ item, index, ...props }) => {
       </div>
 
       <Menu id={`item-${index}`} theme='brand'>
-        <Item onClick={props.onSellItem}>
-          Sell Item
-        </Item>
-        <Item>
-          Withdraw Item
-        </Item>
+        {props.onSellItem && (
+          <Item onClick={() => wrappedClick(props.onSellItem)}>
+            Sell Item
+          </Item>
+        )}
+        {props.onClick && (
+          <Item onClick={() => wrappedClick(props.onClick)}>
+            Select Item
+          </Item>
+        )}
       </Menu>
     </>
   );

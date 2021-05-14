@@ -88,13 +88,14 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
       <Card.Content className='text-white mt-4'>
         <div className='flex justify-center gap-5'>
           <Button
-            className={user.messages.length > 0 ? 'text-accent' : 'text-accent-alt'}
+            className={user.messages.filter(thr => !thr.read).length > 0 ? 'text-accent' : 'text-accent-alt'}
             variant='outline'
             aria-label='View Mail'
             colorScheme=''
-            leftIcon={<EmailIcon />}
             size='sm'
-          >{user.messages.length}</Button>
+            leftIcon={<EmailIcon />}
+            onClick={() => router.push('/mail')}
+          >{user.messages.filter(thread => !thread.read).length}</Button>
           <Button
             className={user.alerts.filter(a => !a.read).length > 0 ? 'text-accent' : 'text-accent-alt'}
             variant='outline'

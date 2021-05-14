@@ -28,7 +28,7 @@ export interface IUser extends Document {
   wallet: IWalletItem[],
   inventory: IItem[],
   alerts: IAlert[],
-  messages: Array<Object>,
+  messages: IThread[],
   pendingFriends: number[],
   friends: number[],
 }
@@ -38,6 +38,21 @@ export interface IAlert {
   type: string,
   message: string,
   from?: number,
+  timestamp: Date,
+}
+
+export interface IThread {
+  id: string,
+  read: boolean,
+  subject: string,
+  participants: number[],
+  messages: IMsg[],
+  timestamp?: Date,
+}
+
+export interface IMsg {
+  from: number,
+  message: string,
   timestamp: Date,
 }
 

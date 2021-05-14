@@ -13,6 +13,8 @@ import { parseCookies } from "nookies";
 import { AiOutlineDollar, AiOutlineUsergroupAdd, AiOutlineUsergroupDelete } from 'react-icons/ai';
 import { IoGiftOutline, IoMailOutline } from 'react-icons/io5';
 import { useMutation } from "react-query";
+import DonateModal from "./DonateModal";
+import GiftModal from "./GiftModal";
 
 interface IProfileHeader {
   user: IUser,
@@ -51,14 +53,38 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
     }
   });
 
-  // TODO: Mutations for Remove Friend
+  const removeMutation = useMutation(async () => {
+    let payload = {
+      action: UserActions.REMOVE_FRIEND,
+      data: { profile_id: profile._id },
+    };
+
+    let data = await request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    });
+
+    if (!data.success)
+      throw new Error(data?.error);
+    return data;
+  }, {
+    onSuccess: (data) => {
+      showToast(toast, 'success', 'Friend Removed', data?.message);
+      refreshData(router);
+    },
+    onError: (e: Error) => {
+      showToast(toast, 'error', 'Failed Remove Friend', e.message);
+    },
+  });
 
   const addFriend = () => {
     addMutation.mutate();
   }
 
   const removeFriend = () => {
-
+    removeMutation.mutate();
   }
 
   return (
@@ -124,7 +150,7 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
                   colorScheme=''
                   title='Remove Friend'
                   icon={<AiOutlineUsergroupDelete />}
-                  onClick={() => {}}
+                  onClick={removeFriend}
                 />
               )}
               <IconButton
@@ -158,6 +184,8 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
           )}
         </div>
       </div>
+      <DonateModal user={user} profile={profile} isOpen={isDonateOpen} onClose={onCloseDonate} />
+      <GiftModal user={user} profile={profile} isOpen={isGiftOpen} onClose={onCloseGift} />
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import { validateToken } from '@/util/auth';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { UserActions } from '@/util/actions';
-import User, { IAlert, IUser, IUserUpdates, IWalletItem } from '@/models/User';
+import User, { IAlert, IMsg, IUser, IUserUpdates, IWalletItem } from '@/models/User';
 import { neededXP } from '@/util/ui';
-import { buildLevelUpAlert, getDistance, roundMoney } from '@/util/apiHelpers';
+import { buildLevelUpAlert, getDistance, IItem, roundMoney } from '@/util/apiHelpers';
 import { connectToDB } from '@/util/mongo';
 import Company, { ICompany, IEmployee } from '@/models/Company';
 import Region, { IRegion } from '@/models/Region';
@@ -24,7 +24,7 @@ interface IRequestBody {
   action: string,
   data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams |
     ICreateShoutParams | IHandleShoutParams | IUpdateUsernameParams | IUpdatePwParams |
-    ITravelParams | IUpdateDescParams | IDonateParams
+    ITravelParams | IUpdateDescParams | IDonateParams | IGiftParams | ICreateThreadParams
 }
 
 interface IApplyJobParams {
@@ -101,6 +101,20 @@ interface IDonateParams {
   }
 }
 
+interface IGiftParams {
+  user_id?: number,
+  profile_id: number,
+  items: IItem[],
+}
+
+interface ICreateThreadParams {
+  user_id?: number,
+  participants: number[],
+  subject: string,
+  message: string,
+  timestamp: Date,
+}
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const validation_res = await validateToken(req, res);
   if (!validation_res || validation_res.error) {
@@ -137,12 +151,20 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await collect_rewards(user_id);
           return res.status(result.status_code).json(result.payload);
         }
+        case UserActions.CREATE_THREAD: {
+          result = await create_thread(data as ICreateThreadParams);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.DELETE_ALERT: {
           result = await delete_alert(data as IHandleAlertParams);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.DONATE: {
           result = await donate_funds(data as IDonateParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.GIFT: {
+          result = await gift_items(data as IGiftParams);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.HEAL: {
@@ -821,7 +843,23 @@ async function donate_funds({ user_id, profile_id, gold, funds }: IDonateParams)
     }
   }
 
-  let profileUpdates = { gold: profile.gold, wallet: [...profile.wallet] };
+  let message: string = '';
+  if (gold && funds) {
+    message = `You have received ${gold.toFixed(2)} gold and ${funds.amount.toFixed(2)} ${funds.currency} from ${user.username}`;
+  } else if (funds) {
+    message = `You have received ${funds.amount.toFixed(2)} ${funds.currency} from ${user.username}`;
+  } else {
+    message = `You have received ${gold.toFixed(2)} gold from ${user.username}`;
+  }
+
+  let donateAlert = {
+    read: false,
+    type: UserActions.DONATE,
+    message,
+    timestamp: new Date(Date.now()),
+  };
+
+  let profileUpdates = { gold: profile.gold, wallet: [...profile.wallet], alerts: [...profile.alerts, donateAlert] };
   let userUpdates = { gold: user.gold, wallet: [...user.wallet] };
   let updatedProfile = await profile.updateOne({ $set: profileUpdates }).exec();
   if (!updatedProfile)
@@ -831,5 +869,112 @@ async function donate_funds({ user_id, profile_id, gold, funds }: IDonateParams)
   if (updatedUser)
     return { status_code: 200, payload: { success: true, error: 'Funds Donated' } };
 
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function gift_items({ user_id, profile_id, items }: IGiftParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  
+  let profile: IUser = await User.findOne({ _id: profile_id }).exec();
+  if (!profile)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  else if (user._id === profile._id)
+    return { status_code: 400, payload: { success: false, error: 'You Cannot Send Gifts To Yourself'} };
+
+  console.log('ITEMS:', items);
+
+  let hasError: boolean = false;
+  for (let item of items) {
+    let idx = user.inventory.findIndex(i => i.item_id === item.item_id);
+    if (idx === -1 || user.inventory[idx].quantity < item.quantity) {
+      hasError = true;
+      break;
+    }
+
+    let profIdx = profile.inventory.findIndex(i => i.item_id === item.item_id);
+    if (profIdx === -1)
+      profile.inventory.push(item);
+    else
+      profile.inventory[profIdx].quantity += item.quantity;
+
+    if (user.inventory[idx].quantity === item.quantity)
+      user.inventory.splice(idx, 1);
+    else
+      user.inventory[idx].quantity -= item.quantity;
+  }
+
+  if (hasError)
+    return { status_code: 400, payload: { success: false, error: 'Insufficient Items' } };
+
+  let giftAlert = {
+    read: false,
+    type: UserActions.GIFT,
+    message: `You've been gifted items from ${user.username}`,
+    timestamp: new Date(Date.now()),
+  };
+
+  let profUpdates = { inventory: [...profile.inventory], alerts: [...profile.alerts, giftAlert] };
+  let userUpdates = { inventory: [...user.inventory] };
+  let updatedProf = await profile.updateOne({ $set: profUpdates }).exec();
+  if (!updatedProf)
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+
+  let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
+  if (updatedUser)
+    return { status_code: 200, payload: { success: true, message: 'Items Gifted' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function create_thread(data: ICreateThreadParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+
+  let { participants } = data;
+  participants.push(data.user_id);
+
+  let msg: IMsg = { from: data.user_id, message: data.message, timestamp: data.timestamp };
+  let threadId: string = '';
+  try {
+    const { randomBytes } = await import('crypto');
+    randomBytes(10, (err, buf) => {
+      if (err) throw err;
+      threadId = buf.toString('hex');
+    });
+  } catch (e) {
+    return { status_code: 500, payload: { success: false, error: 'Failed to Generate Thread ID' } };
+  }
+
+  let hasAll: boolean = true;
+  for (let i = 0; i < participants.length; i++) {
+    let uid = participants[i];
+    let participant = await User.findOne({ _id: uid }).exec();
+
+    if (!participant) {
+      hasAll = false;
+      continue;
+    }
+
+    participant.messages.push({
+      id: threadId,
+      participants,
+      subject: data.subject,
+      messages: [msg],
+      timestamp: data.timestamp,
+      read: uid === data.user_id,
+    });
+
+    let updates = { messages: [...participant.messages] };
+    let updated = await participant.updateOne({ $set: updates }).exec();
+    if (!updated)
+      hasAll = false;
+  }
+
+  if (hasAll)
+    return { status_code: 200, payload: { success: true, message: 'Message Sent' } };
+  
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }

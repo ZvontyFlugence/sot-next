@@ -73,7 +73,6 @@ const ManageInventory: React.FC<IManageInventory> = ({ inventory, company_id, cu
     <>
       <div className='flex justify-end gap-4 mb-2'>
         <Button size='sm' variant='solid' colorScheme='green'>Deposit</Button>
-        <Button size='sm' variant='solid' colorScheme='red'>Withdraw</Button>
       </div>
       <Inventory inventory={inventory} onSellItem={onOpenCreate} setSelected={setSelected} />
       <Modal isOpen={isCreateOpen} onClose={handleCloseCreate}>
@@ -84,7 +83,7 @@ const ManageInventory: React.FC<IManageInventory> = ({ inventory, company_id, cu
           <ModalBody className='flex flex-col gap-2'>
             {selected && (
               <p className='mx-auto'>
-                Creating Offer for {quantity} <i className={'cursor-pointer ' + ITEMS[selected.item_id].image} title={ITEMS[selected.item_id].name} /> at {price} {currency} per unit
+                Creating Offer for {quantity} <i className={'cursor-pointer ' + ITEMS[selected.item_id].image} title={ITEMS[selected.item_id].name} /> at {price.toFixed(2)} {currency} per unit?
               </p>
             )}
             <FormControl>
