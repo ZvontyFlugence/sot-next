@@ -63,16 +63,17 @@ const Profile: React.FC<IProfile> = ({ profile, ...props }) => {
 }
 
 export const getServerSideProps = async ctx => {
-  const { req, res, params } = ctx;
+  const { req, params } = ctx;
 
   let result = await getCurrentUser(req);
   if (!result.isAuthenticated) {
     destroyCookie(ctx, 'token');
-    res.writeHead(302, {
-      Location: '/login',
-    });
-    res.end();
-    return { props: {} };
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/login',
+      },
+    };
   }
 
   const profile_id: number = Number.parseInt(params.id);
@@ -81,11 +82,12 @@ export const getServerSideProps = async ctx => {
   let profile: IUser = await User.findOne({ _id: profile_id }).exec();
 
   if (!profile) {
-    res.writeHead(302, {
-      Location: '/404',
-    });
-    res.end();
-    return { props: {} };
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/404',
+      },
+    };
   }
 
   delete profile.password;

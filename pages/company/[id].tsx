@@ -46,27 +46,29 @@ export default function CompanyPage({ user, company, location_info, ceo_info, ..
 }
 
 export const getServerSideProps = async ctx => {
-  const { req, res, params } = ctx;
+  const { req, params } = ctx;
 
   let result = await getCurrentUser(req);
   if (!result.isAuthenticated) {
     destroyCookie(ctx, 'token');
-    res.writeHead(302, {
-      Location: '/login',
-    });
-    res.end();
-    return;
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/login',
+      },
+    };
   }
 
   const company_id: number = Number.parseInt(params.id);
   // Ensure DB Connection
   let company: ICompany = await Company.findOne({ _id: company_id }).exec();
   if (!company) {
-    res.writeHead(302, {
-      Location: '/404',
-    });
-    res.end();
-    return;
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/404',
+      },
+    };
   }
 
   // Get Location info

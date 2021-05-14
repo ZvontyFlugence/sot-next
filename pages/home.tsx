@@ -162,17 +162,18 @@ export default function Home({ user, job, ...props }: IHomeProps) {
 }
 
 export const getServerSideProps = async ctx => {
-  const { req, res } = ctx;
+  const { req } = ctx;
 
   let result = await getCurrentUser(req);
 
   if (!result.isAuthenticated) {
     destroyCookie(ctx, 'token');
-    res.writeHead(302, {
-      Location: '/login',
-    });
-    res.end();
-    return;
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/login',
+      },
+    };
   }
 
   let job: ICompany;

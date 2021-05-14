@@ -136,11 +136,12 @@ export const getServerSideProps = async ctx => {
   let result = await getCurrentUser(req);
 
   if (result.isAuthenticated) {
-    res.writeHead(302, {
-      Location: '/dashboard',
-    });
-    res.end();
-    return;
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/dashboard',
+      },
+    };
   }
 
   return {

@@ -24,7 +24,7 @@ interface IRequestBody {
   action: string,
   data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams |
     ICreateShoutParams | IHandleShoutParams | IUpdateUsernameParams | IUpdatePwParams |
-    ITravelParams | IUpdateDescParams
+    ITravelParams | IUpdateDescParams | IDonateParams
 }
 
 interface IApplyJobParams {
@@ -91,6 +91,16 @@ interface IUpdateDescParams {
   desc: string,
 }
 
+interface IDonateParams {
+  user_id?: number,
+  profile_id: number,
+  gold?: number,
+  funds?: {
+    currency: string,
+    amount: number,
+  }
+}
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const validation_res = await validateToken(req, res);
   if (!validation_res || validation_res.error) {
@@ -129,6 +139,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
         case UserActions.DELETE_ALERT: {
           result = await delete_alert(data as IHandleAlertParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.DONATE: {
+          result = await donate_funds(data as IDonateParams);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.HEAL: {
@@ -771,6 +785,51 @@ async function upload({ user_id, image }: IUploadImageParams): Promise<IUserActi
   let updatedUser = await user.updateOne({ $set: { image } }).exec();
   if (updatedUser)
     return { status_code: 200, payload: { success: true, message: 'Image Uploaded' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function donate_funds({ user_id, profile_id, gold, funds }: IDonateParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  
+  let profile: IUser = await User.findOne({ _id: profile_id }).exec();
+  if (!profile)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  else if (user._id === profile._id)
+    return { status_code: 400, payload: { success: false, error: 'You Cannot Donate To Yourself'} };
+  
+  if (gold && user.gold >= gold) {
+    user.gold = roundMoney(user.gold - gold);
+    profile.gold = roundMoney(profile.gold + gold);
+  } else if (gold) {
+    return { status_code: 400, payload: { success: false, error: 'Insufficient Gold' } };
+  }
+
+  if (funds) {
+    let userCCIndex = user.wallet.findIndex(cc => cc.currency === funds.currency);
+    if (userCCIndex > -1 && user.wallet[userCCIndex].amount >= funds.amount) {
+      user.wallet[userCCIndex].amount = roundMoney(user.wallet[userCCIndex].amount - funds.amount);
+      let profileCCIndex = profile.wallet.findIndex(cc => cc.currency === funds.currency);
+      if (profileCCIndex === -1)
+        profile.wallet.push(funds);
+      else
+        profile.wallet[profileCCIndex].amount = roundMoney(profile.wallet[profileCCIndex].amount + funds.amount);
+    } else {
+      return { status_code: 400, payload: { success: false, error: 'Insufficient Currency' } };
+    }
+  }
+
+  let profileUpdates = { gold: profile.gold, wallet: [...profile.wallet] };
+  let userUpdates = { gold: user.gold, wallet: [...user.wallet] };
+  let updatedProfile = await profile.updateOne({ $set: profileUpdates }).exec();
+  if (!updatedProfile)
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+
+  let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
+  if (updatedUser)
+    return { status_code: 200, payload: { success: true, error: 'Funds Donated' } };
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }

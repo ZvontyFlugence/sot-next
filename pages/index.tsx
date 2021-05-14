@@ -59,19 +59,20 @@ export default function Index(props: IIndexProps) {
 }
 
 export const getServerSideProps = async ctx => {
-  const { req, res } = ctx;
+  const { req } = ctx;
 
   let result = await getCurrentUser(req);
 
   if (result.isAuthenticated) {
-    res.writeHead(302, {
-      Location: '/dashboard',
-    });
-    res.end();
-    return;
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/dashboard',
+      },
+    };
   }
 
   return {
-    props: { ...result }
-  }
+    props: { ...result },
+  };
 }

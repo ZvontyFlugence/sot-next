@@ -1,7 +1,8 @@
 import Company, { ICompany, IEmployee, IJobOffer, IProductOffer } from '@/models/Company';
+import Region, { IRegion } from '@/models/Region';
 import User, { IUser } from '@/models/User';
 import { CompanyActions } from '@/util/actions';
-import { roundMoney } from '@/util/apiHelpers';
+import { getDistance, roundMoney } from '@/util/apiHelpers';
 import { validateToken } from '@/util/auth';
 import { connectToDB } from '@/util/mongo';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -19,7 +20,8 @@ interface ICompanyActionResult {
 interface IRequestBody {
   action: string,
   data: ICreateJobParams | IProductParams | IDeleteJobParams | IEditJobParams |
-    IHandleFundsParams | IEditEmployeeParams | IFireEmployeeParams
+    IHandleFundsParams | IEditEmployeeParams | IFireEmployeeParams | IRelocateParams |
+    IUploadLogoParams | IUpdateNameParams
 }
 
 interface IBaseParams {
@@ -61,6 +63,18 @@ interface IEditEmployeeParams extends IBaseParams {
 
 interface IFireEmployeeParams extends IBaseParams {
   employee_id: number
+}
+
+interface IUpdateNameParams extends IBaseParams {
+  name: string
+}
+
+interface IRelocateParams extends IBaseParams {
+  region_id: number
+}
+
+interface IUploadLogoParams extends IBaseParams {
+  image: any
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -114,6 +128,18 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
         case CompanyActions.FIRE_EMPLOYEE: {
           result = await fire_employee(data as IFireEmployeeParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case CompanyActions.RELOCATE: {
+          result = await relocate(data as IRelocateParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case CompanyActions.UPDATE_NAME: {
+          result = await update_name(data as IUpdateNameParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case CompanyActions.UPLOAD_LOGO: {
+          result = await upload(data as IUploadLogoParams);
           return res.status(result.status_code).json(result.payload);
         }
         case CompanyActions.WITHDRAW_FUNDS: {
@@ -432,5 +458,75 @@ const fire_employee = async (data: IFireEmployeeParams): Promise<ICompanyActionR
     return { status_code: 200, payload: { success: true, message: 'Employee Fired' } };
   }
 
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+const update_name = async (data: IUpdateNameParams): Promise<ICompanyActionResult> => {
+  let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+  if (!company)
+    return { status_code: 404, payload: { success: false, error: 'Company Not Found' } };
+
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  else if (user._id !== company.ceo)
+    return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
+
+  let exists: ICompany = await Company.findOne({ name: data.name }).exec();
+  if (exists)
+    return { status_code: 400, payload: { success: false, error: 'Company Name Already Taken' } };
+
+  let compUpdates = { name: data.name };
+  let updatedComp = await company.updateOne({ $set: compUpdates }).exec();
+  if (updatedComp)
+    return { status_code: 200, payload: { success: true, message: 'Comany Name Updated' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+const relocate = async (data: IRelocateParams): Promise<ICompanyActionResult> => {
+  let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+  if (!company)
+    return { status_code: 404, payload: { success: false, error: 'Company Not Found' } };
+  
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  else if (user._id !== company.ceo)
+    return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
+  else if (company.location === data.region_id)
+    return { status_code: 400, payload: { success: false, error: 'Already Located In Region' } };
+
+  let regions: IRegion[] = await Region.find({}).exec();
+  let travel_info = getDistance(regions, company.location, data.region_id);
+
+  if (company.gold < travel_info.cost)
+    return { status_code: 400, payload: { success: false, error: 'Insufficient Gold' } };
+  
+  let compUpdates = { gold: roundMoney(company.gold - travel_info.cost), location: data.region_id };
+  let updatedComp = await company.updateOne({ $set: compUpdates }).exec();
+  if (updatedComp)
+    return { status_code: 200, payload: { success: true, message: 'Company Relocated' } };
+  
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+const upload = async (data: IUploadLogoParams): Promise<ICompanyActionResult> => {
+  let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+  if (!company)
+    return { status_code: 404, payload: { success: false, error: 'Company Not Found' } };
+  
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  else if (user._id !== company.ceo)
+    return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
+  else if (!data.image)
+    return { status_code: 400, payload: { success: false, error: 'Invalid Base64 Image' } };
+
+  let updatedComp = await company.updateOne({ $set: { image: data.image } }).exec();
+  if (updatedComp)
+    return { status_code: 200, payload: { success: true, message: 'Logo Uploaded' } };
+  
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }

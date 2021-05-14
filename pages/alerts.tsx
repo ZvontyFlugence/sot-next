@@ -102,22 +102,23 @@ const Alerts: React.FC<IAlerts> = ({ user, ...props }) => {
 }
 
 export const getServerSideProps = async ctx => {
-  let { req, res } = ctx;
+  let { req } = ctx;
 
   let result = await getCurrentUser(req);
 
   if (!result.isAuthenticated) {
     destroyCookie(ctx, 'token');
-    res.writeHead(302, {
-      Location: '/login',
-    });
-    res.end();
-    return { props: {} };
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/login',
+      },
+    };
   }
 
   return {
     props: { ...result },
-  }
+  };
 }
 
 export default Alerts;

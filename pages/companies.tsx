@@ -191,17 +191,18 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
 }
 
 export const getServerSideProps = async ctx => {
-  let { req, res } = ctx;
+  let { req } = ctx;
 
   let result = await getCurrentUser(req);
 
   if (!result.isAuthenticated) {
     destroyCookie(ctx, 'token');
-    res.writeHead(302, {
-      Location: '/login',
-    });
-    res.end();
-    return;
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/login',
+      },
+    };
   }
 
   return {

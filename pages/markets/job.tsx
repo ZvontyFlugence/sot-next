@@ -16,6 +16,7 @@ import { destroyCookie, parseCookies } from 'nookies';
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import Select from '@/components/Select';
+import { m } from 'framer-motion';
 
 interface IJobMarket {
   user: IUser,
@@ -146,17 +147,18 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
 }
 
 export const getServerSideProps = async ctx => {
-  const { req, res } = ctx;
+  const { req } = ctx;
 
   let result = await getCurrentUser(req);
 
   if (!result.isAuthenticated) {
     destroyCookie(ctx, 'token');
-    res.writeHead(302, {
-      Location: '/login',
-    });
-    res.end();
-    return;
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/login',
+      },
+    };
   }
 
   // Get Location Info

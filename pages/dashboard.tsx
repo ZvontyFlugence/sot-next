@@ -30,17 +30,18 @@ export default function Dashboard({ user, ...props }: IDashboardProps) {
 }
 
 export const getServerSideProps = async ctx => {
-  const { req, res } = ctx;
+  const { req } = ctx;
 
   let result = await getCurrentUser(req);
 
   if (!result.isAuthenticated) {
     destroyCookie(ctx, 'token');
-    res.writeHead(302, {
-      Location: '/login',
-    });
-    res.end();
-    return { props: {} };
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/login',
+      }
+    };
   }
 
   return {

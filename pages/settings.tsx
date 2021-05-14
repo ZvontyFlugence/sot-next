@@ -265,16 +265,17 @@ export const getServerSideProps = async ctx => {
 
   if (!result.isAuthenticated) {
     destroyCookie(ctx, 'token');
-    res.writeHead(302, {
-      Location: '/login',
-    });
-    res.end();
-    return { props: {} };
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/dashboard',
+      },
+    };
   }
 
   return {
     props: { ...result },
-  }
+  };
 }
 
 export default Settings;
