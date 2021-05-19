@@ -24,7 +24,7 @@ const CompanyHeader: React.FC<ICompHeader> = ({ company, locationInfo, ceoInfo, 
     <div className='bg-night text-white p-4 shadow-md rounded'>
       <div className='flex flex-row items-stretch gap-4'>
         <Image boxSize='12.0rem' src={company.image} alt='' />
-        <div className='flex flex-col w-full items-top'>
+        <div className='flex flex-col w-full items-start'>
           <h3 className='text-xl font-semibold text-accent'>{company.name}</h3>
           <p className='flex flex-row items-center mt-4'>
             <p>

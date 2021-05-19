@@ -36,7 +36,6 @@ const Profile: React.FC<IProfile> = ({ profile, ...props }) => {
       <div className='px-24'>
         <ProfileHeader user={props.user} profile={profile} locationInfo={props.location_info} />
         <div className='flex gap-4 mt-4'>
-          {/* Profile Body */}
           <div className='w-1/4'>
             <ProfileActivities
               profile={profile}

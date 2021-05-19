@@ -29,6 +29,18 @@ const Nav: React.FC<INav> = ({ user }) => {
     router.push('/login');
   }
 
+  const getPartyLink = () => {
+    return user.party === 0 ? '/party' : `/party/${user.party}`;
+  }
+
+  const getUnitLink = () => {
+    return user.unit === 0 ? '/unit' : `/unit/${user.unit}`;
+  }
+
+  const getNewsLink = () => {
+    return user.newspaper === 0 ? '/newspaper' : `/newspaper/${user.newspaper}`;
+  }
+
   return (
     <div className='flex w-full justify-between px-8 py-2 shadow-md border-solid border-black border border-opacity-25 bg-night text-white'>
       <div>
@@ -53,9 +65,9 @@ const Nav: React.FC<INav> = ({ user }) => {
             <MenuList bgColor='night'>
               <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/home')}>My Home</MenuItem>
               <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/companies')}>My Companies</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>My Party</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>My Newspaper</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>My Army</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(getPartyLink())}>My Party</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(getNewsLink())}>My Newspaper</MenuItem>
+              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(getUnitLink())}>My Army</MenuItem>
             </MenuList>
           </Menu>
           <Menu>

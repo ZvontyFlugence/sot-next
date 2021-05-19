@@ -10,13 +10,15 @@ import Region, { IRegion } from '@/models/Region';
 import Country, { ICountry } from '@/models/Country';
 import Shout, { IShout } from '@/models/Shout';
 import bcrypt from 'bcrypt';
+import Newspaper from '@/models/Newspaper';
 
 interface IUserActionResult {
   status_code: number,
-  payload : {
+  payload: {
     success: boolean,
     error?: string,
     message?: string,
+    newspaper?: number,
   },
 }
 
@@ -24,7 +26,8 @@ interface IRequestBody {
   action: string,
   data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams |
     ICreateShoutParams | IHandleShoutParams | IUpdateUsernameParams | IUpdatePwParams |
-    ITravelParams | IUpdateDescParams | IDonateParams | IGiftParams | ICreateThreadParams
+    ITravelParams | IUpdateDescParams | IDonateParams | IGiftParams | ICreateThreadParams |
+    IHandleThread | ISendMsg | ICreateNewspaper
 }
 
 interface IApplyJobParams {
@@ -115,6 +118,21 @@ interface ICreateThreadParams {
   timestamp: Date,
 }
 
+interface IHandleThread {
+  user_id?: number,
+  thread_id: string,
+}
+
+interface ISendMsg extends IHandleThread {
+  message: string,
+  timestamp: Date,
+}
+
+interface ICreateNewspaper {
+  user_id?: number,
+  name: string,
+}
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const validation_res = await validateToken(req, res);
   if (!validation_res || validation_res.error) {
@@ -151,12 +169,20 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await collect_rewards(user_id);
           return res.status(result.status_code).json(result.payload);
         }
+        case UserActions.CREATE_NEWS: {
+          result = await create_news(data as ICreateNewspaper);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.CREATE_THREAD: {
           result = await create_thread(data as ICreateThreadParams);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.DELETE_ALERT: {
           result = await delete_alert(data as IHandleAlertParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.DELETE_THREAD: {
+          result = await delete_thread(data as IHandleThread);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.DONATE: {
@@ -179,8 +205,16 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await read_alert(data as IHandleAlertParams);
           return res.status(result.status_code).json(result.payload);
         }
+        case UserActions.READ_THREAD: {
+          result = await read_thread(data as IHandleThread);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.SEND_FR: {
           result = await send_fr(data as ISendFRParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.SEND_MSG: {
+          result = await send_msg(data as ISendMsg);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.SEND_SHOUT: {
@@ -976,5 +1010,107 @@ async function create_thread(data: ICreateThreadParams): Promise<IUserActionResu
   if (hasAll)
     return { status_code: 200, payload: { success: true, message: 'Message Sent' } };
   
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function read_thread(data: IHandleThread): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+
+  let msgIdx = user.messages.findIndex(thread => thread.id === data.thread_id);
+  if (msgIdx === -1)
+    return { status_code: 400, payload: { success: false, error: 'Thread Not Found' } };
+
+  user.messages[msgIdx].read = true;
+  let updates = { messages: [...user.messages] };
+  let updated = await user.updateOne({ $set: updates }).exec();
+  if (updated)
+    return { status_code: 200, payload: { success: true, message: 'Thread Marked As Read' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function delete_thread(data: IHandleThread): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+
+  let msgIdx = user.messages.findIndex(thread => thread.id === data.thread_id);
+  if (msgIdx === -1)
+    return { status_code: 400, payload: { success: false, error: 'Thread Not Found' } };
+
+  user.messages.splice(msgIdx, 1);
+  let updates = { messages: [...user.messages] };
+  let updated = await user.updateOne({ $set: updates }).exec();
+  if (updated)
+    return { status_code: 200, payload: { success: true, message: 'Tread Deleted' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function send_msg(data: ISendMsg): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+
+  let threadIdx: number = user.messages.findIndex(thread => thread.id === data.thread_id);
+  if (threadIdx === -1)
+    return { status_code: 404, payload: { success: false, error: 'Mail Thread Not Found' } };
+  
+  let allUpdated: boolean = true;
+  for (let participant_id of user.messages[threadIdx].participants) {
+    let participant: IUser = await User.findOne({ _id: participant_id }).exec();
+    if (!participant) {
+      allUpdated = false;
+      continue;
+    }
+
+    let pThreadIdx: number = participant.messages.findIndex(thread => thread.id === data.thread_id);
+    if (pThreadIdx === -1) {
+      allUpdated = false;
+      continue;
+    }
+
+    if (participant_id !== user._id)
+      participant.messages[pThreadIdx].read = false;
+    
+    participant.messages[pThreadIdx].messages.push({
+      from: user._id,
+      message: data.message,
+      timestamp: new Date(data.timestamp),
+    });
+
+    let updates = { messages: [...participant.messages] };
+    let updated = await participant.updateOne({ $set: updates }).exec();
+
+    if (!updated)
+      allUpdated = false;
+  }
+
+  if (allUpdated)
+    return { status_code: 200, payload: { success: true, message: 'Message Sent' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Not All Participants Received Message' } };
+}
+
+async function create_news(data: ICreateNewspaper): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  else if (user.gold < 5)
+    return { status_code: 400, payload: { success: false, error: 'Insufficient Gold' } };
+
+  let news_id: number = await Newspaper.estimatedDocumentCount() + 1;
+  let newspaper = new Newspaper({ _id: news_id, author: user._id, name: data.name });
+  let created = await newspaper.save();
+  if (!created)
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+
+  let updates = { gold: roundMoney(user.gold - 5), newspaper: 0 };
+  let updated = await user.updateOne({ $set: updates }).exec();
+  if (updated)
+    return { status_code: 200, payload: { success: true, newspaper: news_id, message: 'Newspaper Created' } };
+
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
