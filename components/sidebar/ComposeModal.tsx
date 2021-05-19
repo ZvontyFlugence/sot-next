@@ -105,7 +105,7 @@ const ComposeModal: React.FC<IComposeMsg> = ({ user, ...props }) => {
   }
 
   const resultItem = (result: IUser) => (
-    <div key={result._id} className='flex items-center gap-2 py-2 px-4 cursor-pointer hover:bg-accent-alt' onClick={() => handleSelection(result)}>
+    <div key={result._id} className='flex items-center gap-2 py-2 px-4 cursor-pointer rounded hover:bg-accent-alt' onClick={() => handleSelection(result)}>
       <div className='flex'>
         <Avatar size='sm' src={result.image} name={result.username} />
       </div>

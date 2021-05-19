@@ -1,22 +1,26 @@
 import { IThread, IUser } from "@/models/User";
-import { request } from "@/util/ui";
+import { UserActions } from "@/util/actions";
+import { refreshData, request, showToast } from "@/util/ui";
 import { Avatar } from "@chakra-ui/avatar";
 import { Tag, TagLabel } from "@chakra-ui/tag";
+import { useToast } from "@chakra-ui/toast";
 import { formatDistance } from "date-fns";
 import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
 import { useEffect, useState } from "react";
 import { Item, Menu, useContextMenu } from "react-contexify";
+import { useMutation } from "react-query";
 
-interface IMailThread {
+interface IMailItem {
   thread: IThread,
   index: number,
   userId: number,
 }
 
-const MailThread: React.FC<IMailThread> = ({ thread, index, userId }) => {
+const MailItem: React.FC<IMailItem> = ({ thread, index, userId }) => {
   const cookies = parseCookies();
   const router = useRouter();
+  const toast = useToast();
   const [participants, setParticipants] = useState<IUser[]>([]);
   const { show } = useContextMenu({ id: `mail-${index}` });
 
@@ -36,6 +40,49 @@ const MailThread: React.FC<IMailThread> = ({ thread, index, userId }) => {
     }
   }, [thread, thread.participants, participants.length]);
 
+  const readThreadMutation = useMutation(async () => {
+    let payload = { action: UserActions.READ_THREAD, data: { thread_id: thread.id } };
+    let data = await request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    });
+
+    if (!data.success)
+      throw new Error(data?.error);
+    return data;
+  }, {
+    onSuccess: (data) => {
+      refreshData(router);
+    },
+    onError: (e: Error) => {
+      showToast(toast, 'error', 'Error', e.message);
+    }
+  });
+
+  const deleteThreadMutation = useMutation(async () => {
+    let payload = { action: UserActions.DELETE_THREAD, data: { thread_id: thread.id } };
+    let data = await request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    });
+
+    if (!data.success)
+      throw new Error(data?.error);
+    return data;
+  }, {
+    onSuccess: (data) => {
+      showToast(toast, 'success', data?.message);
+      refreshData(router);
+    },
+    onError: (e: Error) => {
+      showToast(toast, 'error', e.message);
+    }
+  })
+
   const getTimestamp = (): React.ReactNode => (
     <span>
       {formatDistance(new Date(thread.timestamp), new Date(Date.now()), { addSuffix: true })}
@@ -47,18 +94,27 @@ const MailThread: React.FC<IMailThread> = ({ thread, index, userId }) => {
   }
 
   const handleRead = () => {
-
+    readThreadMutation.mutate();
   }
 
   const handleDelete = () => {
-
+    deleteThreadMutation.mutate();
   }
 
   return (
     <>
       <div className={`flex py-2 px-4 alert-item border-b border-solid border-black border-opacity-25 ${thread.read ? 'bg-gray-500 bg-opacity-25' : ''}`} onContextMenu={show}>
-        <div className={`flex justify-between items-center gap-4 py-1 cursor-pointer w-full ${thread.read ? 'text-white' : 'text-accent-alt'}`}>
-          <div className='flex flex-col gap-0.5'>
+        <div className={`flex justify-between items-center gap-4 py-1 cursor-pointer w-full text-white ${thread.read ? '' : 'font-semibold'}`} onClick={goToThread}>
+          <div className='px-2'>
+            <Tag
+              className='flex-grow-0'
+              size='sm'
+              variant={thread.read ? 'outline' : 'solid'}
+              borderRadius='full'
+              bgColor={thread.read ? undefined : 'accent-alt'}
+            />
+          </div>
+          <div className='flex flex-col flex-grow gap-0.5'>
             <span className='font-semibold'>{thread.subject}</span>
             {participants.filter(u => u._id !== userId).map((user: IUser) => (
               <Tag key={user._id} size='lg' colorScheme='whiteAlpha' borderRadius='full'>
@@ -92,4 +148,4 @@ const MailThread: React.FC<IMailThread> = ({ thread, index, userId }) => {
   );
 }
 
-export default MailThread;
+export default MailItem;
