@@ -77,99 +77,101 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
   }
 
   return (
-    <Card>
-      <Card.Header
-        className='flex flex-col justify-center items-center cursor-pointer text-white'
-        onClick={() => router.push(`/profile/${user._id}`)}
-      >
-        <Avatar size='2xl' name={user.username} src={user.image} />
-        <span>{ user.username } <Tag variant='solid' colorScheme='blue'>{user.level}</Tag></span>
-      </Card.Header>
-      <Card.Content className='text-white mt-4'>
-        <div className='flex justify-center gap-5'>
-          <Button
-            className={user.messages.filter(thr => !thr.read).length > 0 ? 'text-accent' : 'text-accent-alt'}
-            variant='outline'
-            aria-label='View Mail'
-            colorScheme=''
-            size='sm'
-            leftIcon={<EmailIcon />}
-            onClick={() => router.push('/mail')}
-          >{user.messages.filter(thread => !thread.read).length}</Button>
-          <Button
-            className={user.alerts.filter(a => !a.read).length > 0 ? 'text-accent' : 'text-accent-alt'}
-            variant='outline'
-            aria-label='View Alerts'
-            colorScheme=''
-            size='sm'
-            leftIcon={<BellIcon />}
-            onClick={() => router.push('/alerts')}
-          >{user.alerts.filter(a => !a.read).length}</Button>
-        </div>
-        <div className='mt-4'>
-          <div className='mb-2'>
-            <span className='text-sm'>XP: {user.xp} / {neededXP(user.level)} </span> 
-            <Progress value={user.xp} min={0} max={neededXP(user.level)} size='sm' colorScheme='orange' hasStripe isAnimated />
+    <div className='pointer-events-auto'>
+      <Card>
+        <Card.Header
+          className='flex flex-col justify-center items-center cursor-pointer text-white'
+          onClick={() => router.push(`/profile/${user._id}`)}
+        >
+          <Avatar size='2xl' name={user.username} src={user.image} />
+          <span>{ user.username } <Tag variant='solid' colorScheme='blue'>{user.level}</Tag></span>
+        </Card.Header>
+        <Card.Content className='text-white mt-4'>
+          <div className='flex justify-center gap-5'>
+            <Button
+              className={user.messages.filter(thr => !thr.read).length > 0 ? 'text-accent' : 'text-accent-alt'}
+              variant='outline'
+              aria-label='View Mail'
+              colorScheme=''
+              size='sm'
+              leftIcon={<EmailIcon />}
+              onClick={() => router.push('/mail')}
+            >{user.messages.filter(thread => !thread.read).length}</Button>
+            <Button
+              className={user.alerts.filter(a => !a.read).length > 0 ? 'text-accent' : 'text-accent-alt'}
+              variant='outline'
+              aria-label='View Alerts'
+              colorScheme=''
+              size='sm'
+              leftIcon={<BellIcon />}
+              onClick={() => router.push('/alerts')}
+            >{user.alerts.filter(a => !a.read).length}</Button>
           </div>
-          <div className='mb-2'>
-            <span className='text-sm'>Health: {user.health}%</span>
-            <Progress value={user.health} size='sm' colorScheme='green' />
+          <div className='mt-4'>
+            <div className='mb-2'>
+              <span className='text-sm'>XP: {user.xp} / {neededXP(user.level)} </span> 
+              <Progress value={user.xp} min={0} max={neededXP(user.level)} size='sm' colorScheme='orange' hasStripe isAnimated />
+            </div>
+            <div className='mb-2'>
+              <span className='text-sm'>Health: {user.health}%</span>
+              <Progress value={user.health} size='sm' colorScheme='green' />
+            </div>
           </div>
-        </div>
-        <div className='flex justify-center mt-2'>
-          <Button
-            variant='solid'
-            colorScheme='green'
-            size='sm'
-            width='50%'
-            leftIcon={<GiHeartPlus />}
-            disabled={(user.health >= 100) || hasHealed}
-            onClick={handleHeal}
-          >
-            Heal
-          </Button>
-        </div>
-        {(!locationQuery.isLoading && !locationQuery.isError) && (
-          <div className='flex justify-between mt-4'>
-            <p>
-              <span className='cursor-pointer' onClick={() => router.push(`/region/${user.location}`)}>
-                {locationQuery.data.locationInfo.region_name}
-              </span>,&nbsp;
-              <span className='cursor-pointer' onClick={() => router.push(`/country/${locationQuery.data.locationInfo.owner_id}`)}>
-                {locationQuery.data.locationInfo.owner_name}
-              </span>
-            </p>
-            <span
-              className={`cursor-pointer flag-icon flag-icon-${locationQuery.data.locationInfo.owner_flag}`}
-              onClick={() => router.push(`/country/${locationQuery.data.locationInfo.owner_id}`)}
-            ></span>
+          <div className='flex justify-center mt-2'>
+            <Button
+              variant='solid'
+              colorScheme='green'
+              size='sm'
+              width='50%'
+              leftIcon={<GiHeartPlus />}
+              disabled={(user.health >= 100) || hasHealed}
+              onClick={handleHeal}
+            >
+              Heal
+            </Button>
           </div>
-        )}
-        <div className='mt-4'>
-          <List>
-            <ListItem className='flex justify-between'>
-              <span>Gold</span>
-              <p className='flex items-center'>
-                <span className='mr-2'>{user.gold.toFixed(2)}</span>
-                <i className='sot-icon sot-coin' />
-              </p>
-            </ListItem>
-            {(!walletQuery.isLoading && !walletQuery.isError) && (
-              <ListItem className='flex justify-between'>
-                <span>{walletQuery.data.walletInfo[user.country].currency}</span>
-                <span>
-                  {walletQuery.data.walletInfo[user.country].amount.toFixed(2)}
-                  <span
-                    className={`ml-2 cursor-pointer flag-icon flag-icon-${walletQuery.data.walletInfo[user.country].flag_code}`}
-                    onClick={() => router.push(`/country/${user.country}`)}
-                  ></span>
+          {(!locationQuery.isLoading && !locationQuery.isError) && (
+            <div className='flex justify-between mt-4'>
+              <p>
+                <span className='cursor-pointer' onClick={() => router.push(`/region/${user.location}`)}>
+                  {locationQuery.data.locationInfo.region_name}
+                </span>,&nbsp;
+                <span className='cursor-pointer' onClick={() => router.push(`/country/${locationQuery.data.locationInfo.owner_id}`)}>
+                  {locationQuery.data.locationInfo.owner_name}
                 </span>
+              </p>
+              <span
+                className={`cursor-pointer flag-icon flag-icon-${locationQuery.data.locationInfo.owner_flag}`}
+                onClick={() => router.push(`/country/${locationQuery.data.locationInfo.owner_id}`)}
+              ></span>
+            </div>
+          )}
+          <div className='mt-4'>
+            <List>
+              <ListItem className='flex justify-between'>
+                <span>Gold</span>
+                <p className='flex items-center'>
+                  <span className='mr-2'>{user.gold.toFixed(2)}</span>
+                  <i className='sot-icon sot-coin' />
+                </p>
               </ListItem>
-            )}
-          </List>
-        </div>
-      </Card.Content>
-    </Card>
+              {(!walletQuery.isLoading && !walletQuery.isError) && (
+                <ListItem className='flex justify-between'>
+                  <span>{walletQuery.data.walletInfo[user.country].currency}</span>
+                  <span>
+                    {walletQuery.data.walletInfo[user.country].amount.toFixed(2)}
+                    <span
+                      className={`ml-2 cursor-pointer flag-icon flag-icon-${walletQuery.data.walletInfo[user.country].flag_code}`}
+                      onClick={() => router.push(`/country/${user.country}`)}
+                    ></span>
+                  </span>
+                </ListItem>
+              )}
+            </List>
+          </div>
+        </Card.Content>
+      </Card>
+    </div>
   );
 }
 

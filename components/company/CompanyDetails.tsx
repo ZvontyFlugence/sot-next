@@ -1,4 +1,4 @@
-import { ICompany, IProductOffer } from "@/models/Company";
+import { ICompany, IJobOffer, IProductOffer } from "@/models/Company";
 import { IUser } from "@/models/User";
 import { refreshData, request, showToast } from "@/util/ui";
 import { Button } from "@chakra-ui/button";
@@ -100,6 +100,7 @@ const CompanyDetails: React.FC<ICompDetails> = ({ user, company, currency }) => 
 
   return (
     <div className='w-full'>
+      <div className='hidden md:block'>
       <Grid templateColumns='repeat(2, 1fr)' gap={12}>
         <GridItem>
           <Card>
@@ -176,6 +177,55 @@ const CompanyDetails: React.FC<ICompDetails> = ({ user, company, currency }) => 
           </Card>
         </GridItem>
       </Grid>
+      </div>
+      <div className='flex md:hidden flex-col justify-center items-center text-sm'>
+        <div className='bg-night shadow-md rounded py-2 px-4 text-white w-full'>
+          <h3 className='text-xl font-semibold text-accent h-brand'>Job Offers</h3>
+          {company.jobOffers.length > 0 && company.jobOffers.map((offer: IJobOffer, i: number) => (
+            <div key={i} className='flex items-center'>
+              <div className='flex flex-col flex-grow'>
+                <span className='text-base'>{offer.title}</span>
+                <span>Positions: {offer.quantity}</span>
+              </div>
+              <div className='flex-grow'>
+                <span>{offer.wage.toFixed(2)} {currency}</span>
+              </div>
+              <div>
+                <Button
+                  size='sm'
+                  variant='solid'
+                  colorScheme='green'
+                  isDisabled={!canApplyForJob}
+                  onClick={() => applyForJob(offer.id)}
+                >
+                  Apply
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className='bg-night shadow-md rounded mt-4 py-2 px-4 text-white w-full'>
+          <h3 className='text-xl font-semibold text-accent h-brand'>Product Offers</h3>
+          {company.productOffers.length > 0 && company.productOffers.map((offer: IProductOffer, i: number) => (
+            <div key={i} className='flex items-center'>
+              <div className='flex flex-col flex-grow'>
+                <span className='text-base'>
+                  <i className={ITEMS[offer.product_id].image} /> &nbsp;
+                  {ITEMS[offer.product_id].name}
+                </span>
+                <span>Quantity: {offer.quantity}</span>
+              </div>
+              <div className='flex-grow'>
+                <span>{offer.price.toFixed(2)} {currency}</span>
+              </div>
+              <div>
+                <Button variant='solid' colorScheme='blue' onClick={() => handleOpen(offer)}>Buy</Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {selected && (
         <Modal isOpen={isOpen} onClose={handleClose}>
           <ModalOverlay />

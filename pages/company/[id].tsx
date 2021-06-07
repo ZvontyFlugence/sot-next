@@ -25,7 +25,7 @@ export default function CompanyPage({ user, company, location_info, ceo_info, ..
   const [isManageMode, setManageMode] = useState(false);
   return (
     <Layout user={user}>
-      <div className='px-24'>
+      <div className='pt-2 px-2 md:pt-0 md:px-24'>
         <CompanyHeader
           company={company}
           locationInfo={location_info}

@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
-import { Avatar, Box, Button, HStack, Image, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
-import { ChevronDownIcon, CalendarIcon, TimeIcon } from '@chakra-ui/icons';
+import { Avatar, Box, Button, HStack, IconButton, Image, Menu, MenuButton, MenuDivider, MenuGroup, MenuItem, MenuList } from '@chakra-ui/react';
+import { ChevronDownIcon, CalendarIcon, TimeIcon, HamburgerIcon } from '@chakra-ui/icons';
 import { destroyCookie } from 'nookies';
 import { IUser } from '@/models/User';
 import { addMinutes, format } from 'date-fns';
@@ -50,68 +50,135 @@ const Nav: React.FC<INav> = ({ user }) => {
         </div>
       </div>
       {!user && (
-        <HStack className='flex flex-grow-4 justify-end max-w-max' spacing='24px'>
-          <Box className='cursor-pointer' onClick={() => router.push('/login')}>Login</Box>
-          <Box className='cursor-pointer' onClick={() => router.push('/register')}>Register</Box>
-        </HStack>
+        <>
+          <div className='hidden md:flex flex-grow-4 justify-end max-w-max'>
+            <HStack spacing='24px'>
+              <Box className='cursor-pointer' onClick={() => router.push('/login')}>Login</Box>
+              <Box className='cursor-pointer' onClick={() => router.push('/register')}>Register</Box>
+            </HStack>
+          </div>          
+          <div className='flex md:hidden flex-grow-4 jutify-end max-w-max'>
+            <Menu>
+              <MenuButton>
+                <HamburgerIcon className='text-xl' />
+              </MenuButton>
+              <MenuList bgColor='night'>
+                <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/login')}>Login</MenuItem>
+                <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/register')}>Register</MenuItem>
+              </MenuList>
+            </Menu>
+          </div>
+        </>
       )}
       {user && (
-        <HStack className='flex flex-grow-4 justify-end max-w-max h-brand' spacing='24px'>
-          <Menu>
-            <MenuButton className='hover:text-accent'>
-              <span className='mr-2'>My Places</span>
-              <ChevronDownIcon />
-            </MenuButton>
-            <MenuList bgColor='night'>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/home')}>My Home</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/companies')}>My Companies</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(getPartyLink())}>My Party</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(getNewsLink())}>My Newspaper</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(getUnitLink())}>My Army</MenuItem>
-            </MenuList>
-          </Menu>
-          <Menu>
-            <MenuButton className='hover:text-accent'>
-              <span className='mr-2'>Markets</span>
-              <ChevronDownIcon />
-            </MenuButton>
-            <MenuList bgColor='night'>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/markets/goods')}>Goods</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/markets/job')}>Jobs</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Exchange</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Companies</MenuItem>
-            </MenuList>
-          </Menu>
-          <Box className='cursor-pointer hover:text-accent'>Battles</Box>
-          <Menu>
-            <MenuButton className='hover:text-accent'>
-              <span className='mr-2'>Social</span>
-              <ChevronDownIcon />
-            </MenuButton>
-            <MenuList bgColor='night'>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>My Country</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Elections</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Rankings</MenuItem>
-            </MenuList>
-          </Menu>
-          <Box className='cursor-pointer hover:text-accent' onClick={() => router.push('/map')}>World Map</Box>
-          <Box>
-            <CalendarIcon />
-            <span className='ml-2'>{formattedDate}</span>
-          </Box>
-          <Box>
-            <TimeIcon />
-            <span className='ml-2'>{formattedTime}</span>
-          </Box>
-          <Menu>
-            <MenuButton as={Button} bgColor='night' _hover={{ color: 'accent' }} _active={{ color: 'accent' }} rightIcon={<ChevronDownIcon />}>Account</MenuButton>
-            <MenuList bgColor='night'>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(`/profile/${user._id}`)}>Profile</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/settings')}>Settings</MenuItem>
-              <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={logout}>Logout</MenuItem>
-            </MenuList>
-          </Menu>
-        </HStack>
+        <>
+          <div className='hidden md:flex flex-grow-4 justify-end max-w-max h-brand'>
+            <HStack spacing='24px'>
+              <Menu>
+                <MenuButton className='hover:text-accent'>
+                  <span className='mr-2'>My Places</span>
+                  <ChevronDownIcon />
+                </MenuButton>
+                <MenuList bgColor='night'>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/home')}>My Home</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/companies')}>My Companies</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(getPartyLink())}>My Party</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(getNewsLink())}>My Newspaper</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(getUnitLink())}>My Army</MenuItem>
+                </MenuList>
+              </Menu>
+              <Menu>
+                <MenuButton className='hover:text-accent'>
+                  <span className='mr-2'>Markets</span>
+                  <ChevronDownIcon />
+                </MenuButton>
+                <MenuList bgColor='night'>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/markets/goods')}>Goods</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/markets/job')}>Jobs</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Exchange</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Companies</MenuItem>
+                </MenuList>
+              </Menu>
+              <Box className='cursor-pointer hover:text-accent'>Battles</Box>
+              <Menu>
+                <MenuButton className='hover:text-accent'>
+                  <span className='mr-2'>Social</span>
+                  <ChevronDownIcon />
+                </MenuButton>
+                <MenuList bgColor='night'>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>My Country</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Elections</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Rankings</MenuItem>
+                </MenuList>
+              </Menu>
+              <Box className='cursor-pointer hover:text-accent' onClick={() => router.push('/map')}>World Map</Box>
+              <Box>
+                <CalendarIcon />
+                <span className='ml-2'>{formattedDate}</span>
+              </Box>
+              <Box>
+                <TimeIcon />
+                <span className='ml-2'>{formattedTime}</span>
+              </Box>
+              <Menu>
+                <MenuButton as={Button} bgColor='night' _hover={{ color: 'accent' }} _active={{ color: 'accent' }} rightIcon={<ChevronDownIcon />}>Account</MenuButton>
+                <MenuList bgColor='night'>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(`/profile/${user._id}`)}>Profile</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/settings')}>Settings</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={logout}>Logout</MenuItem>
+                </MenuList>
+              </Menu>
+            </HStack>
+          </div>
+          <div className='flex md:hidden flex-grow-4 jutify-end max-w-max'>
+            <Menu>
+              <MenuButton>
+                <HamburgerIcon className='text-xl' />
+              </MenuButton>
+              <MenuList bgColor='night'>
+                <MenuGroup title='My Places'>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/home')}>My Home</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/companies')}>My Companies</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(getPartyLink())}>My Party</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(getNewsLink())}>My Newspaper</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(getUnitLink())}>My Army</MenuItem>
+                </MenuGroup>
+                <MenuDivider />
+                <MenuGroup title='Markets'>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/markets/goods')}>Goods</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/markets/job')}>Jobs</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Exchange</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Companies</MenuItem>
+                </MenuGroup>
+                <MenuDivider />
+                <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Battles</MenuItem>
+                <MenuDivider />
+                <MenuGroup title='Social'>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>My Country</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Elections</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Rankings</MenuItem>
+                </MenuGroup>
+                <MenuDivider />
+                <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/map')}>World Map</MenuItem>
+                <MenuDivider />
+                <MenuGroup title='Account'>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(`/profile/${user._id}`)}>Profile</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/settings')}>Settings</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={logout}>Logout</MenuItem>
+                </MenuGroup>
+                <MenuDivider />
+                <MenuItem>
+                  <CalendarIcon />
+                  <span className='ml-2'>{formattedDate}</span>
+                </MenuItem>
+                <MenuItem>
+                  <TimeIcon />
+                  <span className='ml-2'>{formattedTime}</span>
+                </MenuItem>
+              </MenuList>
+            </Menu>
+          </div>
+        </>
       )}
     </div>
   );

@@ -53,7 +53,7 @@ const Dailies: React.FC<IDailies> = ({ user }) => {
   }
 
   return (
-    <div className='mt-4 px-24'>
+    <div className='mt-4 px-12 md:px-24'>
       <Card>
         <Card.Header className='text-xl font-semibold text-white h-brand'>Daily Tasks</Card.Header>
         <Card.Content className='text-white'>

@@ -239,6 +239,19 @@ const ShoutTabContent: React.FC<IShoutTab> = ({ scope, scope_id, user, setParent
     }
   }
 
+  const getDate = (timestamp: Date) => {
+    let now = new Date(Date.now());
+    let sameDay = format(addMinutes(timestamp, timestamp.getTimezoneOffset()), 'HH:mm');
+    let pastDay = format(addMinutes(timestamp, timestamp.getTimezoneOffset()), 'M/d/yy');
+
+    if (now.getUTCDate() !== timestamp.getUTCDate() && now.getUTCMonth() !== timestamp.getUTCDate()
+      && now.getUTCFullYear() !== timestamp.getUTCFullYear()) {
+        return sameDay;
+    }
+
+    return pastDay;
+  }
+
   return (
     <>
       {query.isSuccess && query.data?.shouts.length === 0 && (
@@ -248,7 +261,7 @@ const ShoutTabContent: React.FC<IShoutTab> = ({ scope, scope_id, user, setParent
         <div className='flex flex-col gap-4'>
           {query.data?.shouts.map((shout, i) => (
             <div key={i} className='flex flex-col gap-1'>
-              <div className='flex justify-between'>
+              <div className='flex justify-between items-center'>
                 <div className='flex gap-2 items-center cursor-pointer w-max' onClick={() => router.push(`/profile/${shout.author}`)}>
                   <Avatar
                     boxSize='2.0rem'
@@ -260,7 +273,7 @@ const ShoutTabContent: React.FC<IShoutTab> = ({ scope, scope_id, user, setParent
                   </span>
                 </div>
                 <span>
-                  {format(addMinutes(shout.timestamp, new Date(shout.timestamp).getTimezoneOffset()), 'MM/dd/yyyy HH:mm')}
+                  {getDate(new Date(shout.timestamp))}
                 </span>
               </div>
               <div className='py-2 px-4 rounded' style={{ backdropFilter: 'brightness(90%)' }}>
@@ -285,7 +298,7 @@ const ShoutTabContent: React.FC<IShoutTab> = ({ scope, scope_id, user, setParent
                 <div className='flex flex-col w-5/6 mx-auto'>
                   {replies.map((reply, i) => (
                     <div key={i} className='flex flex-col gap-1'>
-                      <div className='flex justify-between'>
+                      <div className='flex justify-between items-center'>
                         <div className='flex gap-2 items-center cursor pointer w-max' onClick={() => router.push(`/profile/${reply.author}`)}>
                           <Avatar
                             boxSize='1.8rem'
@@ -297,7 +310,7 @@ const ShoutTabContent: React.FC<IShoutTab> = ({ scope, scope_id, user, setParent
                           </span>
                         </div>
                         <span>
-                          {format(addMinutes(reply.timestamp, new Date(reply.timestamp).getTimezoneOffset()), 'MM/dd/yyyy HH:mm')}
+                          {getDate(new Date(reply.timestamp))}
                         </span>
                       </div>
                       <div className='py-2 px-4 rounded' style={{ backdropFilter: 'brightness(90%)' }}>

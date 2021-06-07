@@ -94,69 +94,128 @@ export default function Home({ user, job, ...props }: IHomeProps) {
   return user ? (
     <Layout user={user}>
       <h1 className='text-2xl pl-4 font-semibold text-accent'>My Home</h1>
-      <Grid className='mt-8 pl-8 pr-24' templateColumns='repeat(5, 1fr)' gap={12}>
-        <GridItem colSpan={2}>
-          <Card>
-            <Card.Header className='text-xl font-semibold text-white h-brand'>Gym</Card.Header>
-            <Card.Content className='text-white'>
-              <p>Current Strength: {user.strength}</p>
-              <Button
-                className='mt-2'
-                variant='solid'
-                colorScheme='blue'
-                isDisabled={hasTrained || user.health < 10}
-                onClick={handleTrain}
-              >
-                Train
-              </Button>
-            </Card.Content>
-          </Card>
-        </GridItem>
-        <GridItem colStart={3} colEnd={6}>
-          <Card>
-            <Card.Header className='text-xl font-semibold text-white h-brand'>Work</Card.Header>
-            <Card.Content className='text-white'>
-              {job ? (
-                <div className='flex justify-between items-center mt-2'>
-                  <div className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/company/${job._id}`)}>
-                    <Avatar src={job.image} name={job.name} />
-                    {job.name}
-                    <i className={COMPANY_TYPES[job.type].css} title={COMPANY_TYPES[job.type].text} />
+      <div className='hidden md:block'>
+        <Grid className='mt-8 pl-8 pr-24' templateColumns='repeat(5, 1fr)' gap={12}>
+          <GridItem colSpan={2}>
+            <Card>
+              <Card.Header className='text-xl font-semibold text-white h-brand'>Gym</Card.Header>
+              <Card.Content className='text-white'>
+                <p>Current Strength: {user.strength}</p>
+                <Button
+                  className='mt-2'
+                  variant='solid'
+                  colorScheme='blue'
+                  isDisabled={hasTrained || user.health < 10}
+                  onClick={handleTrain}
+                >
+                  Train
+                </Button>
+              </Card.Content>
+            </Card>
+          </GridItem>
+          <GridItem colStart={3} colEnd={6}>
+            <Card>
+              <Card.Header className='text-xl font-semibold text-white h-brand'>Work</Card.Header>
+              <Card.Content className='text-white'>
+                {job ? (
+                  <div className='flex justify-between items-center mt-2'>
+                    <div className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/company/${job._id}`)}>
+                      <Avatar src={job.image} name={job.name} />
+                      {job.name}
+                      <i className={COMPANY_TYPES[job.type].css} title={COMPANY_TYPES[job.type].text} />
+                    </div>
+                    <Button
+                      variant='solid'
+                      colorScheme='blue'
+                      isDisabled={hasWorked || user.health < 10}
+                      onClick={handleWork}
+                    >
+                      Work
+                    </Button>
                   </div>
-                  <Button
-                    variant='solid'
-                    colorScheme='blue'
-                    isDisabled={hasWorked || user.health < 10}
-                    onClick={handleWork}
-                  >
-                    Work
-                  </Button>
+                ): (
+                  <div className='flex flex-col justify-center items-center'>
+                    <p>You do not have a job</p>
+                    <Button
+                      className='mt-2'
+                      variant='solid'
+                      colorScheme='green'
+                      onClick={() => router.push('/markets/job')}
+                    >
+                      Find Job
+                    </Button>
+                  </div>
+                )}
+              </Card.Content>
+            </Card>
+          </GridItem>
+          <GridItem colSpan={5}>
+            <Card>
+              <Card.Header className='text-xl font-semibold text-white h-brand'>Inventory</Card.Header>
+              <Card.Content className='text-white'>
+                <Inventory inventory={user.inventory} displayOnly />
+              </Card.Content>
+            </Card>
+          </GridItem>
+        </Grid>
+      </div>
+      <div className='flex md:hidden flex-col gap-4 mt-2 px-4'>
+        <Card>
+          <Card.Header className='text-xl font-semibold text-white h-brand'>Gym</Card.Header>
+          <Card.Content className='text-white'>
+            <p>Current Strength: {user.strength}</p>
+            <Button
+              className='mt-2'
+              variant='solid'
+              colorScheme='blue'
+              isDisabled={hasTrained || user.health < 10}
+              onClick={handleTrain}
+            >
+              Train
+            </Button>
+          </Card.Content>
+        </Card>
+        <Card>
+          <Card.Header className='text-xl font-semibold text-white h-brand'>Work</Card.Header>
+          <Card.Content className='text-white'>
+            {job ? (
+              <div className='flex justify-between items-center mt-2'>
+                <div className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/company/${job._id}`)}>
+                  <Avatar src={job.image} name={job.name} />
+                  {job.name}
+                  <i className={COMPANY_TYPES[job.type].css} title={COMPANY_TYPES[job.type].text} />
                 </div>
-              ): (
-                <div className='flex flex-col justify-center items-center'>
-                  <p>You do not have a job</p>
-                  <Button
-                    className='mt-2'
-                    variant='solid'
-                    colorScheme='green'
-                    onClick={() => router.push('/markets/job')}
-                  >
-                    Find Job
-                  </Button>
-                </div>
-              )}
-            </Card.Content>
-          </Card>
-        </GridItem>
-        <GridItem colSpan={5}>
-          <Card>
-            <Card.Header className='text-xl font-semibold text-white h-brand'>Inventory</Card.Header>
-            <Card.Content className='text-white'>
-              <Inventory inventory={user.inventory} displayOnly />
-            </Card.Content>
-          </Card>
-        </GridItem>
-      </Grid>
+                <Button
+                  variant='solid'
+                  colorScheme='blue'
+                  isDisabled={hasWorked || user.health < 10}
+                  onClick={handleWork}
+                >
+                  Work
+                </Button>
+              </div>
+            ): (
+              <div className='flex flex-col justify-center items-center'>
+                <p>You do not have a job</p>
+                <Button
+                  className='mt-2'
+                  variant='solid'
+                  colorScheme='green'
+                  onClick={() => router.push('/markets/job')}
+                >
+                  Find Job
+                </Button>
+              </div>
+            )}
+          </Card.Content>
+        </Card>
+        <Card>
+          <Card.Header className='text-xl font-semibold text-white h-brand'>Inventory</Card.Header>
+          <Card.Content className='text-white'>
+            <Inventory inventory={user.inventory} displayOnly />
+          </Card.Content>
+        </Card>
+      </div>
     </Layout>
   ) : null;
 }

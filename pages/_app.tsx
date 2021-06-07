@@ -3,9 +3,11 @@ import Head from 'next/head';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import colors from '../util/theme';
-import '../styles/globals.css';
 import 'flag-icon-css/css/flag-icon.min.css';
 import 'react-contexify/dist/ReactContexify.css';
+import 'react-quill/dist/quill.snow.css';
+
+import '../styles/globals.css';
 
 const queryClient = new QueryClient();
 const theme = extendTheme({ colors });

@@ -61,7 +61,7 @@ export default function Login(props: ILoginProps) {
   return (
     <div className='h-full w-full overflow-hidden'>
       <Nav />
-      <Center h='75vh'>
+      <Center h='75vh' w='100%' className='px-4 md:px-0'>
         <Container className='bg-night pb-4 rounded text-white'>
           <h1 className='text-2xl text-center font-bold mb-4 mt-8'>Login</h1>
           <Box>

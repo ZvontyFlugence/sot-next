@@ -16,15 +16,22 @@ export default function Dashboard({ user, ...props }: IDashboardProps) {
   return user ? (
     <Layout user={user}>
       <h1 className='text-2xl text-accent pl-4 font-semibold'>Dashboard</h1>
-      <SimpleGrid className='pl-8 pr-12' columns={2}>
-        <Box>
-          <Dailies user={user} />
-          <News user={user} />
-        </Box>
-        <Box>
-          <Shouts user={user} />
-        </Box>
-      </SimpleGrid>
+      <div className='hidden md:block'>
+        <SimpleGrid className='pl-8 pr-12' columns={2}>
+          <Box>
+            <Dailies user={user} />
+            <News user={user} />
+          </Box>
+          <Box>
+            <Shouts user={user} />
+          </Box>
+        </SimpleGrid>
+      </div>
+      <div className='block md:hidden'>
+        <Dailies user={user} />
+        <News user={user} />
+        <Shouts user={user} />
+      </div>
     </Layout>
   ): null;
 }

@@ -33,7 +33,7 @@ export interface IActivityInfo {
 const Profile: React.FC<IProfile> = ({ profile, ...props }) => {
   return props.user ? (
     <Layout user={props.user}>
-      <div className='px-24'>
+      <div className='hidden md:block px-24'>
         <ProfileHeader user={props.user} profile={profile} locationInfo={props.location_info} />
         <div className='flex gap-4 mt-4'>
           <div className='w-1/4'>
@@ -48,6 +48,30 @@ const Profile: React.FC<IProfile> = ({ profile, ...props }) => {
           <div className='w-3/4 flex flex-col gap-4'>
             <div className='bg-night text-white p-4 shadow-md rounded'>
               <p className='h-brand text-accent text-xl'>Stats & Achievements</p>
+              <ProfileStats profile={profile} />
+            </div>
+            <div className='bg-night text-white p-4 shadow-md rounded'>
+              <p className='h-brand text-accent text-xl'>Friends List</p>
+              <FriendsList friends={props.friends_info} />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className='block md:hidden px-2'>
+        <ProfileHeader user={props.user} profile={profile} locationInfo={props.location_info} />
+        <div className='flex gap-2 mt-4'>
+          <div className='w-1/2'>
+            <ProfileActivities
+              profile={profile}
+              jobInfo={props.job_info}
+              partyInfo={props.party_info}
+              armyInfo={props.army_info}
+              newsInfo={props.news_info}
+            />
+          </div>
+          <div className='w-1/2 flex flex-col gap-4'>
+            <div className='bg-night text-white p-4 shadow-md rounded'>
+              <p className='h-brand text-accent text-xl'>Stats</p>
               <ProfileStats profile={profile} />
             </div>
             <div className='bg-night text-white p-4 shadow-md rounded'>

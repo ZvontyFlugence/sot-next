@@ -1,23 +1,23 @@
-import Layout from "@/components/Layout";
-import Select from "@/components/Select";
-import { ICompany } from "@/models/Company";
-import { IUser } from "@/models/User";
-import { getCurrentUser } from "@/util/auth";
-import { COMPANY_TYPES } from "@/util/constants";
-import { showToast } from "@/util/ui";
-import { Button } from "@chakra-ui/button";
-import { FormControl, FormLabel } from "@chakra-ui/form-control";
-import { useDisclosure } from "@chakra-ui/hooks";
-import { Image } from "@chakra-ui/image";
-import { Input } from "@chakra-ui/input";
-import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from "@chakra-ui/modal";
-// import { Select } from "@chakra-ui/select";
-import { Spinner } from "@chakra-ui/spinner";
-import { Table, TableCaption, Tbody, Td, Th, Thead, Tr } from "@chakra-ui/table";
-import { useToast } from "@chakra-ui/toast";
-import { useRouter } from "next/router";
+import Layout from '@/components/Layout';
+import Select from '@/components/Select';
+import { ICompany } from '@/models/Company';
+import { IUser } from '@/models/User';
+import { getCurrentUser } from '@/util/auth';
+import { COMPANY_TYPES } from '@/util/constants';
+import { showToast } from '@/util/ui';
+import { Button } from '@chakra-ui/button';
+import { FormControl, FormLabel } from '@chakra-ui/form-control';
+import { useDisclosure } from '@chakra-ui/hooks';
+import { Image } from '@chakra-ui/image';
+import { Input } from '@chakra-ui/input';
+import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from '@chakra-ui/modal';
+import { Spinner } from '@chakra-ui/spinner';
+import { Table, TableCaption, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/table';
+import { useToast } from '@chakra-ui/toast';
+import { Document } from 'mongoose';
+import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
-import { useState } from "react";
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 
 interface IMyCompaniesProps {
@@ -108,7 +108,7 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
     <>
     <Layout user={user}>
       <h1 className='text-2xl font-semibold pl-4 text-accent'>My Companies</h1>
-      <div className='mt-4 mx-12 bg-night shadow-md rounded text-white'>
+      <div className='hidden md:block mt-4 mx-12 bg-night shadow-md rounded text-white'>
         {isLoading && <Spinner color='accent' size='xl' />}
         {(!isLoading && !isError) && (
           <Table variant='simple' size='md'>
@@ -151,6 +151,44 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
               }
             </Tbody>
           </Table>
+        )}
+      </div>
+      <div className='flex md:hidden flex-col justify-center items-stretch mt-4 mx-2'>
+        {isLoading && <Spinner color='accent' size='xl' />}
+        {(!isLoading && !isError) && (
+          <>
+            <Button
+              variant='outline'
+              color='accent-alt'
+              borderColor='accent-alt'
+              _hover={{ bg: 'accent-alt', color: 'white' }}
+              onClick={onOpen}
+            >
+              Create New Company
+            </Button>
+
+            <div className='mt-4'>
+              {data.companies.map((comp: any) => (
+                <div className='flex flex-row items-center cursor-pointer py-2 px-4 bg-night shadow-md rounded text-white' onClick={() => router.push(`/company/${comp._doc._id}`)}>
+                  <Image boxSize='50px' src={comp._doc.image} alt='' />
+                  <div className='flex flex-col ml-2'>                    
+                    <span className='text-lg'>{comp._doc.name}</span>
+                    <div className='flex flex-row gap-2'>
+                      <p>
+                        <span className='mr-2'>{COMPANY_TYPES[comp._doc.type].text}</span>
+                        <i className={COMPANY_TYPES[comp._doc.type].css} />
+                      </p>
+                      <p>
+                        <span>{comp.location_info?.region_name}</span>,&nbsp;
+                        <span>{comp.location_info?.owner_name}</span>
+                        <span className={`ml-4 flag-icon flag-icon-${comp.location_info?.owner_flag}`}></span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </Layout>
