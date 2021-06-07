@@ -6,14 +6,16 @@ export interface INewspaper extends Document {
   image: string,
   author: number,
   articles: IArticle[],
-  subscribers: number,
+  subscribers: number[],
 }
 
 export interface IArticle {
   id: string,
   title: string,
-  likes: number,
+  likes: number[],
   text: string,
+  publishDate: Date,
+  published: boolean,
 }
 
 const NewspaperSchema = new Schema({
@@ -22,7 +24,7 @@ const NewspaperSchema = new Schema({
   image: { type: String, default: process.env.DEFAULT_IMG },
   author: { type: Number, required: true },
   articles: { type: Array, default: [] },
-  subscribers: { type: Number, default: 0 },
+  subscribers: { type: Array, default: [] },
 });
 
 let Newspaper: Model<INewspaper> | null;
