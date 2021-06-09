@@ -24,7 +24,7 @@ const NewspaperPage: React.FC<INewsPage> = ({ user, newspaper, ...props }) => {
 
   return (
     <Layout user={user}>
-      <div className='flex flex-col gap-4 items-center justify-center px-24'>
+      <div className='flex flex-col gap-4 items-center pt-2 px-2 md:pt-0 md:px-24'>
         <NewsHeader
           userId={user._id}
           newspaper={newspaper}

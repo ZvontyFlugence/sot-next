@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import Newspaper, { INewspaper } from "@/models/Newspaper";
 import { IUser } from "@/models/User";
-import { UserActions } from "@/util/actions";
+import { NewspaperActions } from "@/util/actions";
 import { jsonify } from "@/util/apiHelpers";
 import { getCurrentUser } from "@/util/auth";
 import { refreshData, request, showToast } from "@/util/ui";
@@ -54,19 +54,19 @@ const WriteArticlePage: React.FC<IWriteArticlePage> = ({ user, newspaper, ...pro
 
   const handlePublish = () => {
     let payload = {
-      action: UserActions.PUBLISH_ARTICLE,
+      action: NewspaperActions.PUBLISH_ARTICLE,
       data: {
         news_id: newspaper._id,
-        title: articleName,
-        content: editorValue,
-        country: user && user.country,
-        published: true,
-        publishDate: new Date(Date.now()),
+        article: {
+          title: articleName,
+          content: editorValue,
+          country: user && user.country,
+        },
       },
     };
 
     request({
-      url: '/api/newspaper/doAction',
+      url: '/api/newspapers/doAction',
       method: 'POST',
       payload,
       token: cookies.token,
@@ -76,6 +76,7 @@ const WriteArticlePage: React.FC<IWriteArticlePage> = ({ user, newspaper, ...pro
         setArticleName('');
         setEditorValue(EMPTY_DELTA);
         refreshData(router);
+        router.push(`/newspaper/${newspaper._id}`);
       } else {
         showToast(toast, 'error', 'Publish Article Failed', data?.error);
       }
@@ -84,17 +85,18 @@ const WriteArticlePage: React.FC<IWriteArticlePage> = ({ user, newspaper, ...pro
 
   const handleSave = () => {
     let payload = {
-      action: UserActions.SAVE_ARTICLE,
+      action: NewspaperActions.SAVE_ARTICLE,
       data: {
         news_id: newspaper._id,
-        title: articleName,
-        content: editorValue,
-        published: false,
+        article: {
+          title: articleName,
+          content: editorValue,
+        },        
       },
     };
 
     request({
-      url: '/api/newspaper/doAction',
+      url: '/api/newspapers/doAction',
       method: 'POST',
       payload,
       token: cookies.token,
@@ -104,6 +106,7 @@ const WriteArticlePage: React.FC<IWriteArticlePage> = ({ user, newspaper, ...pro
         setEditorValue(EMPTY_DELTA);
         setArticleName('');
         refreshData(router);
+        router.push(`/newspaper/${newspaper._id}`);
       } else {
         showToast(toast, 'error', 'Save Article Failed', data?.error);
       }
@@ -112,30 +115,30 @@ const WriteArticlePage: React.FC<IWriteArticlePage> = ({ user, newspaper, ...pro
 
   return user ? (
     <Layout user={user}>
-      <div className='flex justify-between items-center pr-8'>
+      <div className='flex justify-between items-center px-2 md:px-0 md:pr-8'>
         <h1 className='text-2xl text-accent font-semibold'>Write Article</h1>
         <div className='flex gap-4'>
           <Button size='sm' variant='solid' colorScheme='blue' onClick={handlePublish}>Publish</Button>
-          <Button size='sm' variant='solid' colorScheme='green' onClick={handleSave}>Save</Button>
+          <Button size='sm' variant='solid' colorScheme='green' onClick={handleSave}>Save Draft</Button>
         </div>
       </div>
-      <div className='mt-8 mr-8 bg-night pt-2 pb-3 px-4 min-h-max rounded shadow-md'>
-      <div>
-        <FormControl>
-          <FormLabel className='text-white'>Article Name</FormLabel>
-          <Input type='text' value={articleName} onChange={e => setArticleName(e.target.value)} />
-        </FormControl>
-      </div>
-      <div className='mt-4'>        
-        <ReactQuill
-          className='h-max rounded shadow-md text-white'
-          theme='snow'
-          modules={modules}
-          formats={formats}
-          value={editorValue}
-          onChange={handleEditorChange}
-        />
-      </div>
+      <div className='mt-8 mx-2 md:mx-0 md:mr-8 bg-night pt-2 pb-3 px-4 min-h-max rounded shadow-md'>
+        <div className='text-white'>
+          <FormControl>
+            <FormLabel>Article Name</FormLabel>
+            <Input type='text' value={articleName} onChange={e => setArticleName(e.target.value)} />
+          </FormControl>
+        </div>
+        <div className='mt-4'>        
+          <ReactQuill
+            className='h-max rounded shadow-md text-white'
+            theme='snow'
+            modules={modules}
+            formats={formats}
+            value={editorValue}
+            onChange={handleEditorChange}
+          />
+        </div>
       </div>
     </Layout>
   ) : null;

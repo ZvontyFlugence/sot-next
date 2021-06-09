@@ -3,7 +3,6 @@ export const UserActions = {
   APPLY_JOB: 'apply_job',
   BUY_ITEM: 'buy_item',
   COLLECT_REWARDS: 'collect_rewards',
-  SAVE_ARTICLE: 'save_article',
   CREATE_NEWS: 'create_news',
   CREATE_THREAD: 'create_thread',
   DECLINE_FR: 'decline_fr',
@@ -14,7 +13,6 @@ export const UserActions = {
   HEAL: 'heal',
   LEVEL_UP: 'level_up',
   LIKE_SHOUT: 'like_shout',
-  PUBLISH_ARTICLE: 'publish_article',
   READ_ALERT: 'read_alert',
   READ_THREAD: 'read_thread',
   REMOVE_FRIEND: 'remove_friend',
@@ -50,6 +48,7 @@ export const CompanyActions = {
 };
 
 export const NewspaperActions = {
-  SAVE_ARTICLE: 'save_article',
+  EDIT_ARTIClE: 'edit_article',
   PUBLISH_ARTICLE: 'publish_article',
+  SAVE_ARTICLE: 'save_article',  
 };

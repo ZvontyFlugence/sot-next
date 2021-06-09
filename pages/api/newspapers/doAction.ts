@@ -11,8 +11,6 @@ interface IPublishArticleParams {
     title: string,
     content: string,
     country: number,
-    published: boolean,
-    publishDate: Date,
   },
 }
 
@@ -20,9 +18,21 @@ interface ISaveArticleParams {
   user_id?: number,
   news_id: number,
   article: {
+    id?: string,
+    title: string,
+    content: string,
+  },
+}
+
+interface IEditArticleParams {
+  user_id?: number,
+  news_id: number,
+  article: {
+    id: string,
     title: string,
     content: string,
     published: boolean,
+    publishDate?: Date,
   },
 }
 
@@ -36,6 +46,11 @@ interface INewspaperActionResult {
   },
 }
 
+interface IRequestBody {
+  action: string,
+  data?: IPublishArticleParams | ISaveArticleParams | IEditArticleParams
+}
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   let validation_res = await validateToken(req, res);
   if (validation_res?.error)
@@ -44,11 +59,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   switch (req.method) {
     case 'POST': {
       let { user_id } = validation_res;
-      let { action, data } = req.body;
+      let { action, data } = JSON.parse(req.body) as IRequestBody;
       if (data)
         data.user_id = user_id;
 
       switch (action) {
+        case NewspaperActions.EDIT_ARTIClE: {
+          let result: INewspaperActionResult = await edit_article(data as IEditArticleParams);
+          return res.status(result.status_code).json(result.payload);
+        }
         case NewspaperActions.PUBLISH_ARTICLE: {
           let result: INewspaperActionResult = await publish_article(data as IPublishArticleParams);
           return res.status(result.status_code).json(result.payload);
@@ -73,48 +92,28 @@ async function publish_article(data: IPublishArticleParams): Promise<INewspaperA
   else if (newspaper.author !== data.user_id)
     return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
 
-  let article_id: string = '';
-  let updates: { articles: IArticle[] };
-  if (!data.article.id) {
-    try {
-      const { randomBytes } = await import('crypto');
-      randomBytes(10, (err, buf) => {
-        if (err) throw err;
-        article_id = buf.toString('hex');
-      });
-    } catch (e) {
-      return { status_code: 500, payload: { success: false, error: 'Failed to Generate Article ID' } };
-    }
-
-    updates = {
-      articles: [...newspaper.articles, {
-        id: article_id,
-        title: data.article.title,
-        text: data.article.content,
-        published: true,
-        publishDate: data.article.publishDate,
-        likes: [] as number[],
-      }],
-    };
-  } else {
-    let index: number = newspaper.articles.findIndex(article => article.id === data.article.id);
-    if (index > -1) {
-      newspaper.articles.splice(index, 1, {
-        id: data.article.id,
-        title: data.article.title,
-        text: data.article.content,
-        published: true,
-        publishDate: data.article.publishDate,
-        likes: [] as number[],
-      });
-    } else {
-      return { status_code: 200, payload: { success: false, error: 'Article Not Found' } };
-    }
+  try {
+    const { randomBytes } = await import('crypto');
+    const buf = randomBytes(10);
+    data.article.id = buf.toString('hex');
+  } catch (e) {
+    return { status_code: 500, payload: { success: false, error: 'Failed to Generate Article ID' } };
   }
+
+  let updates = {
+    articles: [...newspaper.articles, {
+      id: data.article.id,
+      title: data.article.title,
+      text: data.article.content,
+      published: true,
+      publishDate: new Date(Date.now()),
+      likes: [] as number[],
+    }],
+  };
 
   let updated = await newspaper.updateOne({ $set: updates }).exec();
   if (updated)
-    return { status_code: 200, payload: { success: true, message: 'Article Published', article: article_id } };
+    return { status_code: 200, payload: { success: true, message: 'Article Published', article: data.article.id } };
   
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
@@ -125,6 +124,59 @@ async function save_article(data: ISaveArticleParams): Promise<INewspaperActionR
     return { status_code: 404, payload: { success: false, error: 'Newspaper Not Found' } };
   else if (newspaper.author !== data.user_id)
     return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
+
+    try {
+      const { randomBytes } = await import('crypto');
+      const buf = randomBytes(10);
+      data.article.id = buf.toString('hex');
+    } catch (e) {
+      return { status_code: 500, payload: { success: false, error: 'Failed to Generate Article ID' } };
+    }
+
+  let updates = {
+    articles: [...newspaper.articles, {
+      id: data.article.id,
+      title: data.article.title,
+      text: data.article.content,
+      published: false,
+      publishDate: null,
+      likes: [] as number[],
+    } as IArticle],
+  };
+
+  let updated = newspaper.updateOne({ $set: updates }).exec();
+  if (updated)
+    return { status_code: 200, payload: { success: true, message: 'Article Saved as Draft' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function edit_article(data: IEditArticleParams): Promise<INewspaperActionResult> {
+  let newspaper: INewspaper = await Newspaper.findOne({ _id: data.news_id }).exec();
+  if (!newspaper)
+    return { status_code: 404, payload: { success: false, error: 'Newspaper Not Found' } };
+  else if (newspaper.author !== data.user_id)
+    return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
+
+  let articleIndex = newspaper.articles.findIndex(a => a.id === data.article.id);
+  if (articleIndex === -1)
+    return { status_code: 404, payload: { success: false, error: 'Article Not Found' } };
+
+  let article = newspaper.articles[articleIndex];
+  newspaper.articles[articleIndex] = {
+    ...article,
+    title: data.article.title,
+    text: data.article.content,
+    published: data.article.published,
+  } as IArticle;
+
+  if (data.article.publishDate)
+    newspaper.articles[articleIndex].publishDate = data.article.publishDate;
+
+  let updates = { articles: [...newspaper.articles] };
+  let updated = await newspaper.updateOne({ $set: updates }).exec();
+  if (updated)
+    return { status_code: 200, payload: { success: true, message: 'Article Edited' } };
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
