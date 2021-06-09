@@ -157,34 +157,59 @@ const ManageEmployees: React.FC<IManageEmployees> = ({ employees, company_id, ..
       {employees.length === 0 ? (
         <p>Company doesn't have any employees</p>
       ) : (
-        <Table>
-          <Thead>
-            <Tr>
-              <Th color='white'>Employee</Th>
-              <Th color='white'>Title</Th>
-              <Th color='white'>Wage</Th>
-              <Th color='white'>Actions</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {isSuccess && data.employeeInfo && data.employeeInfo.map((employee: IEmployeeInfo, i: number) => (
-              <Tr key={i}>
-                <Td className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/profile/${employee.user_id}`)}>
+        <>
+          <div className='hidden md:block'>
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th color='white'>Employee</Th>
+                  <Th color='white'>Title</Th>
+                  <Th color='white'>Wage</Th>
+                  <Th color='white'>Actions</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {isSuccess && data.employeeInfo && data.employeeInfo.map((employee: IEmployeeInfo, i: number) => (
+                  <Tr key={i}>
+                    <Td className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/profile/${employee.user_id}`)}>
+                      <Avatar src={employee.image} name={employee.name} />
+                      {employee.name}
+                    </Td>
+                    <Td>{employee.title}</Td>
+                    <Td>{employee.wage.toFixed(2)} {props.currency}</Td>
+                    <Td>
+                      <div className='flex items-center gap-4'>
+                        <Button variant='solid' colorScheme='blue' onClick={() => handleOpenEdit(employee)}>Edit</Button>
+                        <Button variant='solid' colorScheme='red' onClick={() => handleOpenDelete(employee)}>Fire</Button>
+                      </div>
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </div>
+          <div className='flex md:hidden flex-col items-center gap-4 w-full'>
+            <h3 className='text-xl font-semibold text-accent h-brand'>Employees</h3>
+            {isSuccess && data?.employeeInfo && data?.employeeInfo.map((employee: IEmployeeInfo, i: number) => (
+              <div key={i} className='flex items-center gap-2 w-full'>
+                <div onClick={() => router.push(`/profile/${employee.user_id}`)}>
                   <Avatar src={employee.image} name={employee.name} />
-                  {employee.name}
-                </Td>
-                <Td>{employee.title}</Td>
-                <Td>{employee.wage.toFixed(2)} {props.currency}</Td>
-                <Td>
-                  <div className='flex items-center gap-4'>
-                    <Button variant='solid' colorScheme='blue' onClick={() => handleOpenEdit(employee)}>Edit</Button>
-                    <Button variant='solid' colorScheme='red' onClick={() => handleOpenDelete(employee)}>Fire</Button>
-                  </div>
-                </Td>
-              </Tr>
+                </div>
+                <div className='flex flex-col gap-2 flex-grow'>
+                  <span className='text-base' onClick={() => router.push(`/profile/${employee.user_id}`)}>
+                    {employee.name}
+                  </span>
+                  <span className='ml-2'>{employee.title}</span>
+                  <span className='ml-2'>Wage: {employee.wage.toFixed(2)} {props.currency}</span>
+                </div>
+                <div className='flex flex-col items-center gap-2'>
+                  <Button size='sm' colorScheme='blue' onClick={() => handleOpenEdit(employee)}>Edit</Button>
+                  <Button size='sm' colorScheme='red' onClick={() => handleOpenDelete(employee)}>Delete</Button>
+                </div>
+              </div>
             ))}
-          </Tbody>
-        </Table>
+          </div>
+        </>
       )}
 
       {/* Edit Employee Modal */}

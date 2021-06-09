@@ -166,38 +166,60 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
 
   return (
     <div className='flex flex-col'>
-      <div className='flex justify-end'>
+      <div className='hidden md:flex justify-end'>
         <Button variant='solid' colorScheme='green' onClick={onOpenCreate}>Create Job Offer</Button>
+      </div>
+      <div className='flex md:hidden justify-end mb-2'>
+        <Button size='sm' colorScheme='green' onClick={onOpenCreate}>Create Job Offer</Button>
       </div>
       {(!jobOffers || jobOffers.length === 0) ? (
         <p>Company has no job offers.</p>
       ) : (
-        <div>
-          <p className='text-xl font-semibold text-center mb-4 h-brand text-accent'>Active Offers</p>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th color='white'>Position Title</Th>
-                <Th color='white'>Available Positions</Th>
-                <Th color='white'>Position Wage</Th>
-                <Th color='white'>Actions</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {jobOffers.map((offer, i) => (
-                <Tr key={i}>
-                  <Td>{offer.title}</Td>
-                  <Td>{offer.quantity}</Td>
-                  <Td>{offer.wage.toFixed(2)} {currency}</Td>
-                  <Td className='flex gap-4'>
-                    <Button variant='solid' colorScheme='blue' onClick={() => handleOpen(i, 'edit')}>Edit</Button>
-                    <Button variant='solid' colorScheme='red' onClick={() => handleOpen(i, 'delete')}>Delete</Button>
-                  </Td>
+        <>
+          <p className='text-xl font-semibold text-center mb-2 md:mb-4 h-brand text-accent'>Active Offers</p>
+          <div className='hidden md:block'>
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th color='white'>Position Title</Th>
+                  <Th color='white'>Available Positions</Th>
+                  <Th color='white'>Position Wage</Th>
+                  <Th color='white'>Actions</Th>
                 </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </div>
+              </Thead>
+              <Tbody>
+                {jobOffers.map((offer, i) => (
+                  <Tr key={i}>
+                    <Td>{offer.title}</Td>
+                    <Td>{offer.quantity}</Td>
+                    <Td>{offer.wage.toFixed(2)} {currency}</Td>
+                    <Td className='flex gap-4'>
+                      <Button variant='solid' colorScheme='blue' onClick={() => handleOpen(i, 'edit')}>Edit</Button>
+                      <Button variant='solid' colorScheme='red' onClick={() => handleOpen(i, 'delete')}>Delete</Button>
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </div>
+          <div className="flex md:hidden flex-col items-center gap-4">
+            {jobOffers.map((offer: IJobOffer, i: number) => (
+              <div key={i} className='flex items-center w-full'>
+                <div className="flex flex-col flex-grow">
+                  <span className="text-base">{offer.title}</span>
+                  <span>Quantity: {offer.quantity}</span>
+                </div>
+                <div className='flex-grow'>
+                  <span>{offer.wage.toFixed(2)} {currency}</span>
+                </div>
+                <div className='flex flex-col justify-center items-center gap-2'>
+                  <Button size='sm' colorScheme='blue' onClick={() => handleOpen(i, 'edit')}>Edit</Button>
+                  <Button size='sm' colorScheme='red' onClick={() => handleOpen(i, 'delete')}>Delete</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Create Job Offer Modal */}

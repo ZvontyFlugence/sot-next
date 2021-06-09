@@ -21,7 +21,7 @@ const CompanyManagement: React.FC<ICompManagement> = ({ company, currency, locat
   return (
     <div className='w-full'>
       <Tabs variant='enclosed'>
-        <div className='bg-night text-white rounded shadow-md'>
+        <div className='bg-night text-white rounded shadow-md overflow-x-auto overflow-y-hidden'>
           <TabList borderColor='accent-alt'>
             <Tab _selected={{ color: 'accent' }}>Product Offers</Tab>
             <Tab _selected={{ color: 'accent' }}>Job Offers</Tab>

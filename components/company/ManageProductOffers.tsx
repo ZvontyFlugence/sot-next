@@ -133,36 +133,58 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
   }
   
   return (
-    <div className='bg-red flex flex-col'>
+    <div className='flex flex-col'>
       {!productOffers || productOffers.length === 0 ? (
         <p>Company has no product offers</p>
       ) : (
-        <div>
+        <>
           <p className='text-xl font-semibold text-center h-brand text-accent'>Active Offers</p>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th color='white'>Item</Th>
-                <Th color='white'>Quantity</Th>
-                <Th color='white'>Price</Th>
-                <Th color='white'>Actions</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {productOffers.map((offer, i) => (
-                <Tr key={i}>
-                  <Td><i className={ITEMS[offer.product_id].image} /> {ITEMS[offer.product_id].name}</Td>
-                  <Td>{offer.quantity}</Td>
-                  <Td>{offer.price.toFixed(2)} {currency}</Td>
-                  <Td className='flex gap-4'>
-                    <Button variant='solid' colorScheme='blue' onClick={() => handleOpen(i, 'edit')}>Edit</Button>
-                    <Button variant='solid' colorScheme='red' onClick={() => handleOpen(i, 'delete')}>Delete</Button>
-                  </Td>
+          <div className='hidden md:block'>
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th color='white'>Item</Th>
+                  <Th color='white'>Quantity</Th>
+                  <Th color='white'>Price</Th>
+                  <Th color='white'>Actions</Th>
                 </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </div>
+              </Thead>
+              <Tbody>
+                {productOffers.map((offer: IProductOffer, i: number) => (
+                  <Tr key={i}>
+                    <Td><i className={ITEMS[offer.product_id].image} /> {ITEMS[offer.product_id].name}</Td>
+                    <Td>{offer.quantity}</Td>
+                    <Td>{offer.price.toFixed(2)} {currency}</Td>
+                    <Td className='flex gap-4'>
+                      <Button variant='solid' colorScheme='blue' onClick={() => handleOpen(i, 'edit')}>Edit</Button>
+                      <Button variant='solid' colorScheme='red' onClick={() => handleOpen(i, 'delete')}>Delete</Button>
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </div>
+          <div className='flex md:hidden flex-col items-center gap-4'>
+            {productOffers.map((offer: IProductOffer, i: number) => (
+              <div key={i} className='flex items-center w-full'>
+                <div className='flex flex-col flex-grow'>
+                  <span className='text-base'>
+                    <i className={ITEMS[offer.product_id].image} /> &nbsp;
+                    {ITEMS[offer.product_id].name}
+                  </span>
+                  <span>Quantity: {offer.quantity}</span>
+                </div>
+                <div className='flex-grow'>
+                  <span>{offer.price.toFixed(2)} {currency}</span>
+                </div>
+                <div className='flex flex-col justify-center items-center gap-2'>
+                  <Button size='sm' colorScheme='blue' onClick={() => handleOpen(i, 'edit')}>Edit</Button>
+                  <Button size='sm' colorScheme='red' onClick={() => handleOpen(i, 'delete')}>Delete</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* TODO: Edit Product Offer Modal */}
