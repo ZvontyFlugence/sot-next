@@ -10,7 +10,7 @@ import Region, { IRegion } from '@/models/Region';
 import Country, { ICountry } from '@/models/Country';
 import Shout, { IShout } from '@/models/Shout';
 import bcrypt from 'bcrypt';
-import Newspaper from '@/models/Newspaper';
+import Newspaper, { INewspaper } from '@/models/Newspaper';
 
 interface IUserActionResult {
   status_code: number,
@@ -27,7 +27,7 @@ interface IRequestBody {
   data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams |
     ICreateShoutParams | IHandleShoutParams | IUpdateUsernameParams | IUpdatePwParams |
     ITravelParams | IUpdateDescParams | IDonateParams | IGiftParams | ICreateThreadParams |
-    IHandleThread | ISendMsg | ICreateNewspaper
+    IHandleThread | ISendMsg | ICreateNewspaper | ILikeArticle | ISubscribeNews
 }
 
 interface IApplyJobParams {
@@ -133,6 +133,17 @@ interface ICreateNewspaper {
   name: string,
 }
 
+interface ILikeArticle {
+  user_id?: number,
+  newsId: number,
+  articleId: string,
+}
+
+interface ISubscribeNews {
+  user_id?: number,
+  newsId: number,
+}
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const validation_res = await validateToken(req, res);
   if (!validation_res || validation_res.error) {
@@ -197,6 +208,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await heal(user_id);
           return res.status(result.status_code).json(result.payload);
         }
+        case UserActions.LIKE_ARTICLE: {
+          result = await like_article(data as ILikeArticle);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.LIKE_SHOUT: {
           result = await like_shout(data as IHandleShoutParams);
           return res.status(result.status_code).json(result.payload);
@@ -221,6 +236,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await send_shout(data as ICreateShoutParams);
           return res.status(result.status_code).json(result.payload);
         }
+        case UserActions.SUBSCRIBE: {
+          result = await subscribe_news(data as ISubscribeNews);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.TRAIN: {
           result = await train(user_id);
           return res.status(result.status_code).json(result.payload);
@@ -229,8 +248,16 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await travel(data as ITravelParams);
           return res.status(result.status_code).json(result.payload);
         }
+        case UserActions.UNLIKE_ARTICLE: {
+          result = await like_article(data as ILikeArticle);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.UNLIKE_SHOUT: {
           result = await unlike_shout(data as IHandleShoutParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.UNSUBSCRIBE: {
+          result = await subscribe_news(data as ISubscribeNews);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.UPDATE_DESC: {
@@ -1113,4 +1140,44 @@ async function create_news(data: ICreateNewspaper): Promise<IUserActionResult> {
     return { status_code: 200, payload: { success: true, newspaper: news_id, message: 'Newspaper Created' } };
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function like_article(data: ILikeArticle): Promise<IUserActionResult> {
+  let newspaper: INewspaper = await Newspaper.findOne({ _id: data.newsId }).exec();
+  if (!newspaper)
+    return { status_code: 404, payload: { success: false, error: 'Newspaper Not Found' } };
+  
+  let articleIndex = newspaper.articles.findIndex(a => a.id === data.articleId);
+  if (articleIndex === -1)
+    return { status_code: 404, payload: { success: false, error: 'Article Not Found' } };
+
+  let likeIndex = newspaper.articles[articleIndex].likes.findIndex(userId => userId === data.user_id);
+  if (likeIndex === -1) {
+    newspaper.articles[articleIndex].likes.push(data.user_id);
+  } else {
+    newspaper.articles[articleIndex].likes.splice(likeIndex, 1);
+  }
+
+  let updates = { articles: [...newspaper.articles ] };
+  let updated = await newspaper.updateOne({ $set: updates }).exec();
+  if (updated)
+    return { status_code: 200, payload: { success: true, message: likeIndex === -1 ? 'Article Liked' : 'Article Unliked' } };
+}
+
+async function subscribe_news(data: ISubscribeNews): Promise<IUserActionResult> {
+  let newspaper: INewspaper = await Newspaper.findOne({ _id: data.newsId }).exec();
+  if (!newspaper)
+    return { status_code: 404, payload: { success: false, error: 'Newspaper Not Found' } };
+
+  let subscriberIndex = newspaper.subscribers.findIndex(userId => userId === data.user_id);
+  if (subscriberIndex === -1) {
+    newspaper.subscribers.push(data.user_id);
+  } else {
+    newspaper.subscribers.splice(subscriberIndex, 1);
+  }
+
+  let updates = { subscribers: [...newspaper.subscribers ] };
+  let updated = await newspaper.updateOne({ $set: updates }).exec();
+  if (updated)
+    return { status_code: 200, payload: { success: true, message: subscriberIndex === -1 ? 'Newspaper Subscribed' : 'Newspaper Unsubscribed' } };
 }

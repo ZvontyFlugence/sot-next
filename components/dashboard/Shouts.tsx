@@ -103,7 +103,7 @@ const Shouts: React.FC<IShouts> = ({ user }) => {
   }
 
   return (
-    <div className='mt-4 px-12'>
+    <div className='mt-4 px-8 md:px-12'>
       <Tabs variant='enclosed' isLazy>
         <div className='bg-night rounded shadow-md text-white'>
           <TabList borderColor='accent-alt'>

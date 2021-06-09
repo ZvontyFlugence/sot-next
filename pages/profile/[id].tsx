@@ -5,6 +5,7 @@ import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileStats from "@/components/profile/ProfileStats";
 import Company, { ICompany } from "@/models/Company";
 import Country, { ICountry } from "@/models/Country";
+import Newspaper, { INewspaper } from "@/models/Newspaper";
 import Region, { IRegion } from "@/models/Region";
 import User, { IUser } from "@/models/User";
 import { ILocationInfo, jsonify } from "@/util/apiHelpers";
@@ -161,7 +162,13 @@ export const getServerSideProps = async ctx => {
   }
 
   if (profile.newspaper > 0) {
-    
+    let newspaper: INewspaper = await Newspaper.findOne({ _id: profile.newspaper }).exec();
+    news_info = {
+      id: newspaper._id,
+      image: newspaper.image,
+      name: newspaper.name,
+      title: 'Author',
+    };
   }
 
   return {

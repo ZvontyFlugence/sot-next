@@ -67,6 +67,7 @@ const EditArticle: React.FC<IEditArticlePage> = ({ user, newspaper, ...props }) 
       data: {
         news_id: newspaper._id,
         article: {
+          id: props.articleId,
           title: articleName,
           content: editorValue,
           published: true,
@@ -99,6 +100,7 @@ const EditArticle: React.FC<IEditArticlePage> = ({ user, newspaper, ...props }) 
       data: {
         news_id: newspaper._id,
         article: {
+          id: props.articleId,
           title: articleName,
           content: editorValue,
           published: false,
