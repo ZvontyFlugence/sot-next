@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start -H 0.0.0.0 -p ${PORT:-8080}",
+    "export": "yarn build && next export -o _static"
   },
   "dependencies": {
     "@chakra-ui/icons": "^1.0.7",
