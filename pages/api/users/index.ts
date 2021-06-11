@@ -6,6 +6,8 @@ import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { validateToken } from '@/util/auth';
+import * as emailValidator from 'deep-email-validator';
+import { OutputFormat } from 'deep-email-validator/dist/output/output';
 
 interface IGetUserResponse {
   status_code: number,
@@ -65,6 +67,8 @@ async function post(req) {
     payload: { success: true },
   };
 
+
+
   // Get form inputs
   const { email, password, username, country, ip } = JSON.parse(req.body);
 
@@ -75,7 +79,15 @@ async function post(req) {
   let sameIpAccounts: IUser[] = await User.find({}).where({ ipAddrs: { $in: [ip] } }).exec();
   if (sameIpAccounts.length > 0) {
     result.status_code = 403;
-    result.payload = { success: false, error: 'Possible Duplicate Account Attempt Detected' };
+    result.payload = { success: false, error: 'Possible Multiple Accounts Attempt Detected' };
+    return result;
+  }
+
+  // Deep Email Validation to ensure real accounts only
+  const { valid } = await isEmailValid(email);
+  if (!valid) {
+    result.status_code = 400;
+    result.payload = { success: false, error: 'Invalid/Non-Existant Email Address' };
     return result;
   }
 
@@ -131,4 +143,8 @@ async function post(req) {
 
   new_user.save();
   return result;
+}
+
+async function isEmailValid(email: string): Promise<OutputFormat> {
+  return emailValidator.validate(email);
 }

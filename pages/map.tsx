@@ -4,7 +4,7 @@ import { IUser } from "@/models/User";
 import { getCurrentUser } from "@/util/auth";
 import { destroyCookie } from "nookies";
 import { useEffect, useState } from "react";
-import { MAP_STYLE, RESOURCES } from '@/util/constants';
+import { RESOURCES } from '@/util/constants';
 import { GMap } from 'primereact/gmap';
 import { Button } from "@chakra-ui/button";
 import Region, { IRegion, IPath } from "@/models/Region";
@@ -13,6 +13,8 @@ import Country, { ICountry } from "@/models/Country";
 import { useRouter } from "next/router";
 import { pSBC } from "@/util/ui";
 import { jsonify } from "@/util/apiHelpers";
+import Nav from "@/components/Nav";
+import MapComponent from "@/components/MapComponent";
 
 interface IMap {
   user: IUser,
@@ -26,16 +28,7 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
   const toast = useToast();
   const [mode, setMode] = useState('political');
   const [overlays, setOverlays] = useState([]);
-
-  const options = {
-    center: {
-      lat: 37.72886323155891,
-      lng: -97.86977002071538,
-    },
-    zoom: 4,
-    disableDefaultUI: true,
-    styles: MAP_STYLE,
-  };
+  const [mapReady, setMapReady] = useState(false);
 
   const getResource = (value: number): React.ReactNode => {
     let resource_id = Math.floor((value - 1) / 3);
@@ -144,7 +137,7 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
   }
 
   useEffect(() => {
-    if (mode) {
+    if (mapReady && mode) {
       setOverlays(regions.map(region => {
         let paths: IPath[] | IPath[][] = [];
         if (!region?.type) {
@@ -171,23 +164,19 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
         return polygon;
       }));
     }
-  }, [mode]);
+  }, [mode, mapReady]);
 
   return (
-    <Layout user={user}>
-      <div>
-        <h1 className='text-2xl text-accent pl-4 font-semibold'>World Map</h1>
-        <div className='flex justify-end gap-2 mr-8'>
-          <Button size='sm' variant='solid' colorScheme='blue' onClick={() => setMode('political')}>Political</Button>
-          <Button size='sm' variant='solid' colorScheme='green' onClick={() => setMode('resources')}>Resources</Button>
-        </div>
-        <div className='mt-4 mr-8'>
-          <GMap
-            overlays={overlays}
-            options={options}
-            style={{ width: '100%', minHeight: '500px' }}
-          />
-        </div>
+   <Layout user={user}>
+      <h1 className='text-2xl text-accent pl-4 font-semibold'>World Map</h1>
+      <div className='flex justify-end gap-2 mr-8'>
+        <Button size='sm' variant='solid' colorScheme='blue' onClick={() => setMode('political')}>Political</Button>
+        <Button size='sm' variant='solid' colorScheme='green' onClick={() => setMode('resources')}>Resources</Button>
+      </div>
+      <div className='mt-4 mr-8'>
+        {overlays && (
+          <MapComponent overlays={overlays} />
+        )}
       </div>
     </Layout>
   );
