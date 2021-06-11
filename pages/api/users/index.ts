@@ -66,15 +66,22 @@ async function post(req) {
   };
 
   // Get form inputs
-  const { email, password, username, country } = JSON.parse(req.body);
+  const { email, password, username, country, ip } = JSON.parse(req.body);
 
   // Ensure db connection is established
   await connectToDB();
 
+  // Make sure ip isn't already used
+  let sameIpAccounts: IUser[] = await User.find({}).where({ ipAddrs: { $in: [ip] } }).exec();
+  if (sameIpAccounts.length > 0) {
+    result.status_code = 403;
+    result.payload = { success: false, error: 'Possible Duplicate Account Attempt Detected' };
+    return result;
+  }
+
   // Make sure email account doesn't already exist
   let exists: IUser = await User.findOne({ email }).exec();
   if (exists) {
-    console.log('Found Existing User', exists);
     result.status_code = 400;
     result.payload = { success: false, error: 'Email Already In Use!' };
     return result;

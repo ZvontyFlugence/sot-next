@@ -55,7 +55,11 @@ export default function Login(props: ILoginProps) {
   });
 
   const login = () => {
-    mutation.mutate({ email, password });
+    fetch('https://api.ipify.org/?format=json')
+      .then(res => res.json())
+      .then(data => {
+        mutation.mutate({ email, password, ip: data.ip });
+      });
   }
 
   return (

@@ -31,6 +31,8 @@ export interface IUser extends Document {
   messages: IThread[],
   pendingFriends: number[],
   friends: number[],
+  ipAddrs: string[],
+  banned: boolean,
 }
 
 export interface IAlert {
@@ -102,11 +104,13 @@ const UserSchema: Schema = new Schema({
   canCollectRewards: { type: Date, default: new Date(Date.now())},
   canHeal: { type: Date, default: new Date(Date.now())},
   wallet: { type: Array, required: true },
-  inventory: { type: Array, default: []},
-  alerts: { type: Array, default: []},
-  messages: { type: Array, default: []},
-  pendingFriends: { type: Array, default: []},
-  friends: { type: Array, default: []},
+  inventory: { type: Array, default: [] },
+  alerts: { type: Array, default: [] },
+  messages: { type: Array, default: [] },
+  pendingFriends: { type: Array, default: [] },
+  friends: { type: Array, default: [] },
+  ipAddrs: { type: Array, default: [] },
+  banned: { type: Boolean, default: false },
 }, {_id: false });
 
 let User: Model<IUser> | null;

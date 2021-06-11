@@ -8,7 +8,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   switch (req.method) {
     case 'POST': {
-      const { email, password } = JSON.parse(req.body);
+      const { email, password, ip } = JSON.parse(req.body);
       // Connect To DB
       await connectToDB();
 
@@ -20,6 +20,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
       // Check if password matches
       if (await bcrypt.compare(password, account.password)) {
+        // Check if IP exists on account, if not add it,
+        if (!account.ipAddrs.includes(ip)) {
+          await account.updateOne({ $set: { ipAddrs: [...account.ipAddrs, ip] } }).exec();
+        }
+
+        if (account.banned) {
+          return res.status(403).json({ error: 'Your Account Has Been Banned!' });
+        }
+
         let token = await jwt.sign({ user_id: account._id }, process.env.JWT_SECRET, {
           expiresIn: '7d',
         });
