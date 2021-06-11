@@ -1,11 +1,9 @@
 /*global google*/
-import Layout from "@/components/Layout";
 import { IUser } from "@/models/User";
 import { getCurrentUser } from "@/util/auth";
 import { destroyCookie } from "nookies";
 import { useEffect, useState } from "react";
 import { RESOURCES } from '@/util/constants';
-import { GMap } from 'primereact/gmap';
 import { Button } from "@chakra-ui/button";
 import Region, { IRegion, IPath } from "@/models/Region";
 import { useToast } from "@chakra-ui/toast";
@@ -137,7 +135,7 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
   }
 
   useEffect(() => {
-    if (mapReady && mode) {
+    if (mode) {
       setOverlays(regions.map(region => {
         let paths: IPath[] | IPath[][] = [];
         if (!region?.type) {
@@ -164,21 +162,24 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
         return polygon;
       }));
     }
-  }, [mode, mapReady]);
+  }, [mode]);
 
   return (
-   <Layout user={user}>
-      <h1 className='text-2xl text-accent pl-4 font-semibold'>World Map</h1>
-      <div className='flex justify-end gap-2 mr-8'>
-        <Button size='sm' variant='solid' colorScheme='blue' onClick={() => setMode('political')}>Political</Button>
-        <Button size='sm' variant='solid' colorScheme='green' onClick={() => setMode('resources')}>Resources</Button>
+    <>
+      <Nav user={user} />
+      <div className='mt-8'>
+        <h1 className='text-2xl text-accent pl-4 font-semibold'>World Map</h1>
+        <div className='flex justify-end gap-2 mr-8'>
+          <Button size='sm' variant='solid' colorScheme='blue' onClick={() => setMode('political')}>Political</Button>
+          <Button size='sm' variant='solid' colorScheme='green' onClick={() => setMode('resources')}>Resources</Button>
+        </div>
+        <div className='mt-4 mr-8'>
+          {overlays && (
+            <MapComponent overlays={overlays} />
+          )}
+        </div>
       </div>
-      <div className='mt-4 mr-8'>
-        {overlays && (
-          <MapComponent overlays={overlays} />
-        )}
-      </div>
-    </Layout>
+    </>
   );
 }
 
