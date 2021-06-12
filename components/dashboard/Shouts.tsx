@@ -50,7 +50,7 @@ const Shouts: React.FC<IShouts> = ({ user }) => {
     }
   }
 
-  const createShoutMutation = useMutation(async () => {
+  const handleShout = () => {
     let payload = {
       action: 'send_shout',
       data: {
@@ -64,34 +64,21 @@ const Shouts: React.FC<IShouts> = ({ user }) => {
       }
     };
 
-    let data = await request({
+    request({
       url: '/api/me/doAction',
       method: 'POST',
       payload,
       token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Shout Successful', data?.message);
+        setMessage('');
+        queryClient.invalidateQueries('getShouts');
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Shout Failed', data?.error);
+      }
     });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onMutate: async () => {
-      setMessage('');
-    },
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'Shout Successful', data?.message);
-      setMessage('');
-      queryClient.invalidateQueries('getShouts');
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Shout Failed', e.message);
-    }
-  });
-
-  const handleShout = () => {
-    createShoutMutation.mutate();
-    setMessage('');
   }
 
   const handleSetParent = (parent: IShout) => {
@@ -122,7 +109,7 @@ const Shouts: React.FC<IShouts> = ({ user }) => {
                 <span>Shout</span>
               )}
             </p>
-            <Textarea size='sm' resize='none' placeholder='Enter shout message' onChange={e => setMessage(e.target.value)} required />
+            <Textarea size='sm' resize='none' placeholder='Enter shout message' value={message} onChange={e => setMessage(e.target.value)} required />
             <Button size='sm' variant='solid' colorScheme='blue' onClick={handleShout}>Shout</Button>
           </div>
           <hr />

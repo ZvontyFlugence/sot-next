@@ -30,6 +30,8 @@ const ArticlePage: React.FC<IArticlePage> = ({ user, newspaper, authorInfo, ...p
   const toast = useToast();
   const [article, setArticle] = useState<IArticle | null>(null);
 
+  const ReactQuill = typeof window === 'object' ? require('react-quill') : () => false;
+
   useEffect(() => {
     let targetArticle = newspaper.articles.find(a => a.id === props.articleId);
     setArticle(targetArticle);
@@ -148,7 +150,7 @@ const ArticlePage: React.FC<IArticlePage> = ({ user, newspaper, authorInfo, ...p
   return user ? (
     <Layout user={user}>
       {article && (
-        <>
+        <div className='pt-2 md:pt-0'>
           <div className='hidden md:flex bg-night shadow-md rounded ml-8 mr-12 p-4'>
             <div className='flex flex-col gap-4 flex-grow'>
               <div className='flex items-center'>
@@ -191,7 +193,56 @@ const ArticlePage: React.FC<IArticlePage> = ({ user, newspaper, authorInfo, ...p
               </ButtonGroup>
             </div>
           </div>
-        </>
+          <div className='flex md:hidden bg-night shadow-md rounded mx-2 p-2'>
+            <div className='flex flex-col gap-2 flex-grow text-sm'>
+              <div className='flex items-center'>
+                <h3 className='text-lg text-accent font-semibold'>{article.title}</h3>
+                <span className='ml-2 text-white'>{format(new Date(article.publishDate), 'MM/dd/yyyy')}</span>
+              </div>
+              <div className='flex gap-2'>
+                <div className='flex flex-col justify-center gap-1 text-white'>
+                  <span className='mr-2'>Newspaper:</span>
+                  <Tag className='cursor-pointer' bgColor='transparent' onClick={() => router.push(`/newspaper/${newspaper._id}`)}>
+                    <Image boxSize='2.5rem' src={newspaper.image} alt={newspaper.name} />
+                    <span className='ml-2 text-accent-alt'>{newspaper.name}</span>
+                  </Tag>
+                </div>
+                <div className='flex flex-col justify-center gap-1 text-white'>
+                  <span className='mr-2'>Author:</span>
+                  <Tag className='cursor-pointer' bgColor='transparent' onClick={() => router.push(`/profile/${authorInfo._id}`)}>
+                    <Image boxSize='2.5rem' src={authorInfo.image} alt={authorInfo.username} />
+                    <span className='ml-2 text-accent-alt'>{authorInfo.username}</span>
+                  </Tag>
+                </div>
+              </div>
+              <div className='flex justify-center gap-2'>
+                <ButtonGroup isAttached>
+                  <Tag className='w-12' variant='outline' colorScheme='red' bgColor='whiteAlpha.200' color='white' borderRightRadius='none'>
+                    <span className='w-full text-center'>{article.likes.length}</span>
+                  </Tag>
+                  <Button leftIcon={<AiOutlineLike />} colorScheme='red' borderLeftRadius='none' onClick={onLikeClick}>
+                    {article.likes.includes(user._id) ? 'Unlike' : 'Like'}  
+                  </Button>          
+                </ButtonGroup>
+                <ButtonGroup isAttached>
+                  <Tag className='w-12' variant='outline' colorScheme='blue' bgColor='whiteAlpha.200' color='white' borderRightRadius='none'>
+                    <span className='w-full text-center'>{newspaper.subscribers.length}</span>
+                  </Tag>
+                  <Button leftIcon={<FiRss />} colorScheme='blue' borderLeftRadius='none' onClick={onSubscribeClick}>
+                    {newspaper.subscribers.includes(user._id) ? 'Unsubscribe' : 'Subscribe'}
+                  </Button>
+                </ButtonGroup>
+              </div>
+            </div>
+          </div>
+          <div className='bg-night shadow-md rounded text-white mt-2 mx-2 md:mx-0 md:ml-8 md:mr-12 p-2 md:p-4'>
+            <ReactQuill
+              theme='bubble'
+              value={article.text}
+              readOnly={true}
+            />
+          </div>
+        </div>
       )}
     </Layout>
   ) : null;

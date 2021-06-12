@@ -106,7 +106,7 @@ const Nav: React.FC<INav> = ({ user }) => {
                   <ChevronDownIcon />
                 </MenuButton>
                 <MenuList bgColor='night'>
-                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>My Country</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(`/country/${user.country}`)}>My Country</MenuItem>
                   <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Elections</MenuItem>
                   <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Rankings</MenuItem>
                 </MenuList>
@@ -154,7 +154,7 @@ const Nav: React.FC<INav> = ({ user }) => {
                 <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Battles</MenuItem>
                 <MenuDivider />
                 <MenuGroup title='Social'>
-                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>My Country</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(`/country/${user.country}`)}>My Country</MenuItem>
                   <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Elections</MenuItem>
                   <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Rankings</MenuItem>
                 </MenuGroup>

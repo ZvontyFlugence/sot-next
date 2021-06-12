@@ -64,8 +64,8 @@ const NewsBody: React.FC<INewsBody> = ({ user, newspaper }) => {
         {articles.length > 0 ? (
           <List>
             {articles.map((article, idx) => (
-              <ListItem key={idx} className='flex justify-between' onClick={() => router.push(`/newspaper/${newspaper._id}/article/${article.id}${article.published ? '' : '/edit'}`)}>
-                <div className='flex flex-col items-center justify-center'>
+              <ListItem key={idx} className='flex justify-between items-center gap-8 mt-4'>
+                <div className='flex flex-col justify-center flex-grow'>
                   <div>
                     <span>{article.title}</span>
                     {!article.published && (
@@ -90,6 +90,17 @@ const NewsBody: React.FC<INewsBody> = ({ user, newspaper }) => {
                     <StatNumber>{(article.likes && article.likes.length) || 0}</StatNumber>
                   </Stat>
                 </div>
+                {article.published ? (
+                  <div className='flex flex-col items-center justify-center gap-2'>
+                    <Button size='sm' colorScheme='blue' onClick={() => router.push(`/newspaper/${newspaper._id}/article/${article.id}`)}>View</Button>
+                    <Button size='sm' colorScheme='orange' onClick={() => router.push(`/newspaper/${newspaper._id}/article/${article.id}/edit`)}>Edit</Button>
+                  </div>
+                ) : (
+                  <div>
+                    <Button size='sm' colorScheme='orange' onClick={() => router.push(`/newspaper/${newspaper._id}/article/${article.id}/edit`)}>Edit</Button>
+                  </div>
+                )}
+                
               </ListItem>
             ))}
           </List>

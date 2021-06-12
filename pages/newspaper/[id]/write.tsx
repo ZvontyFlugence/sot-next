@@ -60,7 +60,6 @@ const WriteArticlePage: React.FC<IWriteArticlePage> = ({ user, newspaper, ...pro
         article: {
           title: articleName,
           content: editorValue,
-          country: user && user.country,
         },
       },
     };

@@ -1,5 +1,7 @@
 import { ICountry } from "@/models/Country";
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/tabs";
+import React, { useState } from "react";
+import Select from "../Select";
 import Demographics from "./Demographics";
 import Regions from "./Regions";
 
@@ -8,31 +10,52 @@ interface ICountryBody {
 }
 
 const CountryBody: React.FC<ICountryBody> = ({ country }) => {
+  const [selected, setSelected] = useState<string>('');
+
+  const TABS = {
+    'Demographics': <Demographics country={country} />,
+    'Regions': <Regions country_id={country._id} capital={country.capital} />,
+    'Government': <></>,
+    'Economy': <></>,
+    'Military': <></>,
+    'Laws': <></>,
+};
+
   return (
-    <Tabs className='w-full' orientation='vertical' isLazy>
-      <div className='flex justify-start items-start gap-12 w-full'>
-        <TabList className='flex flex-grow-0 bg-night text-white shadow-md rounded'>
-          <Tab _hover={{ color: 'accent-alt' }} _selected={{ color: 'accent-alt' }} borderColor='accent-alt'>Demographics</Tab>
-          <Tab _hover={{ color: 'accent-alt' }} _selected={{ color: 'accent-alt' }} borderColor='accent-alt'>Regions</Tab>
-          <Tab _hover={{ color: 'accent-alt' }} _selected={{ color: 'accent-alt' }} borderColor='accent-alt'>Government</Tab>
-          <Tab _hover={{ color: 'accent-alt' }} _selected={{ color: 'accent-alt' }} borderColor='accent-alt'>Economy</Tab>
-          <Tab _hover={{ color: 'accent-alt' }} _selected={{ color: 'accent-alt' }} borderColor='accent-alt'>Military</Tab>
-          <Tab _hover={{ color: 'accent-alt' }} _selected={{ color: 'accent-alt' }} borderColor='accent-alt'>Laws</Tab>
-        </TabList>
-        <TabPanels className='flex flex-grow bg-night text-white shadow-md rounded'>
-          <TabPanel className='w-full'>
-            <Demographics country={country} />
-          </TabPanel>
-          <TabPanel className='w-full'>
-            <Regions country_id={country._id} capital={country.capital} />
-          </TabPanel>
-          <TabPanel></TabPanel>
-          <TabPanel></TabPanel>
-          <TabPanel></TabPanel>
-          <TabPanel></TabPanel>
-        </TabPanels>
+    <>
+      <div className='hidden md:block'>
+        <Tabs className='w-full' orientation='vertical' isLazy>
+          <div className='flex justify-start items-start gap-12 w-full'>
+            <TabList className='flex flex-grow-0 bg-night text-white shadow-md rounded'>
+              {Object.keys(TABS).map((tab: string, i: number) => (
+                <Tab key={i} _hover={{ color: 'accent-alt' }} _selected={{ color: 'accent-alt' }} borderColor='accent-alt'>{tab}</Tab>
+              ))}
+            </TabList>
+            <TabPanels className='flex flex-grow bg-night text-white shadow-md rounded'>
+              {Object.values(TABS).map((panelContent: React.ReactNode, i: number) => (
+                <TabPanel className='w-full' key={i}>
+                  {panelContent}
+                </TabPanel>
+              ))}
+            </TabPanels>
+          </div>
+        </Tabs>
       </div>
-    </Tabs>
+      <div className="block md:hidden w-full">
+        <div className='flex flex-col justify-center gap-4 w-full overflow-x-visible'>
+          <Select onChange={(val) => setSelected(val as string)}>
+            {Object.keys(TABS).map((tab: string, i: number) => (
+              <Select.Option key={i} value={tab}>
+                {tab}
+              </Select.Option>
+            ))}
+          </Select>
+          <div className='bg-night text-white shadow-md rounded p-4'>
+            {TABS[selected]}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 

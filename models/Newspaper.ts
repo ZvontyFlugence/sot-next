@@ -16,6 +16,7 @@ export interface IArticle {
   text: string,
   publishDate: Date,
   published: boolean,
+  newspaper?: number,
 }
 
 const NewspaperSchema = new Schema({

@@ -48,6 +48,42 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
       }
 
+      shouts = shouts.sort((a, b) => {
+        let aTime = new Date(a.timestamp);
+        let bTime = new Date(b.timestamp);
+
+        if (aTime > bTime)
+          return -1;
+        else if (aTime < bTime)
+          return 1;
+        else {
+          if (aTime.getUTCHours() > bTime.getUTCHours())
+            return -1;
+          else if (aTime.getUTCHours() > bTime.getUTCHours())
+            return 1;
+          else {
+            if (aTime.getUTCMinutes() > bTime.getUTCMinutes())
+              return -1;
+            else if (aTime.getUTCMinutes() < bTime.getUTCMinutes())
+              return 1;
+            else {
+              if (aTime.getUTCSeconds() > bTime.getUTCSeconds())
+                return -1;
+              else if (aTime.getUTCSeconds() < bTime.getUTCSeconds())
+                return 1;
+              else {
+                if (aTime.getUTCMilliseconds() > bTime.getUTCMilliseconds())
+                  return -1;
+                else if (aTime.getUTCMilliseconds() < bTime.getUTCMilliseconds())
+                  return 1;
+                else
+                  return 0;
+              }
+            }
+          }
+        }
+      });
+
       return res.status(200).json({ shouts, authors });
     }
     default:

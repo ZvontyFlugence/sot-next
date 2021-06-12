@@ -10,7 +10,6 @@ interface IPublishArticleParams {
     id?: string,
     title: string,
     content: string,
-    country: number,
   },
 }
 
@@ -170,8 +169,8 @@ async function edit_article(data: IEditArticleParams): Promise<INewspaperActionR
     published: data.article.published,
   } as IArticle;
 
-  if (data.article.publishDate)
-    newspaper.articles[articleIndex].publishDate = data.article.publishDate;
+  if (data.article.published)
+    newspaper.articles[articleIndex].publishDate = new Date(data.article.publishDate);
 
   let updates = { articles: [...newspaper.articles] };
   let updated = await newspaper.updateOne({ $set: updates }).exec();

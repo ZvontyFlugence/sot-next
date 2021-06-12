@@ -71,7 +71,7 @@ const EditArticle: React.FC<IEditArticlePage> = ({ user, newspaper, ...props }) 
           title: articleName,
           content: editorValue,
           published: true,
-          publishedDate: new Date(Date.now()),
+          publishDate: new Date(Date.now()),
         },
       },
     };

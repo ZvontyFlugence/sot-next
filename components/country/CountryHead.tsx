@@ -1,7 +1,5 @@
 import { ICountry } from "@/models/Country";
-import { refreshData } from "@/util/ui";
 import { useRouter } from "next/router";
-import { useQueryClient } from "react-query";
 import Select from "../Select";
 
 interface ICountryHead {
@@ -10,7 +8,6 @@ interface ICountryHead {
 }
 
 const CountryHead: React.FC<ICountryHead> = ({ country, countries }) => {
-  const queryClient = useQueryClient();
   const router = useRouter();
 
   const goToCountry = (id: number) => {

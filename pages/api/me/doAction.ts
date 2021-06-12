@@ -720,8 +720,10 @@ async function send_shout({ user_id, shout }: ICreateShoutParams): Promise<IUser
   const new_shout = new Shout({
     _id: doc_count,
     ...shout,
+    timestamp: new Date(Date.now()),
   });
-  new_shout.save();
+  
+  await new_shout.save();
 
   return { status_code: 200, payload: { success: true, message: 'Shout Sent' } };
 }

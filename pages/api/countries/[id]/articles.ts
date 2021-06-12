@@ -22,7 +22,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       for (let citizen of citizens) {
         if (citizen.newspaper > 0) {
           let newspaper: INewspaper = await Newspaper.findOne({ _id: citizen.newspaper }).exec();
-          articles.push(...newspaper.articles.filter(a => a.published === true));
+          let published = newspaper.articles.filter(a => a.published === true);
+          articles.push(...published.map(a => ({ ...a, newspaper: newspaper._id})));
         }
       }
 
