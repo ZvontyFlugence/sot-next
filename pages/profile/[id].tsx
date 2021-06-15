@@ -6,11 +6,13 @@ import ProfileStats from "@/components/profile/ProfileStats";
 import Company, { ICompany } from "@/models/Company";
 import Country, { ICountry } from "@/models/Country";
 import Newspaper, { INewspaper } from "@/models/Newspaper";
+import Party, { IParty } from "@/models/Party";
 import Region, { IRegion } from "@/models/Region";
 import User, { IUser } from "@/models/User";
 import { ILocationInfo, jsonify } from "@/util/apiHelpers";
 import { getCurrentUser } from "@/util/auth";
 import { destroyCookie } from "nookies";
+import user from "../api/stats/user";
 
 interface IProfile {
   user: IUser,
@@ -154,7 +156,30 @@ export const getServerSideProps = async ctx => {
   }
 
   if (profile.party > 0) {
+    let party: IParty = await Party.findOne({ _id: profile.party }).exec();
+    let role: string = '';
 
+    switch (profile._id) {
+      case party.president: {
+        role = 'Party President';
+        break;
+      }
+      case party.vp: {
+        role = 'Vice Party President';
+        break;
+      }
+      default: {
+        role = 'Member';
+        break;
+      }
+    }
+
+    party_info = {
+      id: party._id,
+      image: party.image,
+      name: party.name,
+      title: role,
+    };
   }
 
   if (profile.unit > 0) {

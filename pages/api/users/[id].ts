@@ -47,5 +47,7 @@ async function getUser(_id: number): Promise<IResult> {
     return { status_code: 404, payload };
   }
 
+  delete user.password;
+
   return { status_code: 200, payload: { success: true, user } };
 }
