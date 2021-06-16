@@ -56,3 +56,10 @@ export const NewspaperActions = {
   PUBLISH_ARTICLE: 'publish_article',
   SAVE_ARTICLE: 'save_article',  
 };
+
+export const PartyActions = {
+  UPDATE_ECON: 'update_econ',
+  UPDATE_LOGO: 'update_logo',
+  UPDATE_NAME: 'update_name',  
+  UPDATE_SOC: 'update_soc',
+};
