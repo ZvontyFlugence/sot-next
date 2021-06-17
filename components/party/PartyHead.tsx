@@ -1,4 +1,4 @@
-import { IParty } from "@/models/Party";
+import { EconomicStance, IParty, SocialStance } from "@/models/Party";
 import { ILeadershipInfo, ICountryInfo } from '@/pages/api/parties/[partyId]';
 import { Avatar } from "@chakra-ui/avatar";
 import { IconButton } from "@chakra-ui/button";
@@ -65,6 +65,10 @@ const PartyHead: React.FC<IPartyHeadProps> = ({ party, leadershipInfo, countryIn
                   <span className='ml-2'>None</span>
                 )}
               </div>
+            </div>
+            <div className='flex items-center gap-8 mt-2'>
+              <span>Economic Stance: {EconomicStance.toString(party.economicStance as EconomicStance)}</span>
+              <span>Social Stance: {SocialStance.toString(party.socialStance as SocialStance)}</span>
             </div>
             <div className='mt-8'>
               <Stat>

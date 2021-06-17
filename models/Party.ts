@@ -114,11 +114,11 @@ export namespace SocialStance {
       case SocialStance.ModerateAuthoritarian:
         return 'Moderate Authoritarian';
       case SocialStance.LeanAuthoritarian:
-        return 'Authoritarian-Leaning';
+        return 'Authoritarian-leaning';
       case SocialStance.Centrist:
         return 'Centrist';
       case SocialStance.LeanLibertarian:
-        return 'Libertarian-Leaning';
+        return 'Libertarian-leaning';
       case SocialStance.ModerateLibertarian:
         return 'Moderate Libertarian';
       case SocialStance.Libertarian:
