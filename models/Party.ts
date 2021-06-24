@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import { ICandidate } from './Election';
 
 export interface IParty extends Document {
   _id: number,
@@ -11,6 +12,9 @@ export interface IParty extends Document {
   members: number[],
   description: string,
   country: number,
+  cpCandidates: ICandidate[],
+  congressCandidates: ICandidate[],
+  ppCandidates: ICandidate[],
 }
 
 export enum EconomicStance {
@@ -114,11 +118,11 @@ export namespace SocialStance {
       case SocialStance.ModerateAuthoritarian:
         return 'Moderate Authoritarian';
       case SocialStance.LeanAuthoritarian:
-        return 'Authoritarian-Leaning';
+        return 'Authoritarian-leaning';
       case SocialStance.Centrist:
         return 'Centrist';
       case SocialStance.LeanLibertarian:
-        return 'Libertarian-Leaning';
+        return 'Libertarian-leaning';
       case SocialStance.ModerateLibertarian:
         return 'Moderate Libertarian';
       case SocialStance.Libertarian:
@@ -138,6 +142,9 @@ const PartySchema = new Schema({
   president: { type: Number, required: true },
   vp: { type: Number, default: -1 },
   description: { type: String, default: '' },
+  cpCandidates: { type: Array, default: [] },
+  congressCandidates: { type: Array, default: [] },
+  ppCandidates: { type: Array, default: [] },
 });
 
 let Party: Model<IParty> | null;

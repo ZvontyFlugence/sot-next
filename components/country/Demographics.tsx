@@ -28,7 +28,7 @@ const Demographics: React.FC<IDemographics> = ({ country }) => {
   }, [id]);
 
   return (
-    <div>
+    <div className='w-full'>
       <h2 className='text-xl text-accent'>Demographics</h2>
       {query.isSuccess && query.data && (
         <List className='mt-4 px-8 w-full' spacing={3}>

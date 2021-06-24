@@ -3,6 +3,7 @@ import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io';
 
 interface ISelectComponent {
   className?: string,
+  selected?: number | string,
   onChange?: (value: number | string) => void,
 }
 
@@ -18,8 +19,14 @@ interface ISelectOptions {
 
 const Select: React.FC<ISelectComponent> & ISelectOptions = ({ children, ...props }) => {
   const [open, setOpen] = useState(false);
-  const [selectedValue, setSelectedValue] = useState(children[0].props.value);
-  const [selectedText, setSelectedText] = useState<React.ReactNode>(children[0].props.children);
+  const [selectedValue, setSelectedValue] = useState<number | string>(findSelected(props.selected)?.props.value || children[0].props.value);
+  const [selectedText, setSelectedText] = useState<React.ReactNode>(findSelected(props.selected)?.props.children || children[0].props.children);
+
+  function findSelected(value: number | string) {
+    return (children as React.ReactElement[]).find((child: React.ReactElement) => {
+      return child.props.value === props.selected;
+    });
+  }
 
   const handleSelect = (e, value: number | string, text: React.ReactNode) => {
     e.stopPropagation();

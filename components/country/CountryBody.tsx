@@ -23,15 +23,15 @@ const CountryBody: React.FC<ICountryBody> = ({ country }) => {
 
   return (
     <>
-      <div className='hidden md:block'>
+      <div className='hidden md:block w-full'>
         <Tabs className='w-full' orientation='vertical' isLazy>
-          <div className='flex justify-start items-start gap-12 w-full'>
+          <div className='flex items-start gap-12 w-full'>
             <TabList className='flex flex-grow-0 bg-night text-white shadow-md rounded'>
               {Object.keys(TABS).map((tab: string, i: number) => (
                 <Tab key={i} _hover={{ color: 'accent-alt' }} _selected={{ color: 'accent-alt' }} borderColor='accent-alt'>{tab}</Tab>
               ))}
             </TabList>
-            <TabPanels className='flex flex-grow bg-night text-white shadow-md rounded'>
+            <TabPanels className='flex-grow bg-night text-white shadow-md rounded w-full'>
               {Object.values(TABS).map((panelContent: React.ReactNode, i: number) => (
                 <TabPanel className='w-full' key={i}>
                   {panelContent}
