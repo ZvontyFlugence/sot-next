@@ -9,6 +9,7 @@ export interface IRegion extends Document {
   borders: IPath[] | IPath[][],
   neighbors: number[],
   type?: string,
+  representatives: number[],
 }
 
 export interface IPath {

@@ -17,27 +17,35 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         return res.status(400).json({ error: 'Invalid Country ID' });
       }
 
-      let population: number = 0;
-      let newCitizens: number = 0;
-      let averageLevel: number = 0;
-      let citizens: IUser[] = await User.find({}).where({ country: country_id }).exec();
+      let demographics = await getDemographics(country_id);
 
-      if (citizens && citizens.length > 0) {
-        population = citizens.length;
-        newCitizens = citizens.filter(c => isBornToday(new Date(c.createdOn))).length;
-        let levelSum = citizens.reduce((accum, citizen) => accum + citizen.level, 0);
-        averageLevel = Math.round(levelSum / citizens.length);
-      }
-
-      return res.status(200).json({
-        population,
-        newCitizens,
-        averageLevel,
-      });
+      return res.status(200).json(demographics);
     }
     default:
       return res.status(404).json({ error: 'Unhandled HTTP Method' });
   }
+}
+
+interface IDemographicsResponse {
+  population: number,
+  newCitizens: number,
+  averageLevel: number,
+}
+
+export async function getDemographics(country_id: number): Promise<IDemographicsResponse> {
+  let population: number = 0;
+  let newCitizens: number = 0;
+  let averageLevel: number = 0;
+  let citizens: IUser[] = await User.find({}).where({ country: country_id }).exec();
+
+  if (citizens && citizens.length > 0) {
+    population = citizens.length;
+    newCitizens = citizens.filter(c => isBornToday(new Date(c.createdOn))).length;
+    let levelSum = citizens.reduce((accum, citizen) => accum + citizen.level, 0);
+    averageLevel = Math.round(levelSum / citizens.length);
+  }
+
+  return { population, newCitizens, averageLevel };
 }
 
 function isBornToday(createdOn: Date) {

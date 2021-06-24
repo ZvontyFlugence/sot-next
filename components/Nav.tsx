@@ -108,7 +108,7 @@ const Nav: React.FC<INav> = ({ user }) => {
                 <MenuList bgColor='night'>
                   <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(`/country/${user.country}`)}>My Country</MenuItem>
                   <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Elections</MenuItem>
-                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Rankings</MenuItem>
+                  <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/rankings')}>Rankings</MenuItem>
                 </MenuList>
               </Menu>
               <Box className='cursor-pointer hover:text-accent' onClick={() => router.push('/map')}>World Map</Box>

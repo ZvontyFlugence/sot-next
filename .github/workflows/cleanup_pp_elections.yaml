@@ -1,0 +1,19 @@
+name: Cleanup CP Elections Job
+on:
+  schedule:
+    - cron: '0 0 16 * *'
+jobs:
+  terminate:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --request POST \
+          --url '${{ secrets.APP_URL }}/api/cron/elections/party/terminate' \
+          --header 'Authorization: Bearer ${{ secrets.ACTIONS_KEY }}'
+  create:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --request POST \
+          --url '${{ secrets.APP_URL }}/api/cron/elections/party/create' \
+          --header 'Authorization: Bearer ${{ secrets.ACTIONS_KEY }}'  

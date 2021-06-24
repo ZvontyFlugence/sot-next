@@ -1,0 +1,12 @@
+name: Activate CP Elections Job
+on:
+  schedule:
+    - cron: '0 0 5 * *'
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --request POST \
+          --url '${{ secrets.APP_URL }}/api/cron/elections/country/activate' \
+          --header 'Authorization: Bearer ${{ secrets.ACTIONS_KEY }}'

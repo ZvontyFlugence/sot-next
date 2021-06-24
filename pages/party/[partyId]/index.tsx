@@ -2,7 +2,7 @@ import Layout from "@/components/Layout";
 import ManageParty from "@/components/party/ManageParty";
 import PartyBody from "@/components/party/PartyBody";
 import PartyHead from "@/components/party/PartyHead";
-import { IParty } from "@/models/Party";
+import Party, { IParty } from "@/models/Party";
 import { IUser } from "@/models/User";
 import { getParty, ICountryInfo, ILeadershipInfo } from "@/pages/api/parties/[partyId]";
 import { jsonify } from "@/util/apiHelpers";
@@ -14,6 +14,7 @@ interface IPartyPageProps {
   user: IUser,
   isAuthenticated: boolean,
   party: IParty,
+  partyRank: number,
   leadershipInfo: ILeadershipInfo,
   countryInfo: ICountryInfo,
 }
@@ -31,6 +32,7 @@ const PartyPage: React.FC<IPartyPageProps> = ({ user, party, ...props }) => {
         <PartyHead
           user_id={user._id}
           party={party}
+          partyRank={props.partyRank}
           leadershipInfo={props.leadershipInfo}
           countryInfo={props.countryInfo}
           onManage={handleChangeMode}
@@ -61,10 +63,14 @@ export const getServerSideProps = async ctx => {
   let partyRes = await getParty({ id: Number.parseInt(params.partyId as string), withLeadership: true, withCountry: true });
   const { party, leadershipInfo, countryInfo } = partyRes.payload;
 
+  let parties: IParty[] = await Party.find({ country: party.country }).exec();
+  let rank: number = parties.sort((a, b) => b.members.length - a.members.length).findIndex(p => p._id === party._id) + 1;
+
   return {
     props: {
       ...result,
       party: jsonify(party),
+      partyRank: jsonify(rank),
       leadershipInfo: jsonify(leadershipInfo),
       countryInfo: jsonify(countryInfo),
     },

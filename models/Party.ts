@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import { ICandidate } from './Election';
 
 export interface IParty extends Document {
   _id: number,
@@ -11,6 +12,9 @@ export interface IParty extends Document {
   members: number[],
   description: string,
   country: number,
+  cpCandidates: ICandidate[],
+  congressCandidates: ICandidate[],
+  ppCandidates: ICandidate[],
 }
 
 export enum EconomicStance {
@@ -138,6 +142,9 @@ const PartySchema = new Schema({
   president: { type: Number, required: true },
   vp: { type: Number, default: -1 },
   description: { type: String, default: '' },
+  cpCandidates: { type: Array, default: [] },
+  congressCandidates: { type: Array, default: [] },
+  ppCandidates: { type: Array, default: [] },
 });
 
 let Party: Model<IParty> | null;

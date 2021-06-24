@@ -9,9 +9,32 @@ export interface ICountry extends Document {
   color: string,
   exchangeOffers: Array<Object>,
   capital: number,
-  government: Object,
-  congressElections: Array<Object>,
-  presidentElections: Array<Object>,
+  government: IGovernment,
+}
+
+export interface IGovernment {
+  president?: number,
+  vp?: number,
+  cabinet: ICabinet,
+  congress: ICongressMember[],
+  electionSystem: ElectionSystem,
+  totalElectoralVotes?: number,
+}
+
+export interface ICabinet {
+  mofa?: number,
+  mod?: number,
+  mot?: number,
+}
+
+export interface ICongressMember {
+  id: number,
+  location: number,
+}
+
+export enum ElectionSystem {
+  PopularVote = 'Popular Vote',
+  ElectoralCollege = 'Electoral College',
 }
 
 export interface ICountryStats {
@@ -31,8 +54,6 @@ const CountrySchema = new Schema({
   exchangeOffers: { type: Array, default: []},
   capital: { type: Number, required: true },
   government: { type: Object, required: true },
-  congressElections: { type: Array, default: []},
-  presidentElections: { type: Array, default: []},
 }, { _id: false });
 
 let Country: Model<ICountry> | null;
