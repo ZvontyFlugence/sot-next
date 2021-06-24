@@ -12,6 +12,7 @@ import { ImEnter, ImExit } from 'react-icons/im';
 interface IPartyHeadProps {
   user_id: number,
   party: IParty,
+  partyRank: number,
   leadershipInfo: ILeadershipInfo,
   countryInfo: ICountryInfo,
   onManage: () => void,
@@ -70,7 +71,11 @@ const PartyHead: React.FC<IPartyHeadProps> = ({ party, leadershipInfo, countryIn
               <span>Economic Stance: {EconomicStance.toString(party.economicStance as EconomicStance)}</span>
               <span>Social Stance: {SocialStance.toString(party.socialStance as SocialStance)}</span>
             </div>
-            <div className='mt-8'>
+            <div className='flex items-center gap-8 mt-8'>
+              <Stat className='cursor-pointer' onClick={() => router.push(`/rankings/${party.country}/parties`)}>
+                <StatLabel>Rank</StatLabel>
+                <StatNumber className='text-center'>{props.partyRank}</StatNumber>
+              </Stat>
               <Stat>
                 <StatLabel>Members</StatLabel>
                 <StatNumber className='text-center'>{party.members.length}</StatNumber>

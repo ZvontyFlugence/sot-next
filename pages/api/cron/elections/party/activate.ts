@@ -16,7 +16,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
       const update = {
         query: {
-          type: ElectionType.CountryPresident,
+          type: ElectionType.PartyPresident,
           month: date.getUTCMonth(),
           year: date.getUTCFullYear(),
           isActive: false,
@@ -34,9 +34,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       
       return res.status(500);
     }
-    
+
     return res.status(401);
-  } catch (err: any) {
+  } catch (e: any) {
     return res.status(500);
   }
 }

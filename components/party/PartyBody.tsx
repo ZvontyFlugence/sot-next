@@ -1,3 +1,4 @@
+import { ICandidate } from "@/models/Election";
 import { IParty } from "@/models/Party";
 import { IUser } from "@/models/User";
 import { request } from "@/util/ui";
@@ -6,6 +7,7 @@ import { Badge } from "@chakra-ui/layout";
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/tabs";
 import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
+import { useEffect, useState } from "react";
 import { useQuery } from "react-query";
 
 interface IPartyBodyProps {
@@ -21,6 +23,27 @@ export interface IMemberInfo {
 
 const PartyBody: React.FC<IPartyBodyProps> = ({ party }) => {
   const cookies = parseCookies();
+  const [cp, setCP] = useState<IUser>();
+
+  useEffect(() => {
+    request({
+      url: `/api/country/${party.country}`,
+      method: 'GET',
+      token: cookies.token,
+    }).then(data => {
+      if (data.country.government.president) {
+        request({
+          url: `/api/users/${data.country.government.president}`,
+          method: 'GET',
+          token: cookies.token,
+        }).then(resp => {
+          if (resp.success) {
+            setCP(resp.user);
+          }
+        });
+      }
+    });
+  }, [party.country]);
 
   const { isLoading, data, error } = useQuery('getPartyMembers', async () => {
     let members: IMemberInfo[] = [];
@@ -82,8 +105,37 @@ const PartyBody: React.FC<IPartyBodyProps> = ({ party }) => {
               </div>
             </TabPanel>
             <TabPanel>
-              <div className='flex flex-col gap-4 bg-night shadow-md rounded px-4 py-2'>
+              <div className='flex flex-col gap-4 bg-night shadow-md rounded px-4 py-2 text-white'>
+                <div className='flex justify-between'>
+                  <div className='flex-grow'>
+                    <h3 className='text-xl text-accent font-semibold'>Country President:</h3>
+                    {cp ? (
+                      <div className='flex items-center gap-4'>
+                        <Avatar src={cp.image} name={cp.username} />
+                        <span>{cp.username}</span>
+                      </div>
+                    ) : (
+                      <p>Country Has No President</p>
+                    )}                  
+                  </div>
+                  <div className='flex-grow'>
+                    <h3 className='text-xl text-accent font-semibold'>Nominee:</h3>
+                    <p>Party Has No Nominee for Country President</p>
+                  </div>                
+                </div>
 
+                <div>
+                  <h3 className='text-xl text-accent font-semibold'>Party Candidates:</h3>
+                  {party.cpCandidates.length === 0 && (
+                    <p>Party Has No Candidates for Country President</p>
+                  )}
+                  {party.cpCandidates.map((candidate: ICandidate, i: number) => (
+                    <div key={i} className='flex items-center gap-4'>
+                      <Avatar src={candidate.image} name={candidate.name} />
+                      <span className='font-semibold'>{candidate.name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </TabPanel>
           </TabPanels>
@@ -119,8 +171,34 @@ const PartyBody: React.FC<IPartyBodyProps> = ({ party }) => {
               </div>
             </TabPanel>
             <TabPanel>
-              <div className='flex flex-col gap-4 bg-night shadow-md rounded px-4 py-2'>
-
+              <div className='flex flex-col gap-4 bg-night shadow-md rounded px-4 py-2 text-white'>
+                <div>
+                  <h3 className='text-xl text-accent font-semibold'>Country President:</h3>
+                  {cp ? (
+                    <div className='flex items-center gap-4'>
+                      <Avatar src={cp.image} name={cp.username} />
+                      <span>{cp.username}</span>
+                    </div>
+                  ) : (
+                    <p>Country Has No President</p>
+                  )}                  
+                </div>
+                <div>
+                  <h3 className='text-xl text-accent font-semibold'>Nominee:</h3>
+                  <p>Party Has No Nominee for Country President</p>
+                </div>
+                <div>
+                  <h3 className='text-xl text-accent font-semibold'>Party Candidates:</h3>
+                  {party.cpCandidates.length === 0 && (
+                    <p>Party Has No Candidates for Country President</p>
+                  )}
+                  {party.cpCandidates.map((candidate: ICandidate, i: number) => (
+                    <div key={i} className='flex items-center gap-4'>
+                      <Avatar src={candidate.image} name={candidate.name} />
+                      <span className='font-semibold'>{candidate.name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </TabPanel>
           </TabPanels>

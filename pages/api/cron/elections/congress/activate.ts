@@ -1,5 +1,5 @@
-import Election, { ElectionType } from '@/models/Election';
-import { connectToDB } from '@/util/mongo';
+import Election, { ElectionType } from "@/models/Election";
+import { connectToDB } from "@/util/mongo";
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -11,12 +11,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       // Ensure DB Connection
       await connectToDB();
 
-      // Update every inactive, uncompleted election to become active
+      // Update every inactive, uncompleted congress election to be active
       let date: Date = new Date(Date.now());
 
       const update = {
         query: {
-          type: ElectionType.CountryPresident,
+          type: ElectionType.Congress,
           month: date.getUTCMonth(),
           year: date.getUTCFullYear(),
           isActive: false,
@@ -28,15 +28,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       };
 
       const updated = await Election.updateMany(update.query, update.changes).exec();
-      
+
       if (updated)
         return res.status(200).json({ success: true, updated: updated.nModified });
       
       return res.status(500);
     }
-    
+
     return res.status(401);
-  } catch (err: any) {
+  } catch (e: any) {
     return res.status(500);
   }
 }

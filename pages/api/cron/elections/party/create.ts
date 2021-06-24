@@ -1,5 +1,5 @@
-import Country, { ICountry } from '@/models/Country';
 import Election, { ElectionType, IElection } from '@/models/Election';
+import Party, { IParty } from '@/models/Party';
 import { connectToDB } from '@/util/mongo';
 import { Types } from 'mongoose';
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -13,15 +13,16 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       // Ensure DB Connection
       await connectToDB();
 
-      // Create new inactive, uncompleted election for every country
-      let countries: ICountry[] = await Country.find({}).exec();
+      // Create new inactive, uncompleted election for every party
+      let party_ids: number[] = await Party.find({})
+        .exec()
+        .then(docs => docs.map((doc: IParty) => doc._id));
 
-      let electionsToInsert: IElection[] = countries.map((country: ICountry) => {
+      let electionsToInsert: IElection[] = party_ids.map((id: number) => {
         return new Election({
           _id: new Types.ObjectId(),
-          type: ElectionType.CountryPresident,
-          typeId: country._id,
-          system: country.government.electionSystem,
+          type: ElectionType.PartyPresident,
+          typeId: id,
         });
       });
 
@@ -29,8 +30,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
       if (inserted)
         return res.status(200).json({ success: true });
-      else 
-        return res.status(500);
+      
+      return res.status(500);
     }
 
     return res.status(401);
