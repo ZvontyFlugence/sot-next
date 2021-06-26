@@ -19,12 +19,12 @@ interface ISelectOptions {
 
 const Select: React.FC<ISelectComponent> & ISelectOptions = ({ children, ...props }) => {
   const [open, setOpen] = useState(false);
-  const [selectedValue, setSelectedValue] = useState<number | string>(findSelected(props.selected)?.props.value || children[0].props.value);
-  const [selectedText, setSelectedText] = useState<React.ReactNode>(findSelected(props.selected)?.props.children || children[0].props.children);
+  const [selectedValue, setSelectedValue] = useState<number | string>(findSelected(props.selected)?.props?.value || children[0].props.value);
+  const [selectedText, setSelectedText] = useState<React.ReactNode>(findSelected(props.selected)?.props?.children || children[0].props.children);
 
   function findSelected(value: number | string) {
     return (children as React.ReactElement[]).find((child: React.ReactElement) => {
-      return child.props.value === props.selected;
+      return child?.props?.value === props.selected;
     });
   }
 
@@ -67,7 +67,7 @@ const Select: React.FC<ISelectComponent> & ISelectOptions = ({ children, ...prop
         <div className='absolute top-12 w-max rounded bg-night text-white overflow-hidden shadow z-50'>
           {React.Children.map(children, (child: React.ReactElement) => {
             return !child.props.disabled ? (
-              <Select.Option onClick={(e) => handleSelect(e, child.props.value, child.props.children)}  {...child.props} />
+              <Select.Option onClick={(e) => handleSelect(e, child?.props?.value, child?.props?.children)}  {...child.props} />
             ) : (
               <Select.Option {...child.props} />
             );
