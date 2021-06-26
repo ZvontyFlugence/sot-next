@@ -32,7 +32,7 @@ const ProfileActivities: React.FC<IProfileActivities> = ({ profile, jobInfo, par
             <p>None</p>
           )}
         </div>
-        <div className='flex flex-col items-center gap-0.5 cursor-pointer'>
+        <div className='flex flex-col items-center gap-0.5 cursor-pointer' onClick={() => router.push(`/party/${profile.party}`)}>
           <p className='h-brand text-accent text-xl'>Political Party</p>
           {partyInfo ? (
             <div className='flex gap-4'>
@@ -46,7 +46,7 @@ const ProfileActivities: React.FC<IProfileActivities> = ({ profile, jobInfo, par
             <p>None</p>
           )}
         </div>
-        <div className='flex flex-col items-center gap-0.5 cursor-pointer'>
+        <div className='flex flex-col items-center gap-0.5 cursor-pointer' onClick={() => router.push(`/army/${profile.unit}`)}>
           <p className='h-brand text-accent text-xl'>Military Unit</p>
           {armyInfo ? (
             <div className='flex gap-4'>
@@ -60,7 +60,7 @@ const ProfileActivities: React.FC<IProfileActivities> = ({ profile, jobInfo, par
             <p>None</p>
           )}
         </div>
-        <div className='flex flex-col items-center gap-0.5 cursor-pointer'>
+        <div className='flex flex-col items-center gap-0.5 cursor-pointer' onClick={() => router.push(`/newspaper/${profile.newspaper}`)}>
           <p className='h-brand text-accent text-xl'>Newspaper</p>
           {newsInfo ? (
             <div className='flex gap-4'>
