@@ -51,7 +51,7 @@ const ElectionSchema = new Schema({
   type: { type: String, required: true },
   typeId: { type: Number, required: true },
   candidates: { type: Array, default: [] },
-  month: { type: Number, default: new Date(Date.now()).getUTCMonth() },
+  month: { type: Number, default: new Date(Date.now()).getUTCMonth() + 1 },
   year: { type: Number, default: new Date(Date.now()).getUTCFullYear() },
   isActive: { type: Boolean, default: false },
   isCompleted: { type: Boolean, default: false },

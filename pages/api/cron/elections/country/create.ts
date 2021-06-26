@@ -16,12 +16,18 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       // Create new inactive, uncompleted election for every country
       let countries: ICountry[] = await Country.find({}).exec();
 
+      let date: Date = new Date(Date.now());
+      let year: number = date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear();
+      let month: number = date.getUTCDate() <=5 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1;
+
       let electionsToInsert: IElection[] = countries.map((country: ICountry) => {
         return new Election({
           _id: new Types.ObjectId(),
           type: ElectionType.CountryPresident,
           typeId: country._id,
           system: country.government.electionSystem,
+          year,
+          month,
         });
       });
 

@@ -6,6 +6,7 @@ import { parseCookies } from "nookies";
 import { useState } from "react";
 import { useQuery } from "react-query";
 import Select from "../Select";
+import ManageCPCandidates from "./management/ManageCPCandidates";
 import ManagePartyMembers from "./management/ManagePartyMembers";
 import PartySettings from "./management/PartySettings";
 import { IMemberInfo } from './PartyBody';
@@ -52,7 +53,8 @@ const ManageParty: React.FC<IManagePartyProps> = ({ user_id, party }) => {
   });
 
   const TABS: ITabs = {
-    'Members': <ManagePartyMembers user_id={user_id} members={data?.members} />,
+    'Members': <ManagePartyMembers user_id={user_id} party_id={party._id} members={data?.members} />,
+    'Country Elections': <ManageCPCandidates partyId={party._id} candidates={party.cpCandidates} country={party.country} />,
     'Settings':  <PartySettings user_id={user_id} party={party} />,
   }
 
@@ -70,7 +72,7 @@ const ManageParty: React.FC<IManagePartyProps> = ({ user_id, party }) => {
           <TabPanels>
             <TabPanel>
               {!isLoading && !error && (
-                <ManagePartyMembers user_id={user_id} members={data?.members} />
+                <ManagePartyMembers user_id={user_id} party_id={party._id} members={data?.members} />
               )}
             </TabPanel>
             <TabPanel>
@@ -80,7 +82,7 @@ const ManageParty: React.FC<IManagePartyProps> = ({ user_id, party }) => {
 
             </TabPanel>
             <TabPanel>
-
+              <ManageCPCandidates partyId={party._id} candidates={party.cpCandidates} country={party.country} />
             </TabPanel>
             <TabPanel>
               <PartySettings user_id={user_id} party={party} />

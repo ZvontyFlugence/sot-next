@@ -7,10 +7,12 @@ import { buildLevelUpAlert, getDistance, IItem, roundMoney } from '@/util/apiHel
 import { connectToDB } from '@/util/mongo';
 import Company, { ICompany, IEmployee } from '@/models/Company';
 import Region, { IRegion } from '@/models/Region';
-import Country, { ICountry } from '@/models/Country';
+import Country, { ElectionSystem, ICountry } from '@/models/Country';
 import Shout, { IShout } from '@/models/Shout';
 import bcrypt from 'bcrypt';
 import Newspaper, { INewspaper } from '@/models/Newspaper';
+import Party, { IParty } from '@/models/Party';
+import Election, { ECVote, ElectionType, ICandidate, IElection } from '@/models/Election';
 
 interface IUserActionResult {
   status_code: number,
@@ -27,7 +29,7 @@ interface IRequestBody {
   data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams |
     ICreateShoutParams | IHandleShoutParams | IUpdateUsernameParams | IUpdatePwParams |
     ITravelParams | IUpdateDescParams | IDonateParams | IGiftParams | ICreateThreadParams |
-    IHandleThread | ISendMsg | ICreateNewspaper | ILikeArticle | ISubscribeNews
+    IHandleThread | ISendMsg | ICreateNewspaper | ILikeArticle | ISubscribeNews | IRunForCP
 }
 
 interface IApplyJobParams {
@@ -144,6 +146,16 @@ interface ISubscribeNews {
   newsId: number,
 }
 
+interface IRunForCP {
+  user_id?: number,
+  partyId: number,
+}
+
+interface IHandlePartyMembership {
+  user_id?: number,
+  partyId: number,
+}
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const validation_res = await validateToken(req, res);
   if (!validation_res || validation_res.error) {
@@ -208,6 +220,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await heal(user_id);
           return res.status(result.status_code).json(result.payload);
         }
+        case UserActions.JOIN_PARTY: {
+          result = await join_party(data as IHandlePartyMembership);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.LEAVE_PARTY: {
+          result = await leave_party(data as IHandlePartyMembership);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.LIKE_ARTICLE: {
           result = await like_article(data as ILikeArticle);
           return res.status(result.status_code).json(result.payload);
@@ -222,6 +242,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
         case UserActions.READ_THREAD: {
           result = await read_thread(data as IHandleThread);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.RUN_FOR_CP: {
+          result = await run_for_cp(data as IRunForCP);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.SEND_FR: {
@@ -1182,4 +1206,93 @@ async function subscribe_news(data: ISubscribeNews): Promise<IUserActionResult> 
   let updated = await newspaper.updateOne({ $set: updates }).exec();
   if (updated)
     return { status_code: 200, payload: { success: true, message: subscriberIndex === -1 ? 'Newspaper Subscribed' : 'Newspaper Unsubscribed' } };
+}
+
+async function run_for_cp(data: IRunForCP): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  let party: IParty = await Party.findOne({ _id: data.partyId }).exec();
+  if (!party)
+    return { status_code: 404, payload: { success: false, error: 'Political Party Not Found' } };
+  else if (party.president === user._id)
+    return { status_code: 400, payload: { success: false, error: 'Party President Cannot Run For Office' } };
+  else if (!party.members.includes(user._id))
+    return { status_code: 400, payload: { success: false, error: 'You Are Not A Party Member' } };
+  else if (party.cpCandidates.findIndex(can => can.id === user._id) >= 0)
+    return { status_code: 400, payload: { success: false, error: 'You Are Already A Candidate' } };
+
+  let date: Date = new Date(Date.now());
+  let query = {
+    isActive: false,
+    isCompleted: false,
+    type: ElectionType.CountryPresident,
+    typeId: party.country,
+    month: date.getUTCDate() < 5 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1,
+    year: date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear(),
+  };
+
+  let election: IElection = await Election.findOne(query).exec();
+  if (!election)
+    return { status_code: 404, payload: { success: false, error: 'Country President Election Not Found' } };
+
+  let candidate: ICandidate = {
+    id: user._id,
+    name: user.username,
+    image: user.image,
+    party: party._id,
+    partyName: party.name,
+    partyImage: party.image,
+    votes: election.system === ElectionSystem.ElectoralCollege ? ([] as ECVote[]) : ([] as number[]),
+  };
+
+  party.cpCandidates.push(candidate);
+
+  let updatedParty = await party.save();
+  if (updatedParty)
+    return { status_code: 200, payload: { success: true, message: 'Candidacy Submitted' } };
+
+  return { status_code: 500, payload: { success: true, error: 'Something Went Wrong' } };
+}
+
+async function join_party(data: IHandlePartyMembership): Promise<IUserActionResult> {
+  let party: IParty = await Party.findOne({ _id: data.partyId }).exec();
+  if (!party)
+    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
+  else if (party.members.includes(data.user_id))
+    return { status_code: 400, payload: { success: false, error: 'User Already A Party Member' } };
+
+  // Update Party
+  party.members.push(data.user_id);
+  let updatedParty = await party.save();
+  if (!updatedParty)
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+
+  // Update User
+  let updatedUser = await User.updateOne({ _id: data.user_id }, { $set: { party: party._id } }).exec();
+  if (updatedUser)
+    return { status_code: 200, payload: { success: true, message: 'Successfully Joined Party' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function leave_party(data: IHandlePartyMembership): Promise<IUserActionResult> {
+  let party: IParty = await Party.findOne({ _id: data.partyId }).exec();
+  if (!party)
+    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
+  else if (!party.members.includes(data.user_id))
+    return { status_code: 400, payload: { success: false, error: 'User Already Not A Member' } };
+
+  // Update Party
+  party.members.splice(party.members.indexOf(data.user_id), 1);
+  let updatedParty = await party.save();
+  if (!updatedParty)
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+
+  // Update User
+  let updatedUser = await User.updateOne({ _id: data.user_id }, { $set: { party: 0 } }).exec();
+  if (updatedUser)
+    return { status_code: 200, payload: { success: true, message: 'Successfully Left Party' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }

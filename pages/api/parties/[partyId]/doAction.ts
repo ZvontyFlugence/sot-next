@@ -1,3 +1,4 @@
+import Election, { ElectionType, IElection } from '@/models/Election';
 import Party, { EconomicStance, IParty, SocialStance } from '@/models/Party';
 import { PartyActions } from '@/util/actions';
 import { validateToken } from '@/util/auth';
@@ -5,7 +6,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 
 interface IPartyActionRequest {
   action: string,
-  data: IUpdateLogo | IUpdateName | IUpdateStance
+  data: IUpdateLogo | IUpdateName | IUpdateStance | INominateCP | IEditMember
 }
 
 interface IPartyActionResponse {
@@ -34,6 +35,15 @@ interface IUpdateStance extends IBaseParams {
   value: EconomicStance | SocialStance,
 }
 
+interface INominateCP extends IBaseParams {
+  candidateId: number,
+}
+
+interface IEditMember extends IBaseParams {
+  memberId: number,
+  role: string,
+}
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   let validation_res = await validateToken(req, res);
   if (validation_res?.error)
@@ -57,6 +67,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       let result: IPartyActionResponse;
 
       switch (action) {
+        case PartyActions.EDIT_MEMBER: {
+          result = await edit_member(data as IEditMember);
+          break;
+        }
+        case PartyActions.NOMINATE_CP: {
+          result = await nominate_cp(data as INominateCP);
+          break;
+        }
         case PartyActions.UPDATE_ECON: {
           result = await update_econ(data as IUpdateStance);
           break;
@@ -140,4 +158,81 @@ async function update_soc(data: IUpdateStance): Promise<IPartyActionResponse> {
       return { status_code: 200, payload: { success: true, message: 'Party Stance Updated' } };
   
     return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function nominate_cp(data: INominateCP): Promise<IPartyActionResponse> {
+  let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
+  if (!party)
+    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
+  else if (party.president !== data?.user_id)
+    return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
+  else if (!party.members.includes(data.candidateId))
+    return { status_code: 400, payload: { success: false, error: 'Candidate Must Be A Party Member' } };
+  else if (party.cpCandidates.findIndex(can => can.id === data.candidateId) < 0)
+    return { status_code: 400, payload: { success: false, error: 'Only Candidates May Be Nominated' } };
+
+  let date: Date = new Date(Date.now());
+  let query = {
+    isActive: false,
+    isCompleted: false,
+    type: ElectionType.CountryPresident,
+    typeId: party.country,
+    month: date.getUTCDate() < 5 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1,
+    year: date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear(),
+  };
+  
+  let election: IElection = await Election.findOne(query).exec();
+  if (!election)
+    return { status_code: 404, payload: { success: false, error: 'Country President Election Not Found' } };
+  else if (election.candidates.findIndex(can => can.id === data.candidateId) >= 0)
+    return { status_code: 400, payload: { success: false, error: 'Candidate Is Already The Nominee' } };
+
+  party.cpCandidates = party.cpCandidates.filter(can => can.id === data.candidateId);
+  let updatedParty = await party.save();
+  if (!updatedParty)
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+
+  election.candidates.push(updatedParty.cpCandidates[0]);
+  let updatedElection = await election.save();
+  if (updatedElection)
+    return { status_code: 200, payload: { success: true, message: 'Candidate Nominated' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function edit_member(data: IEditMember): Promise<IPartyActionResponse> {
+  let party: IParty = await Party.findOne({ _id: data.party_id }).exec();
+  if (!party)
+    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
+  else if (party.president !== data.user_id)
+    return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
+  else if (!party.members.includes(data.memberId))
+    return { status_code: 400, payload: { success: false, error: 'User Is Not A Party Member' } };
+
+  if (party.president === data.memberId && data.role !== 'president') {
+    if (data.role === 'vp') {
+      party.president = party.vp;
+      party.vp = data.memberId;
+    } else if (data.role === 'member') {
+      party.president = party.vp;
+      party.vp = -1;
+    }
+  } else if (party.vp === data.memberId && data.role !== 'vp') {
+    if (data.role === 'president') {
+      party.president = party.vp;
+      party.vp = -1;
+    } else if (data.role === 'member') {
+      party.vp = -1;
+    }
+  } else if (data.role === 'president') {
+    party.president = data.memberId;
+  } else if (data.role === 'vp') {
+    party.vp = data.memberId;
+  }
+
+  let updatedParty = await party.save();
+  if (updatedParty)
+    return { status_code: 200, payload: { success: true, message: 'Member Role Updated' } };
+  
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
