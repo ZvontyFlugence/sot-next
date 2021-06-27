@@ -1,8 +1,8 @@
 import Layout from '@/components/Layout';
-import Election, { ElectionType, ICandidate, IElection } from '@/models/Election';
+import Election, { ECVote, ElectionType, ICandidate, IElection } from '@/models/Election';
 import { IUser } from '@/models/User';
 import { UserActions } from '@/util/actions';
-import { jsonify } from '@/util/apiHelpers';
+import { findVote, jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
 import { refreshData, request, showToast } from '@/util/ui';
 import { Table, Thead, Tr, Th, Tbody, Td, Avatar, Button, useToast } from '@chakra-ui/react';
@@ -42,6 +42,14 @@ const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
     });
   }
 
+  const hasUserVoted = (): boolean => {
+    let foundVote: boolean[] = election?.candidates.map((can: ICandidate) => {
+      return can.votes.findIndex((vote: number | ECVote) =>  findVote(vote, user._id)) >= 0;
+    });
+
+    return foundVote.some(vote => vote === true);
+  }
+
   return user ? (
     <Layout user={user}>
       <h1 className='text-xl text-accent h-brand font-semibold'>
@@ -52,9 +60,9 @@ const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
         <Table>
           <Thead>
             <Tr>
-              <Th>Candidate</Th>
-              <Th>Party</Th>
-              <Th>Action</Th>
+              <Th color='white'>Candidate</Th>
+              <Th color='white'>Party</Th>
+              <Th color='white'>Action</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -73,8 +81,8 @@ const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
                   </div>           
                 </Td>
                 <Td>
-                  { new Date(Date.now()).getUTCDate() === 5 && (
-                    <Button size='sm' colorScheme='blue' onClick={() => handleVote(can.id)}>Vote</Button>
+                  { new Date(Date.now()).getUTCDate() === 26 && (
+                    <Button size='sm' colorScheme='blue' onClick={() => handleVote(can.id)} disabled={hasUserVoted()}>Vote</Button>
                   )}
                 </Td>
               </Tr>

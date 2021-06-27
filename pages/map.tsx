@@ -26,7 +26,6 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
   const toast = useToast();
   const [mode, setMode] = useState('political');
   const [overlays, setOverlays] = useState([]);
-  const [mapReady, setMapReady] = useState(false);
 
   const getResource = (value: number): React.ReactNode => {
     let resource_id = Math.floor((value - 1) / 3);

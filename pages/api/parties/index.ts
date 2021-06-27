@@ -66,6 +66,7 @@ interface ICreatePartyRequest {
   name: string,
   economicStance: number,
   socialStance: number,
+  color: string,
 }
 
 interface ICreatePartyResponse {
@@ -101,6 +102,7 @@ async function createParty(data: ICreatePartyRequest): Promise<ICreatePartyRespo
     president: user._id,
     members: [user._id],
     country: user.country,
+    color: data.color,
   });
 
   // Subtract user gold

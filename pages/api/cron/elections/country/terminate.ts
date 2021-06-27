@@ -21,7 +21,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       await session.withTransaction(async () => {
         let date: Date = new Date(Date.now());
         const query = {
-          month: date.getUTCMonth(),
+          month: date.getUTCMonth() + 2,
           year: date.getUTCFullYear(),
           isActive: true,
           type: ElectionType.CountryPresident,
@@ -30,10 +30,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         let elections: IElection[] = await Election.find(query);
 
         return await Promise.all(elections.map(async (election: IElection) => {
+          if (election.candidates.length === 0) {
+            return await election.updateOne({ isActive: false, isCompleted: true });
+          }
+
           // Calculate winner
           let winners: number[] = [];
           let ecResults: IVoteObject = {};
           let candidateTallies: { [candidate: number]: number } = {};
+          let regionTallies: { [region: number]: number } = {};
 
           if (election.system === ElectionSystem.PopularVote) {
             let maxVotes: number = 0;
@@ -99,7 +104,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
               }
 
-              regionWinners.push(regionWinner);
+              if (regionMaxVotes > 0) {
+                regionWinners.push(regionWinner);
+              }
+              
               ecResults[region] = votes[region];
             }
 
@@ -112,12 +120,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
               let regionPop: number = regionCitizens.length;
               let percent: number = (regionPop / countryPop);
               let tally: number = Math.round(country.government?.totalElectoralVotes * percent);
+              regionTallies[region] = tally;
               finalTally.push(tally);
             }
 
             // Sum total votes for each candidate
             for (let region of regions) {
               let index: number = regions.findIndex(reg => reg === region);
+              if (index < 0) {
+                continue;
+              }
+
               let winningCandidate: number = regionWinners[index];
               if (!candidateTallies[winningCandidate]) {
                 candidateTallies[winningCandidate] = finalTally[index];
@@ -152,6 +165,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           election.isCompleted = true;
           election.tally = election.system === ElectionSystem.ElectoralCollege ? candidateTallies : undefined;
           election.ecResults = election.system === ElectionSystem.ElectoralCollege ? ecResults : undefined;
+          election.regionTallies = election.system === ElectionSystem.ElectoralCollege ? regionTallies : undefined;
 
           // Update User with alert and gold
           let alert = {

@@ -1,4 +1,5 @@
 import { IEmployee, IJobOffer, IProductOffer } from '@/models/Company';
+import { ECVote } from '@/models/Election';
 import { IRegion } from '@/models/Region';
 import { UserActions } from '@/util/actions';
 
@@ -73,6 +74,14 @@ export function buildLevelUpAlert(level: number) {
 
 export function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+export const findVote = (vote: number | ECVote, user_id: number) => {
+  if (typeof vote === 'number') {
+    return vote === user_id
+  } else {
+    return (vote as ECVote)?.tally.includes(user_id);
+  }
 }
 
 export function getDistance(regions: IRegion[], src: number, dest: number) {

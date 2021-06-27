@@ -14,6 +14,7 @@ export interface IElection extends Document {
   system: ElectionSystem,
   tally?: { [candidate: number]: number },
   ecResults?: IVoteObject,
+  regionTallies?: { [region: number]: number },
 }
 
 export interface IVoteObject {
@@ -35,6 +36,7 @@ export interface ICandidate {
   party: number,
   partyName?: string,
   partyImage?: string,
+  partyColor?: string,
   votes: number[] | ECVote[],
   location?: number,
   locationName?: string,
@@ -59,6 +61,7 @@ const ElectionSchema = new Schema({
   system: { type: String, required: true },
   tally: { type: Object },
   ecResults: { type: Object },
+  regionTallies: { type: Object },
 });
 
 let Election: Model<IElection> | null;

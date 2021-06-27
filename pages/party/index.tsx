@@ -24,6 +24,7 @@ const CreateParty: React.FC<ICreatePartyProps> = ({ user, ...props }) => {
   const toast = useToast();
 
   const [name, setName] = useState<string>('');
+  const [color, setColor] = useState<string>('');
   const [econStance, setEconStance] = useState<number>(0);
   const [socStance, setSocStance] = useState<number>(0);
 
@@ -32,6 +33,7 @@ const CreateParty: React.FC<ICreatePartyProps> = ({ user, ...props }) => {
   const handleCreateParty = () => {
     let payload = {
       name,
+      color,
       economicStance: econStance,
       socialStance: socStance,
     };
@@ -70,6 +72,10 @@ const CreateParty: React.FC<ICreatePartyProps> = ({ user, ...props }) => {
           <FormControl>
             <FormLabel>Party Name</FormLabel>
             <Input type='text' value={name} onChange={e => setName(e.target.value)} />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Party Color</FormLabel>
+            <Input type='text' value={color} onChange={e => setColor(e.target.value)} />
           </FormControl>
           <FormControl>
             <FormLabel>Economic Stance</FormLabel>

@@ -3,7 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { UserActions } from '@/util/actions';
 import User, { IAlert, IMsg, IUser, IUserUpdates, IWalletItem } from '@/models/User';
 import { neededXP } from '@/util/ui';
-import { buildLevelUpAlert, getDistance, IItem, roundMoney } from '@/util/apiHelpers';
+import { buildLevelUpAlert, findVote, getDistance, IItem, roundMoney } from '@/util/apiHelpers';
 import { connectToDB } from '@/util/mongo';
 import Company, { ICompany, IEmployee } from '@/models/Company';
 import Region, { IRegion } from '@/models/Region';
@@ -13,6 +13,7 @@ import bcrypt from 'bcrypt';
 import Newspaper, { INewspaper } from '@/models/Newspaper';
 import Party, { IParty } from '@/models/Party';
 import Election, { ECVote, ElectionType, ICandidate, IElection } from '@/models/Election';
+import { ObjectId } from 'mongoose';
 
 interface IUserActionResult {
   status_code: number,
@@ -26,10 +27,10 @@ interface IUserActionResult {
 
 interface IRequestBody {
   action: string,
-  data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams |
-    ICreateShoutParams | IHandleShoutParams | IUpdateUsernameParams | IUpdatePwParams |
-    ITravelParams | IUpdateDescParams | IDonateParams | IGiftParams | ICreateThreadParams |
-    IHandleThread | ISendMsg | ICreateNewspaper | ILikeArticle | ISubscribeNews | IRunForCP
+  data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams | ICreateShoutParams |
+    IHandleShoutParams | IUpdateUsernameParams | IUpdatePwParams | ITravelParams | IGiftParams |
+    IUpdateDescParams | IDonateParams | ICreateThreadParams | IHandleThread | ISendMsg | IRunForCP |
+    ICreateNewspaper | ILikeArticle | ISubscribeNews | IHandleVote
 }
 
 interface IApplyJobParams {
@@ -154,6 +155,13 @@ interface IRunForCP {
 interface IHandlePartyMembership {
   user_id?: number,
   partyId: number,
+}
+
+interface IHandleVote {
+  user_id?: number,
+  candidate: number,
+  election: ObjectId,
+  location: number,
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -298,6 +306,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
         case UserActions.UPLOAD_PFP: {
           result = await upload(data as IUploadImageParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.VOTE: {
+          result = await vote(data as IHandleVote);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.WORK: {
@@ -1243,6 +1255,7 @@ async function run_for_cp(data: IRunForCP): Promise<IUserActionResult> {
     party: party._id,
     partyName: party.name,
     partyImage: party.image,
+    partyColor: party.color,
     votes: election.system === ElectionSystem.ElectoralCollege ? ([] as ECVote[]) : ([] as number[]),
   };
 
@@ -1295,4 +1308,65 @@ async function leave_party(data: IHandlePartyMembership): Promise<IUserActionRes
     return { status_code: 200, payload: { success: true, message: 'Successfully Left Party' } };
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+// TODO: Use User Residence over Current Location
+// TODO: Handle Congress & Party President Elections
+async function vote(data: IHandleVote): Promise<IUserActionResult> {
+  let election: IElection = await Election.findOne({ _id: data.election }).exec();
+  if (!election)
+    return { status_code: 404, payload: { success: false, error: 'Election Not Found' } };
+
+  let hasVoted: boolean = false;
+
+  for (let candidate of election.candidates) {
+    if (candidate.votes.findIndex(vote => findVote(vote, data.user_id)) >= 0) {
+      hasVoted = true;
+      break;
+    }
+  }
+
+  if (hasVoted)
+    return { status_code: 400, payload: { success: false, error: 'You\'ve Already Voted' } };
+
+  try {
+    switch (election.type) {
+      case ElectionType.CountryPresident: {
+        let candidateIndex: number = election.candidates.findIndex(can => can.id === data.candidate);
+        if (candidateIndex === -1)
+          return { status_code: 404, payload: { success: false, error: 'Candidate Not Found' } };
+
+        if (election.system === ElectionSystem.ElectoralCollege) {
+          let voteIndex: number = (election.candidates[candidateIndex].votes as ECVote[])
+            .findIndex((ecVote: ECVote) => ecVote.location === data.location);
+          
+          if (voteIndex === -1) {
+            (election.candidates[candidateIndex].votes as ECVote[]).push({
+              location: data.location,
+              tally: [data.user_id],
+            } as ECVote);
+            break;
+          } else {
+            (election.candidates[candidateIndex].votes[voteIndex] as ECVote)?.tally.push(data.user_id);
+            break;
+          }
+        } else if (election.system === ElectionSystem.PopularVote) {
+          // Dont need a check if voted here, since done above
+          (election.candidates[candidateIndex].votes as number[]).push(data.user_id);
+          break;
+        }
+      }
+      case ElectionType.Congress:
+      case ElectionType.PartyPresident:
+      default:
+        return { status_code: 400, payload: { success: false, error: 'Unknown Election Type' } };
+    }
+  } catch (e: any) {
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+  }
+
+  let updatedElection = await election.updateOne({ $set: { candidates: election.candidates }});
+
+  if (updatedElection)
+    return { status_code: 200, payload: { success: true, message: 'Vote Submitted' } };
 }
