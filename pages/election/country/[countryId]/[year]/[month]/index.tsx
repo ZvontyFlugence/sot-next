@@ -81,7 +81,7 @@ const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
                   </div>           
                 </Td>
                 <Td>
-                  { new Date(Date.now()).getUTCDate() === 26 && (
+                  { new Date(Date.now()).getUTCDate() === 5 && (
                     <Button size='sm' colorScheme='blue' onClick={() => handleVote(can.id)} disabled={hasUserVoted()}>Vote</Button>
                   )}
                 </Td>
@@ -113,7 +113,6 @@ export const getServerSideProps = async ctx => {
   let month: number = Number.parseInt(params.month);
 
   let query = {
-    isActive: true,
     type: ElectionType.CountryPresident,
     typeId: country,
     year,
@@ -121,7 +120,14 @@ export const getServerSideProps = async ctx => {
   };
 
   let election: IElection = await Election.findOne(query).exec();
-  if (!election) {
+  if (!election.isActive && election.isCompleted) {
+    return {
+      redirect: {
+        permanent: false,
+        destination: `/election/country/${country}/${year}/${month}/results`,
+      },
+    };
+  } else if (!election) {
     return {
       redirect: {
         permanent: false,

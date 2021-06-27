@@ -15,7 +15,7 @@ const ElectionMsg: React.FC<IElectionMsg> = ({ country, party, day, month, year 
   
   const getElectionType = () => {
     switch (day) {
-      case 26:
+      case 5:
         return ElectionType.CountryPresident;
       case 15:
         return ElectionType.Congress;

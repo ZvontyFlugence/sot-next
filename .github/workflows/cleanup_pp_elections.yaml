@@ -1,4 +1,4 @@
-name: Cleanup CP Elections Job
+name: Cleanup PP Elections Job
 on:
   schedule:
     - cron: '0 0 16 * *'

@@ -3,6 +3,7 @@ import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/tabs";
 import React, { useState } from "react";
 import Select from "../Select";
 import Demographics from "./Demographics";
+import Government from "./Government";
 import Regions from "./Regions";
 
 interface ICountryBody {
@@ -15,7 +16,7 @@ const CountryBody: React.FC<ICountryBody> = ({ country }) => {
   const TABS = {
     'Demographics': <Demographics country={country} />,
     'Regions': <Regions country_id={country._id} capital={country.capital} />,
-    'Government': <></>,
+    'Government': <Government country={country} />,
     'Economy': <></>,
     'Military': <></>,
     'Laws': <></>,

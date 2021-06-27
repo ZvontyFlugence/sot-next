@@ -21,7 +21,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       await session.withTransaction(async () => {
         let date: Date = new Date(Date.now());
         const query = {
-          month: date.getUTCMonth() + 2,
+          month: date.getUTCMonth() + 1,
           year: date.getUTCFullYear(),
           isActive: true,
           type: ElectionType.CountryPresident,
