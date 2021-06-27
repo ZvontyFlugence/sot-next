@@ -1,4 +1,5 @@
-import Election, { ElectionType, IElection } from '@/models/Election';
+import Country, { ICountry } from '@/models/Country';
+import Election, { ElectionType, ICandidate, IElection } from '@/models/Election';
 import Party, { EconomicStance, IParty, SocialStance } from '@/models/Party';
 import { PartyActions } from '@/util/actions';
 import { validateToken } from '@/util/auth';
@@ -6,7 +7,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 
 interface IPartyActionRequest {
   action: string,
-  data: IUpdateLogo | IUpdateName | IUpdateStance | INominateCP | IEditMember
+  data: IUpdateLogo | IUpdateName | IUpdateStance | INominateCP | IEditMember | INominateCongress
 }
 
 interface IPartyActionResponse {
@@ -36,6 +37,10 @@ interface IUpdateStance extends IBaseParams {
 }
 
 interface INominateCP extends IBaseParams {
+  candidateId: number,
+}
+
+interface INominateCongress extends IBaseParams {
   candidateId: number,
 }
 
@@ -160,12 +165,15 @@ async function update_soc(data: IUpdateStance): Promise<IPartyActionResponse> {
     return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
+// TODO: Handle Nominating Someone After A Nominee Was Already Selected
 async function nominate_cp(data: INominateCP): Promise<IPartyActionResponse> {
   let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
   if (!party)
     return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
   else if (party.president !== data?.user_id)
     return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
+  else if (party.president !== data.candidateId)
+    return { status_code: 400, payload: { success: false, error: 'Candidate Cannot Be Party President' } };
   else if (!party.members.includes(data.candidateId))
     return { status_code: 400, payload: { success: false, error: 'Candidate Must Be A Party Member' } };
   else if (party.cpCandidates.findIndex(can => can.id === data.candidateId) < 0)
@@ -187,6 +195,7 @@ async function nominate_cp(data: INominateCP): Promise<IPartyActionResponse> {
   else if (election.candidates.findIndex(can => can.id === data.candidateId) >= 0)
     return { status_code: 400, payload: { success: false, error: 'Candidate Is Already The Nominee' } };
 
+  // TODO: What is the purpose of this?
   party.cpCandidates = party.cpCandidates.filter(can => can.id === data.candidateId);
   let updatedParty = await party.save();
   if (!updatedParty)
@@ -234,5 +243,52 @@ async function edit_member(data: IEditMember): Promise<IPartyActionResponse> {
   if (updatedParty)
     return { status_code: 200, payload: { success: true, message: 'Member Role Updated' } };
   
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function nominate_congress(data: INominateCongress): Promise<IPartyActionResponse> {
+  let party: IParty = await Party.findOne({ _id: data.party_id }).exec();
+  if (!party)
+    return { status_code: 200, payload: { success: false, message: 'Party Not Found' } };
+  else if (party.president !== data?.user_id)
+    return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
+  else if (party.president !== data.candidateId)
+    return { status_code: 400, payload: { success: false, error: 'Candidate Cannot Be Party President' } };
+  else if (!party.members.includes(data.candidateId))
+    return { status_code: 400, payload: { success: false, error: 'Candidate Must Be A Party Member' } };
+  else if (party.congressCandidates.findIndex(can => can.id === data.candidateId) < 0)
+    return { status_code: 400, payload: { success: false, error: 'Only Candidates May Be Nominated' } };
+
+  let country: ICountry = await Country.findOne({ _id: party.country }).exec();
+  if (!country)
+    return { status_code: 404, payload: { success: false, error: 'Congress Election Not Found' } };
+  else if (country.government.president === data.candidateId)
+    return { status_code: 400, payload: { success: false, error: 'Candidate Cannot Be Country President' } };
+
+  let candidate: ICandidate = party.congressCandidates.find(can => can.id === data?.candidateId);
+  if (!candidate)
+    return { status_code: 404, payload: { success: false, error: 'Candidate Not Found' } };
+  
+  let date: Date = new Date(Date.now());
+  let query = {
+    isActive: false,
+    isCompleted: false,
+    type: ElectionType.Congress,
+    typeId: candidate?.location,
+    month: date.getUTCDate() < 25 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1,
+    year: date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear(),
+  };
+
+  let election: IElection = await Election.findOne(query).exec();
+  if (!election)
+    return { status_code: 404, payload: { success: false, error: 'Congress Election Not Found' } };
+  else if (election.candidates.findIndex(can => can.id === data.candidateId) >= 0)
+    return { status_code: 400, payload: { success: false, error: 'Candidate Is Already The Nominee' } };
+
+  election.candidates.push(candidate);
+  let updatedElection = await election.save();
+  if (updatedElection)
+    return { status_code: 200, payload: { success: true, message: 'Candidate Nominated' } };
+
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }

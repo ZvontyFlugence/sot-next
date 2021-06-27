@@ -29,7 +29,7 @@ interface IRequestBody {
   action: string,
   data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams | ICreateShoutParams |
     IHandleShoutParams | IUpdateUsernameParams | IUpdatePwParams | ITravelParams | IGiftParams |
-    IUpdateDescParams | IDonateParams | ICreateThreadParams | IHandleThread | ISendMsg | IRunForCP |
+    IUpdateDescParams | IDonateParams | ICreateThreadParams | IHandleThread | ISendMsg | IRunForOffice |
     ICreateNewspaper | ILikeArticle | ISubscribeNews | IHandleVote
 }
 
@@ -147,7 +147,7 @@ interface ISubscribeNews {
   newsId: number,
 }
 
-interface IRunForCP {
+interface IRunForOffice {
   user_id?: number,
   partyId: number,
 }
@@ -252,8 +252,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await read_thread(data as IHandleThread);
           return res.status(result.status_code).json(result.payload);
         }
+        case UserActions.RUN_FOR_CONGRESS: {
+          result = await run_for_congress(data as IRunForOffice);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.RUN_FOR_CP: {
-          result = await run_for_cp(data as IRunForCP);
+          result = await run_for_cp(data as IRunForOffice);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.SEND_FR: {
@@ -1220,7 +1224,7 @@ async function subscribe_news(data: ISubscribeNews): Promise<IUserActionResult> 
     return { status_code: 200, payload: { success: true, message: subscriberIndex === -1 ? 'Newspaper Subscribed' : 'Newspaper Unsubscribed' } };
 }
 
-async function run_for_cp(data: IRunForCP): Promise<IUserActionResult> {
+async function run_for_cp(data: IRunForOffice): Promise<IUserActionResult> {
   let user: IUser = await User.findOne({ _id: data.user_id }).exec();
   if (!user)
     return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
@@ -1310,7 +1314,6 @@ async function leave_party(data: IHandlePartyMembership): Promise<IUserActionRes
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
-// TODO: Use User Residence over Current Location
 // TODO: Handle Congress & Party President Elections
 async function vote(data: IHandleVote): Promise<IUserActionResult> {
   let user: IUser = await User.findOne({ _id: data.user_id }).exec();
@@ -1375,4 +1378,66 @@ async function vote(data: IHandleVote): Promise<IUserActionResult> {
 
   if (updatedElection)
     return { status_code: 200, payload: { success: true, message: 'Vote Submitted' } };
+}
+
+async function run_for_congress(data: IRunForOffice): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+
+  let residence: IRegion = await Region.findOne({ _id: user.residence }).exec();
+  if (!residence)
+    return { status_code: 404, payload: { success: false, error: 'Residence Region Not Found' } };
+  
+  let party: IParty = await Party.findOne({ _id: data.partyId }).exec();
+  if (!party)
+    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
+  else if (!party.members.includes(user._id))
+    return { status_code: 400, payload: { success: false, error: 'You Are Not A Party Member' } };
+  else if (party.president === user._id)
+    return { status_code: 400, payload: { success: false, error: 'Party Presidents Cannot Run For Congress' } };
+  else if (party.congressCandidates.findIndex(can => can.id === user._id) >= 0)
+    return { status_code: 400, payload: { success: false, error: 'Already A Congress Candidate' } };
+
+  let country: ICountry = await Country.findOne({ _id: party.country }).exec();
+  if (!country)
+    return { status_code: 404, payload: { success: false, error: 'Country Not Found' } };
+  else if (country.government.president === user._id)
+    return { status_code: 400, payload: { success: false, error: 'Country Presidents Cannot Run For Congress' } };
+
+  let date: Date = new Date(Date.now());
+  let year: number = date.getUTCDate() > 25 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear();
+  let month: number = date.getUTCDate() < 25 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1;
+  let query = {
+    isActive: false,
+    isCompleted: false,
+    type: ElectionType.Congress,
+    typeId: user.residence,
+    year,
+    month,
+  };
+
+  let election: IElection = await Election.findOne(query).exec();
+  if (!election)
+    return { status_code: 404, payload: { success: false, error: 'Congress Election Not Found' } };
+
+  let candidate: ICandidate = {
+    id: user._id,
+    name: user.username,
+    image: user.image,
+    party: party._id,
+    partyName: party.name,
+    partyImage: party.image,
+    partyColor: party.color,
+    location: residence._id,
+    locationName: residence.name,
+    votes: [] as number[],
+  };
+
+  party.congressCandidates.push(candidate);
+  let updatedParty = await party.save();
+  if (updatedParty)
+    return { status_code: 200, payload: { success: true, message: 'Candidacy Submitted' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }

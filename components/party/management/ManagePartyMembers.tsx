@@ -8,7 +8,7 @@ import { FormControl, FormLabel } from '@chakra-ui/form-control';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { useState } from 'react';
-import { getRoleColor, IMemberInfo } from '../PartyBody';
+import { getRoleColor, IMemberInfo } from '../PartyMembers';
 import { refreshData, request, showToast } from '@/util/ui';
 import { PartyActions } from '@/util/actions';
 import { parseCookies } from 'nookies';

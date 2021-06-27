@@ -1,4 +1,5 @@
 import Election, { ElectionType, IElection } from "@/models/Election";
+import Party, { IParty } from "@/models/Party";
 import Region, { IRegion } from "@/models/Region";
 import { connectToDB } from "@/util/mongo";
 import { Types } from 'mongoose';
@@ -12,6 +13,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     if (key === process.env.ACTIONS_KEY) {
       // Ensure DB Connection
       await connectToDB();
+
+      // Clear all party congress candidates
+      let parties: IParty[] = await Party.find({}).exec();
+
+      for (let party of parties) {
+        party.congressCandidates = [];
+        party.save();
+      }
 
       // Create new inactive, uncompleted elections for every country
       let region_ids: number[] = await Region.find({})
