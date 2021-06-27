@@ -18,11 +18,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         .exec()
         .then(docs => docs.map((doc: IRegion) => doc._id));
 
+      let date: Date = new Date(Date.now());
+      let year: number = date.getUTCDate() > 25 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear();
+      let month: number = date.getUTCDate() <= 25 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1;
+
       let electionsToInsert: IElection[] = region_ids.map((id: number) => {
         return new Election({
           _id: new Types.ObjectId(),
           type: ElectionType.Congress,
           typeId: id,
+          year,
+          month,
         });
       });
 

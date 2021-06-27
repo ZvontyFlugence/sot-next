@@ -17,7 +17,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       const update = {
         query: {
           type: ElectionType.Congress,
-          month: date.getUTCMonth(),
+          month: date.getUTCMonth() + 1,
           year: date.getUTCFullYear(),
           isActive: false,
           isCompleted: false,
