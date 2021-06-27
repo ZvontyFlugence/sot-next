@@ -81,8 +81,15 @@ const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
                   </div>           
                 </Td>
                 <Td>
-                  { new Date(Date.now()).getUTCDate() === 5 && (
-                    <Button size='sm' colorScheme='blue' onClick={() => handleVote(can.id)} disabled={hasUserVoted()}>Vote</Button>
+                  {new Date(Date.now()).getUTCDate() === 5 && (
+                    <Button
+                      size='sm'
+                      colorScheme='blue'
+                      onClick={() => handleVote(can.id)}
+                      disabled={hasUserVoted() || user.location !== user.residence}
+                    >
+                      Vote
+                    </Button>
                   )}
                 </Td>
               </Tr>

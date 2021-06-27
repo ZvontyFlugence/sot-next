@@ -1,7 +1,6 @@
 import { IItem } from '@/util/apiHelpers';
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-// TODO: create interfaces for  messages array type
 export interface IUser extends Document {
   _id: number,
   email: string,
@@ -17,6 +16,7 @@ export interface IUser extends Document {
   gold: number,
   strength: number,
   location: number,
+  residence: number,
   job: number | null,
   party: number | null,
   unit: number | null,
@@ -95,6 +95,7 @@ const UserSchema: Schema = new Schema({
   gold: { type: Number, default: 5.00 },
   strength: { type: Number, default: 0 },
   location: { type: Number, required: true },
+  residence: { type: Number, required: true },
   job: { type: Number, default: 0 },
   party: { type: Number, default: 0 },
   unit: { type: Number, default: 0 },

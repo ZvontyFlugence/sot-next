@@ -1313,6 +1313,12 @@ async function leave_party(data: IHandlePartyMembership): Promise<IUserActionRes
 // TODO: Use User Residence over Current Location
 // TODO: Handle Congress & Party President Elections
 async function vote(data: IHandleVote): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  else if (data.location !== user.residence)
+    return { status_code: 400, payload: { success: false, error: 'You can only vote from your region of residence' } };
+
   let election: IElection = await Election.findOne({ _id: data.election }).exec();
   if (!election)
     return { status_code: 404, payload: { success: false, error: 'Election Not Found' } };
