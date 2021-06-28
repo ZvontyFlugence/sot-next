@@ -76,6 +76,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await edit_member(data as IEditMember);
           break;
         }
+        case PartyActions.NOMINATE_CONGRESS: {
+          result = await nominate_congress(data as INominateCongress);
+          break;
+        }
         case PartyActions.NOMINATE_CP: {
           result = await nominate_cp(data as INominateCP);
           break;
@@ -195,13 +199,13 @@ async function nominate_cp(data: INominateCP): Promise<IPartyActionResponse> {
   else if (election.candidates.findIndex(can => can.id === data.candidateId) >= 0)
     return { status_code: 400, payload: { success: false, error: 'Candidate Is Already The Nominee' } };
 
-  // TODO: What is the purpose of this?
-  party.cpCandidates = party.cpCandidates.filter(can => can.id === data.candidateId);
-  let updatedParty = await party.save();
-  if (!updatedParty)
-    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+  let prevCandidateIndex = election.candidates.findIndex(can => can.party === party.id);
+  if (prevCandidateIndex !== -1) {
+    election.candidates.splice(prevCandidateIndex, 1);
+  }
 
-  election.candidates.push(updatedParty.cpCandidates[0]);
+  let candidate: ICandidate = party.cpCandidates.find(can => can.id === data.candidateId);
+  election.candidates.push(candidate);
   let updatedElection = await election.save();
   if (updatedElection)
     return { status_code: 200, payload: { success: true, message: 'Candidate Nominated' } };

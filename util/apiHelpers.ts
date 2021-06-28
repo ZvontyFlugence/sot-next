@@ -1,5 +1,5 @@
 import { IEmployee, IJobOffer, IProductOffer } from '@/models/Company';
-import { ECVote } from '@/models/Election';
+import { ECVote, IElection } from '@/models/Election';
 import { IRegion } from '@/models/Region';
 import { UserActions } from '@/util/actions';
 
@@ -55,6 +55,14 @@ export interface IRegionNode {
   visited: boolean,
   previous: IRegionNode | null,
   borders?: IRegion['borders']
+}
+
+export interface GetElectionResponse {
+  status_code: number,
+  payload: {
+    election?: IElection,
+    error?: string,
+  }
 }
 
 /* Functions */

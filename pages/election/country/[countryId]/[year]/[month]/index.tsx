@@ -53,7 +53,7 @@ const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
   return user ? (
     <Layout user={user}>
       <h1 className='text-xl text-accent h-brand font-semibold'>
-        Country President Election: {election?.month}/{election?.year}
+        Country President Election: {election?.month}/5/{election?.year}
       </h1>
       <div className='mt-4 mr-8 p-4 bg-night rounded shadow-md text-white'>
         <h3 className='text-lg text-accent h-brand font-semibold'>Candidates</h3>
