@@ -23,7 +23,7 @@
     "bcrypt": "^5.0.1",
     "crypto-random-string": "^4.0.0",
     "date-fns": "^2.19.0",
-    "deep-email-validator": "^0.1.18",
+    "email-deep-validator": "^3.3.0",
     "flag-icon-css": "^3.5.0",
     "framer-motion": "^4",
     "jsonwebtoken": "^8.5.1",
