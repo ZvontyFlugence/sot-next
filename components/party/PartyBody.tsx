@@ -1,10 +1,9 @@
-import { ICandidate } from "@/models/Election";
 import { IParty } from "@/models/Party";
-import { Avatar } from "@chakra-ui/avatar";
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/tabs";
 import CongressCandidates from "./CongressCandidates";
 import CPCandidates from "./CPCandidates";
 import PartyMembers from "./PartyMembers";
+import PPCandidates from "./PPCandidates";
 
 interface IPartyBodyProps {
   party: IParty,
@@ -27,9 +26,7 @@ const PartyBody: React.FC<IPartyBodyProps> = ({ party, user_id }) => {
               <PartyMembers party={party} />
             </TabPanel>
             <TabPanel>
-              <div className='flex flex-col gap-4 bg-night shadow-md rounded px-4 py-2'>
-
-              </div>
+              <PPCandidates user_id={user_id} party={party} />
             </TabPanel>
             <TabPanel>
               <CongressCandidates user_id={user_id} party={party} />
@@ -53,14 +50,10 @@ const PartyBody: React.FC<IPartyBodyProps> = ({ party, user_id }) => {
               <PartyMembers party={party} />
             </TabPanel>
             <TabPanel>
-              <div className='flex flex-col gap-4 bg-night shadow-md rounded px-4 py-2'>
-
-              </div>
+              <PPCandidates user_id={user_id} party={party} />
             </TabPanel>
             <TabPanel>
-              <div className='flex flex-col gap-4 bg-night shadow-md rounded px-4 py-2'>
-
-              </div>
+              <CongressCandidates user_id={user_id} party={party} />
             </TabPanel>
             <TabPanel>
               <CPCandidates user_id={user_id} party={party} />

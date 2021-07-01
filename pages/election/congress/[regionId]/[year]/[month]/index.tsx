@@ -38,7 +38,14 @@ const CongressElection: React.FC<ICongressElection> = ({ user, election, country
       token: cookies.token,
     }).then(data => {
       if (data.regions) {
-        setRegions(data.regions);
+        setRegions(data.regions.sort((a: IRegion, b: IRegion) => {
+          if (a.name < b.name)
+            return -1;
+          else if (a.name > b.name)
+            return 1;
+          
+          return 0;
+        }));
       }
     });
 
@@ -48,7 +55,14 @@ const CongressElection: React.FC<ICongressElection> = ({ user, election, country
       token: cookies.token,
     }).then(data => {
       if (data.countries)
-        setCountries(data.countries);
+        setCountries(data.countries.sort((a: IRegion, b: IRegion) => {
+          if (a.name < b.name)
+            return -1;
+          else if (a.name > b.name)
+            return 1;
+          
+          return 0;
+        }));
     });
   }, []);
 
@@ -59,13 +73,20 @@ const CongressElection: React.FC<ICongressElection> = ({ user, election, country
       token: cookies.token,
     }).then(data => {
       if (data.regions) {
-        setRegions(data.regions);
+        setRegions(data.regions.sort((a: IRegion, b: IRegion) => {
+          if (a.name < b.name)
+            return -1;
+          else if (a.name > b.name)
+            return 1;
+          
+          return 0;
+        }));
       }
     })
   }, [country]);
 
   const goToElection = () => {
-      router.push(`/election/congress/${selectedRegion}/${election.year}/${election.month}`);
+    router.push(`/election/congress/${selectedRegion}/${election.year}/${election.month}`);
   }
 
   const handleVote = (candidate: number) => {

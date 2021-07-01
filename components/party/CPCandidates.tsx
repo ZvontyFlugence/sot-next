@@ -24,7 +24,7 @@ const CPCandidates: React.FC<ICPCandidates> = ({ user_id, party }) => {
 
   let date: Date = new Date(Date.now());
   let year: number = date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear();
-  let month: number = date.getUTCDate() <=5 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1;
+  let month: number = date.getUTCDate() <= 5 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1;
   const canRun: boolean = party.president === user_id || party.cpCandidates.findIndex(can => can.id === user_id) >= 0;
 
   useEffect(() => {
@@ -33,7 +33,7 @@ const CPCandidates: React.FC<ICPCandidates> = ({ user_id, party }) => {
       method: 'GET',
       token: cookies.token,
     }).then(data => {
-      if (data.country.government.president) {
+      if (data.country?.government.president) {
         request({
           url: `/api/users/${data.country.government.president}`,
           method: 'GET',

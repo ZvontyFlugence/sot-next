@@ -62,7 +62,15 @@ export interface GetElectionResponse {
   payload: {
     election?: IElection,
     error?: string,
-  }
+  },
+}
+
+export interface GetElectionsResponse {
+  status_code: number,
+  payload: {
+    elections?: IElection[],
+    error?: string,
+  },
 }
 
 /* Functions */

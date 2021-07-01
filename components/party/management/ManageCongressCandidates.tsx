@@ -1,32 +1,29 @@
 import { ICandidate, IElection } from '@/models/Election';
 import { IParty } from '@/models/Party';
-import { UserActions } from '@/util/actions';
+import { PartyActions } from '@/util/actions';
 import { refreshData, request, showToast } from '@/util/ui';
 import { Avatar, Button, Tag, useToast } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
-import { useEffect } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-interface ICongressCandidates {
+
+interface IManageCongressCandidates {
   user_id: number,
   party: IParty,
 }
 
-const CongressCandidates: React.FC<ICongressCandidates> = ({ user_id, party }) => {
+const ManageCongressCandidates: React.FC<IManageCongressCandidates> = ({ user_id, party }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
 
-  const [candidates, setCandidates] = useState<ICandidate[]>([]);
-  const [cp, setCP] = useState<number | null>(null);
   const [congress, setCongress] = useState<number[]>([]);
-
+  const [candidates, setCandidates] = useState<ICandidate[]>([]);
 
   let date: Date = new Date(Date.now());
   let year: number = date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear();
   let month: number = date.getUTCDate() <=5 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1;
-  const canRun: boolean = party.president === user_id || party.congressCandidates.findIndex(can => can.id === user_id) >= 0 || cp === user_id;
 
   useEffect(() => {
     request({
@@ -35,9 +32,6 @@ const CongressCandidates: React.FC<ICongressCandidates> = ({ user_id, party }) =
       token: cookies.token,
     }).then(data => {
       if (data.country) {
-        let president = data.country.government.president;
-        if (president !== -1)
-          setCP(president);
         setCongress(data.country.government.congress);
       }
     });
@@ -48,21 +42,23 @@ const CongressCandidates: React.FC<ICongressCandidates> = ({ user_id, party }) =
       token: cookies.token,
     }).then(data => {
       if (data.elections) {
-        setCandidates(data.elections.reduce((accum: ICandidate[], election: IElection) => {
-          return [...accum, ...election.candidates];
-        }, []));
+        setCandidates(
+          data.elections.reduce((accum: ICandidate[], election: IElection) => {
+            return [...accum, ...election.candidates];
+          }, [])
+        );
       }
-    });
+    })
   }, [party.country, year, month]);
 
-  const runForCongress = () => {
+  const nominateForCongress = (candidateId: number, candidateLocation: number) => {
     let payload = {
-      action: UserActions.RUN_FOR_CONGRESS,
-      data: { partyId: party._id },
+      action: PartyActions.NOMINATE_CONGRESS,
+      data: { candidateId },
     };
 
     request({
-      url: '/api/me/doAction',
+      url: `/api/parties/${party._id}/doAction`,
       method: 'POST',
       payload,
       token: cookies.token,
@@ -71,11 +67,13 @@ const CongressCandidates: React.FC<ICongressCandidates> = ({ user_id, party }) =
         showToast(toast, 'success', data?.message);
         refreshData(router);
       } else {
-        showToast(toast, 'error', 'Submit Candidacy Failed', data?.error);
+        showToast(toast, 'error', 'Nominate Candidate Failed', data?.error);
       }
     });
   }
 
+  console.log('Candidates', candidates);
+  
   return (
     <>
       <div className='hidden md:flex flex-col gap-4 bg-night shadow-md rounded px-4 py-2 text-white'>
@@ -88,12 +86,11 @@ const CongressCandidates: React.FC<ICongressCandidates> = ({ user_id, party }) =
         <div>
           <h3 className='flex justify-between items-center'>
             <span className='text-lg text-accent-alt font-semibold'>Party Candidates:</span>
-            <Button size='sm' colorScheme='blue' onClick={runForCongress} disabled={canRun}>Run</Button>
           </h3>
           {party.congressCandidates.length === 0 ? (
             <p>Party Has No Candidates for Congress</p>
           ) : party.congressCandidates.map((candidate: ICandidate, i: number) => (
-            <div key={i} className='flex items-center gap-8'>
+            <div key={i} className='flex justify-between items-center gap-8'>
               <div className='flex items-center gap-4 cursor-pointer' onClick={() => router.push(`/profile/${candidate.id}`)}>
                 <Avatar src={candidate.image} name={candidate.name} />
                 <div className='flex flex-col'>
@@ -111,6 +108,11 @@ const CongressCandidates: React.FC<ICongressCandidates> = ({ user_id, party }) =
               >
                 {candidate.locationName}
               </Tag>
+              {congress.filter(can => can === candidate.id).length === 0 && (
+                <Button size='sm' colorScheme='blue' onClick={() => nominateForCongress(candidate.id, candidate.location)}>
+                  Nominate
+                </Button>
+              )}
             </div>
           ))}
         </div>
@@ -124,8 +126,8 @@ const CongressCandidates: React.FC<ICongressCandidates> = ({ user_id, party }) =
           {party.congressCandidates.length === 0 ? (
             <p>Party Has No Candidates for Congress</p>
           ) : party.congressCandidates.map((candidate: ICandidate, i: number) => (
-            <div key={i} className='flex items-center gap-4'>
-              <div className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/profile/${candidate.id}`)}>
+            <div key={i} className='flex justify-between'>
+              <div className='flex items-center gap-4 cursor-pointer' onClick={() => router.push(`/profile/${candidate.id}`)}>
                 <Avatar src={candidate.image} name={candidate.name} />
                 <div className='flex flex-col'>
                   <span className='font-semibold'>{candidate.name}</span>
@@ -142,6 +144,11 @@ const CongressCandidates: React.FC<ICongressCandidates> = ({ user_id, party }) =
               >
                 {candidate.locationName}
               </Tag>
+              {congress.filter(can => can === candidate.id).length === 0 && (
+                <Button size='sm' colorScheme='blue' onClick={() => nominateForCongress(candidate.id, candidate.location)}>
+                  Nominate
+                </Button>
+              )}
             </div>
           ))}
         </div>
@@ -150,4 +157,4 @@ const CongressCandidates: React.FC<ICongressCandidates> = ({ user_id, party }) =
   );
 }
 
-export default CongressCandidates;
+export default ManageCongressCandidates;

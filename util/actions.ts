@@ -67,6 +67,7 @@ export const PartyActions = {
   EDIT_MEMBER: 'edit_member',
   NOMINATE_CP: 'nominate_cp',
   NOMINATE_CONGRESS: 'nominate_congress',
+  UPDATE_COLOR: 'update_color',
   UPDATE_ECON: 'update_econ',
   UPDATE_LOGO: 'update_logo',
   UPDATE_NAME: 'update_name',  

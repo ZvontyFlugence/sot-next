@@ -7,7 +7,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 
 interface IPartyActionRequest {
   action: string,
-  data: IUpdateLogo | IUpdateName | IUpdateStance | INominateCP | IEditMember | INominateCongress
+  data: IUpdateLogo | IUpdateName | IUpdateStance | IEditMember | INominateCandidate | IUpdateColor
 }
 
 interface IPartyActionResponse {
@@ -36,17 +36,17 @@ interface IUpdateStance extends IBaseParams {
   value: EconomicStance | SocialStance,
 }
 
-interface INominateCP extends IBaseParams {
-  candidateId: number,
-}
-
-interface INominateCongress extends IBaseParams {
+interface INominateCandidate extends IBaseParams {
   candidateId: number,
 }
 
 interface IEditMember extends IBaseParams {
   memberId: number,
   role: string,
+}
+
+interface IUpdateColor extends IBaseParams {
+  color: string,
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -77,11 +77,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           break;
         }
         case PartyActions.NOMINATE_CONGRESS: {
-          result = await nominate_congress(data as INominateCongress);
+          result = await nominate_congress(data as INominateCandidate);
           break;
         }
         case PartyActions.NOMINATE_CP: {
-          result = await nominate_cp(data as INominateCP);
+          result = await nominate_cp(data as INominateCandidate);
+          break;
+        }
+        case PartyActions.UPDATE_COLOR: {
+          result = await update_color(data as IUpdateColor);
           break;
         }
         case PartyActions.UPDATE_ECON: {
@@ -118,11 +122,11 @@ async function update_econ(data: IUpdateStance): Promise<IPartyActionResponse> {
   else if (party.president !== data?.user_id)
     return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
 
-    let updatedParty = await party.updateOne({ $set: { economicStance: data.value as EconomicStance } }).exec();
-    if (updatedParty)
-      return { status_code: 200, payload: { success: true, message: 'Party Stance Updated' } };
-  
-    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+  let updatedParty = await party.updateOne({ $set: { economicStance: data.value as EconomicStance } }).exec();
+  if (updatedParty)
+    return { status_code: 200, payload: { success: true, message: 'Party Stance Updated' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
 async function update_logo(data: IUpdateLogo): Promise<IPartyActionResponse> {
@@ -148,11 +152,11 @@ async function update_name(data: IUpdateName): Promise<IPartyActionResponse> {
   else if (party.president !== data?.user_id)
     return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
 
-    let updatedParty = await party.updateOne({ $set: { name: data.name } }).exec();
-    if (updatedParty)
-      return { status_code: 200, payload: { success: true, message: 'Party Name Updated' } };
-  
-    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+  let updatedParty = await party.updateOne({ $set: { name: data.name } }).exec();
+  if (updatedParty)
+    return { status_code: 200, payload: { success: true, message: 'Party Name Updated' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
 async function update_soc(data: IUpdateStance): Promise<IPartyActionResponse> {
@@ -162,15 +166,15 @@ async function update_soc(data: IUpdateStance): Promise<IPartyActionResponse> {
   else if (party.president !== data?.user_id)
     return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
 
-    let updatedParty = await party.updateOne({ $set: { socialStance: data.value as SocialStance } }).exec();
-    if (updatedParty)
-      return { status_code: 200, payload: { success: true, message: 'Party Stance Updated' } };
-  
-    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+  let updatedParty = await party.updateOne({ $set: { socialStance: data.value as SocialStance } }).exec();
+  if (updatedParty)
+    return { status_code: 200, payload: { success: true, message: 'Party Stance Updated' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
 // TODO: Handle Nominating Someone After A Nominee Was Already Selected
-async function nominate_cp(data: INominateCP): Promise<IPartyActionResponse> {
+async function nominate_cp(data: INominateCandidate): Promise<IPartyActionResponse> {
   let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
   if (!party)
     return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
@@ -250,13 +254,13 @@ async function edit_member(data: IEditMember): Promise<IPartyActionResponse> {
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
-async function nominate_congress(data: INominateCongress): Promise<IPartyActionResponse> {
+async function nominate_congress(data: INominateCandidate): Promise<IPartyActionResponse> {
   let party: IParty = await Party.findOne({ _id: data.party_id }).exec();
   if (!party)
     return { status_code: 200, payload: { success: false, message: 'Party Not Found' } };
   else if (party.president !== data?.user_id)
     return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
-  else if (party.president !== data.candidateId)
+  else if (party.president === data.candidateId)
     return { status_code: 400, payload: { success: false, error: 'Candidate Cannot Be Party President' } };
   else if (!party.members.includes(data.candidateId))
     return { status_code: 400, payload: { success: false, error: 'Candidate Must Be A Party Member' } };
@@ -287,12 +291,26 @@ async function nominate_congress(data: INominateCongress): Promise<IPartyActionR
   if (!election)
     return { status_code: 404, payload: { success: false, error: 'Congress Election Not Found' } };
   else if (election.candidates.findIndex(can => can.id === data.candidateId) >= 0)
-    return { status_code: 400, payload: { success: false, error: 'Candidate Is Already The Nominee' } };
+    return { status_code: 400, payload: { success: false, error: 'Candidate Is Already A Nominee' } };
 
   election.candidates.push(candidate);
   let updatedElection = await election.save();
   if (updatedElection)
     return { status_code: 200, payload: { success: true, message: 'Candidate Nominated' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function update_color(data: IUpdateColor): Promise<IPartyActionResponse> {
+  let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
+  if (!party)
+    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
+  else if (party.president !== data?.user_id)
+    return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
+
+  let updatedParty = await party.updateOne({ $set: { color: data.color } }).exec();
+  if (updatedParty)
+    return { status_code: 200, payload: { success: true, message: 'Party Color Updated' } };
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }

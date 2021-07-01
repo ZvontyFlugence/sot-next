@@ -1,6 +1,6 @@
 import Election, { ElectionType, IElection } from '@/models/Election';
-import { validateToken } from '@/util/auth';
 import { GetElectionResponse } from '@/util/apiHelpers';
+import { validateToken } from '@/util/auth';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -10,19 +10,19 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   switch (req.method) {
     case 'GET': {
-      let regionId: number = -1;
+      let partyId: number = -1;
       let year: number = -1;
       let month: number = -1;
 
       try {
-        regionId = Number.parseInt(req.query.regionId as string);
+        partyId = Number.parseInt(req.query.partyId as string);
         year = Number.parseInt(req.query.year as string);
         month = Number.parseInt(req.query.month as string);
       } catch (e: any) {
         return res.status(400).json({ error: 'Invalid Parameters' });
       }
 
-      let result = await getCongressElection(regionId, year, month);
+      let result = await getPartyElection(partyId, year, month);
       return res.status(result.status_code).json(result.payload);
     }
     default:
@@ -30,17 +30,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
 }
 
-async function getCongressElection(regionId: number, year: number, month: number): Promise<GetElectionResponse> {
+async function getPartyElection(partyId: number, year: number, month: number): Promise<GetElectionResponse> {
   let query = {
-    type: ElectionType.Congress,
-    typeId: regionId,
-    month,
+    type: ElectionType.PartyPresident,
+    typeId: partyId,
     year,
+    month,
   };
 
   let election: IElection = await Election.findOne(query).exec();
-  if (!election)
-    return { status_code: 404, payload: { error: 'Congress Election Not Found' } };
+  if (election)
+    return { status_code: 200, payload: { election } };
 
-  return { status_code: 200, payload: { election } };
+  return { status_code: 500, payload: { error: 'Something Went Wrong' } };
 }

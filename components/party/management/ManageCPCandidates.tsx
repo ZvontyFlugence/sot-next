@@ -34,7 +34,7 @@ const ManageCPCandidates: React.FC<IManageCPCandidates> = ({ partyId, candidates
     }).then(data => {
       if (data.country.government.president) {
         request({
-          url: `/api/user/${data.country.government.president}`,
+          url: `/api/users/${data.country.government.president}`,
           method: 'GET',
           token: cookies.token,
         }).then(resp => setCP(resp.user));
@@ -77,7 +77,7 @@ const ManageCPCandidates: React.FC<IManageCPCandidates> = ({ partyId, candidates
     <>
       <div className='hidden md:flex flex-col gap-4 bg-night shadow-md rounded px-4 py-2 text-white'>
         <h2 className='text-xl text-accent font-semibold'>
-          Country President Elections: {month}/{year}
+          Country President Elections: {month}/5/{year}
         </h2>
         <div className='flex justify-between'>
           <div className='flex-grow'>
