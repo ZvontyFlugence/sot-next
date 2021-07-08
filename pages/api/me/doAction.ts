@@ -3,14 +3,17 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { UserActions } from '@/util/actions';
 import User, { IAlert, IMsg, IUser, IUserUpdates, IWalletItem } from '@/models/User';
 import { neededXP } from '@/util/ui';
-import { buildLevelUpAlert, getDistance, IItem, roundMoney } from '@/util/apiHelpers';
+import { buildLevelUpAlert, findVote, getDistance, IItem, roundMoney } from '@/util/apiHelpers';
 import { connectToDB } from '@/util/mongo';
 import Company, { ICompany, IEmployee } from '@/models/Company';
 import Region, { IRegion } from '@/models/Region';
-import Country, { ICountry } from '@/models/Country';
+import Country, { ElectionSystem, ICountry } from '@/models/Country';
 import Shout, { IShout } from '@/models/Shout';
 import bcrypt from 'bcrypt';
 import Newspaper, { INewspaper } from '@/models/Newspaper';
+import Party, { IParty } from '@/models/Party';
+import Election, { ECVote, ElectionType, ICandidate, IElection } from '@/models/Election';
+import { ObjectId } from 'mongoose';
 
 interface IUserActionResult {
   status_code: number,
@@ -24,10 +27,10 @@ interface IUserActionResult {
 
 interface IRequestBody {
   action: string,
-  data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams |
-    ICreateShoutParams | IHandleShoutParams | IUpdateUsernameParams | IUpdatePwParams |
-    ITravelParams | IUpdateDescParams | IDonateParams | IGiftParams | ICreateThreadParams |
-    IHandleThread | ISendMsg | ICreateNewspaper | ILikeArticle | ISubscribeNews
+  data?: IApplyJobParams | IHandleAlertParams | ISendFRParams | IBuyItemParams | ICreateShoutParams |
+    IHandleShoutParams | IUpdateUsernameParams | IUpdatePwParams | ITravelParams | IGiftParams |
+    IUpdateDescParams | IDonateParams | ICreateThreadParams | IHandleThread | ISendMsg | IRunForOffice |
+    ICreateNewspaper | ILikeArticle | ISubscribeNews | IHandleVote
 }
 
 interface IApplyJobParams {
@@ -144,6 +147,23 @@ interface ISubscribeNews {
   newsId: number,
 }
 
+interface IRunForOffice {
+  user_id?: number,
+  partyId: number,
+}
+
+interface IHandlePartyMembership {
+  user_id?: number,
+  partyId: number,
+}
+
+interface IHandleVote {
+  user_id?: number,
+  candidate: number,
+  election: ObjectId,
+  location: number,
+}
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const validation_res = await validateToken(req, res);
   if (!validation_res || validation_res.error) {
@@ -208,6 +228,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await heal(user_id);
           return res.status(result.status_code).json(result.payload);
         }
+        case UserActions.JOIN_PARTY: {
+          result = await join_party(data as IHandlePartyMembership);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.LEAVE_PARTY: {
+          result = await leave_party(data as IHandlePartyMembership);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.LIKE_ARTICLE: {
           result = await like_article(data as ILikeArticle);
           return res.status(result.status_code).json(result.payload);
@@ -222,6 +250,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
         case UserActions.READ_THREAD: {
           result = await read_thread(data as IHandleThread);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.RUN_FOR_CONGRESS: {
+          result = await run_for_congress(data as IRunForOffice);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.RUN_FOR_CP: {
+          result = await run_for_cp(data as IRunForOffice);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.SEND_FR: {
@@ -274,6 +310,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
         case UserActions.UPLOAD_PFP: {
           result = await upload(data as IUploadImageParams);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case UserActions.VOTE: {
+          result = await vote(data as IHandleVote);
           return res.status(result.status_code).json(result.payload);
         }
         case UserActions.WORK: {
@@ -1182,4 +1222,222 @@ async function subscribe_news(data: ISubscribeNews): Promise<IUserActionResult> 
   let updated = await newspaper.updateOne({ $set: updates }).exec();
   if (updated)
     return { status_code: 200, payload: { success: true, message: subscriberIndex === -1 ? 'Newspaper Subscribed' : 'Newspaper Unsubscribed' } };
+}
+
+async function run_for_cp(data: IRunForOffice): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  let party: IParty = await Party.findOne({ _id: data.partyId }).exec();
+  if (!party)
+    return { status_code: 404, payload: { success: false, error: 'Political Party Not Found' } };
+  else if (party.president === user._id)
+    return { status_code: 400, payload: { success: false, error: 'Party President Cannot Run For Office' } };
+  else if (!party.members.includes(user._id))
+    return { status_code: 400, payload: { success: false, error: 'You Are Not A Party Member' } };
+  else if (party.cpCandidates.findIndex(can => can.id === user._id) >= 0)
+    return { status_code: 400, payload: { success: false, error: 'You Are Already A Candidate' } };
+
+  let date: Date = new Date(Date.now());
+  let query = {
+    isActive: false,
+    isCompleted: false,
+    type: ElectionType.CountryPresident,
+    typeId: party.country,
+    month: date.getUTCDate() < 5 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1,
+    year: date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear(),
+  };
+
+  let election: IElection = await Election.findOne(query).exec();
+  if (!election)
+    return { status_code: 404, payload: { success: false, error: 'Country President Election Not Found' } };
+
+  let candidate: ICandidate = {
+    id: user._id,
+    name: user.username,
+    image: user.image,
+    party: party._id,
+    partyName: party.name,
+    partyImage: party.image,
+    partyColor: party.color,
+    votes: election.system === ElectionSystem.ElectoralCollege ? ([] as ECVote[]) : ([] as number[]),
+  };
+
+  party.cpCandidates.push(candidate);
+
+  let updatedParty = await party.save();
+  if (updatedParty)
+    return { status_code: 200, payload: { success: true, message: 'Candidacy Submitted' } };
+
+  return { status_code: 500, payload: { success: true, error: 'Something Went Wrong' } };
+}
+
+async function join_party(data: IHandlePartyMembership): Promise<IUserActionResult> {
+  let party: IParty = await Party.findOne({ _id: data.partyId }).exec();
+  if (!party)
+    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
+  else if (party.members.includes(data.user_id))
+    return { status_code: 400, payload: { success: false, error: 'User Already A Party Member' } };
+
+  // Update Party
+  party.members.push(data.user_id);
+  let updatedParty = await party.save();
+  if (!updatedParty)
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+
+  // Update User
+  let updatedUser = await User.updateOne({ _id: data.user_id }, { $set: { party: party._id } }).exec();
+  if (updatedUser)
+    return { status_code: 200, payload: { success: true, message: 'Successfully Joined Party' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function leave_party(data: IHandlePartyMembership): Promise<IUserActionResult> {
+  let party: IParty = await Party.findOne({ _id: data.partyId }).exec();
+  if (!party)
+    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
+  else if (!party.members.includes(data.user_id))
+    return { status_code: 400, payload: { success: false, error: 'User Already Not A Member' } };
+
+  // Update Party
+  party.members.splice(party.members.indexOf(data.user_id), 1);
+  let updatedParty = await party.save();
+  if (!updatedParty)
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+
+  // Update User
+  let updatedUser = await User.updateOne({ _id: data.user_id }, { $set: { party: 0 } }).exec();
+  if (updatedUser)
+    return { status_code: 200, payload: { success: true, message: 'Successfully Left Party' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+// TODO: Handle Congress & Party President Elections
+async function vote(data: IHandleVote): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  else if (data.location !== user.residence)
+    return { status_code: 400, payload: { success: false, error: 'You can only vote from your region of residence' } };
+
+  let election: IElection = await Election.findOne({ _id: data.election }).exec();
+  if (!election)
+    return { status_code: 404, payload: { success: false, error: 'Election Not Found' } };
+
+  let hasVoted: boolean = false;
+
+  for (let candidate of election.candidates) {
+    if (candidate.votes.findIndex(vote => findVote(vote, data.user_id)) >= 0) {
+      hasVoted = true;
+      break;
+    }
+  }
+
+  if (hasVoted)
+    return { status_code: 400, payload: { success: false, error: 'You\'ve Already Voted' } };
+
+  try {
+    switch (election.type) {
+      case ElectionType.CountryPresident: {
+        let candidateIndex: number = election.candidates.findIndex(can => can.id === data.candidate);
+        if (candidateIndex === -1)
+          return { status_code: 404, payload: { success: false, error: 'Candidate Not Found' } };
+
+        if (election.system === ElectionSystem.ElectoralCollege) {
+          let voteIndex: number = (election.candidates[candidateIndex].votes as ECVote[])
+            .findIndex((ecVote: ECVote) => ecVote.location === data.location);
+          
+          if (voteIndex === -1) {
+            (election.candidates[candidateIndex].votes as ECVote[]).push({
+              location: data.location,
+              tally: [data.user_id],
+            } as ECVote);
+            break;
+          } else {
+            (election.candidates[candidateIndex].votes[voteIndex] as ECVote)?.tally.push(data.user_id);
+            break;
+          }
+        } else if (election.system === ElectionSystem.PopularVote) {
+          // Dont need a check if voted here, since done above
+          (election.candidates[candidateIndex].votes as number[]).push(data.user_id);
+          break;
+        }
+      }
+      case ElectionType.Congress:
+      case ElectionType.PartyPresident:
+      default:
+        return { status_code: 400, payload: { success: false, error: 'Unknown Election Type' } };
+    }
+  } catch (e: any) {
+    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+  }
+
+  let updatedElection = await election.updateOne({ $set: { candidates: election.candidates }});
+
+  if (updatedElection)
+    return { status_code: 200, payload: { success: true, message: 'Vote Submitted' } };
+}
+
+async function run_for_congress(data: IRunForOffice): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+
+  let residence: IRegion = await Region.findOne({ _id: user.residence }).exec();
+  if (!residence)
+    return { status_code: 404, payload: { success: false, error: 'Residence Region Not Found' } };
+  
+  let party: IParty = await Party.findOne({ _id: data.partyId }).exec();
+  if (!party)
+    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
+  else if (!party.members.includes(user._id))
+    return { status_code: 400, payload: { success: false, error: 'You Are Not A Party Member' } };
+  else if (party.president === user._id)
+    return { status_code: 400, payload: { success: false, error: 'Party Presidents Cannot Run For Congress' } };
+  else if (party.congressCandidates.findIndex(can => can.id === user._id) >= 0)
+    return { status_code: 400, payload: { success: false, error: 'Already A Congress Candidate' } };
+
+  let country: ICountry = await Country.findOne({ _id: party.country }).exec();
+  if (!country)
+    return { status_code: 404, payload: { success: false, error: 'Country Not Found' } };
+  else if (country.government.president === user._id)
+    return { status_code: 400, payload: { success: false, error: 'Country Presidents Cannot Run For Congress' } };
+
+  let date: Date = new Date(Date.now());
+  let year: number = date.getUTCDate() > 25 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear();
+  let month: number = date.getUTCDate() < 25 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1;
+  let query = {
+    isActive: false,
+    isCompleted: false,
+    type: ElectionType.Congress,
+    typeId: user.residence,
+    year,
+    month,
+  };
+
+  let election: IElection = await Election.findOne(query).exec();
+  if (!election)
+    return { status_code: 404, payload: { success: false, error: 'Congress Election Not Found' } };
+
+  let candidate: ICandidate = {
+    id: user._id,
+    name: user.username,
+    image: user.image,
+    party: party._id,
+    partyName: party.name,
+    partyImage: party.image,
+    partyColor: party.color,
+    location: residence._id,
+    locationName: residence.name,
+    votes: [] as number[],
+  };
+
+  party.congressCandidates.push(candidate);
+  let updatedParty = await party.save();
+  if (updatedParty)
+    return { status_code: 200, payload: { success: true, message: 'Candidacy Submitted' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }

@@ -1,5 +1,6 @@
 import Country, { ICountry } from '@/models/Country';
 import Election, { ElectionType, IElection } from '@/models/Election';
+import Party, { IParty } from '@/models/Party';
 import { connectToDB } from '@/util/mongo';
 import { Types } from 'mongoose';
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -13,8 +14,20 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       // Ensure DB Connection
       await connectToDB();
 
+      // Clear out all party cp canidates
+      let parties: IParty[] = await Party.find({}).exec();
+
+      for (let party of parties) {
+        party.cpCandidates = [];
+        party.save();
+      }
+
       // Create new inactive, uncompleted election for every country
       let countries: ICountry[] = await Country.find({}).exec();
+
+      let date: Date = new Date(Date.now());
+      let year: number = date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear();
+      let month: number = date.getUTCDate() <=5 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1;
 
       let electionsToInsert: IElection[] = countries.map((country: ICountry) => {
         return new Election({
@@ -22,6 +35,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           type: ElectionType.CountryPresident,
           typeId: country._id,
           system: country.government.electionSystem,
+          year,
+          month,
         });
       });
 

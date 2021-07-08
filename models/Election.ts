@@ -11,9 +11,10 @@ export interface IElection extends Document {
   isActive: boolean,
   isCompleted: boolean,
   winner: number | number[],
-  system: ElectionSystem,
+  system?: ElectionSystem,
   tally?: { [candidate: number]: number },
   ecResults?: IVoteObject,
+  regionTallies?: { [region: number]: number },
 }
 
 export interface IVoteObject {
@@ -35,6 +36,7 @@ export interface ICandidate {
   party: number,
   partyName?: string,
   partyImage?: string,
+  partyColor?: string,
   votes: number[] | ECVote[],
   location?: number,
   locationName?: string,
@@ -51,14 +53,15 @@ const ElectionSchema = new Schema({
   type: { type: String, required: true },
   typeId: { type: Number, required: true },
   candidates: { type: Array, default: [] },
-  month: { type: Number, default: new Date(Date.now()).getUTCMonth() },
+  month: { type: Number, default: new Date(Date.now()).getUTCMonth() + 1 },
   year: { type: Number, default: new Date(Date.now()).getUTCFullYear() },
   isActive: { type: Boolean, default: false },
   isCompleted: { type: Boolean, default: false },
   winner: { type: Number, default: -1 },
-  system: { type: String, required: true },
+  system: { type: String },
   tally: { type: Object },
   ecResults: { type: Object },
+  regionTallies: { type: Object },
 });
 
 let Election: Model<IElection> | null;

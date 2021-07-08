@@ -1,0 +1,12 @@
+name: Activate Congress Elections Job
+on:
+  schedule:
+    - cron: '0 0 25 * *'
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --request POST \
+          --url '${{ secrets.APP_URL }}/api/cron/elections/congress/activate' \
+          --header 'Authorization: Bearer ${{ secrets.ACTIONS_KEY }}'

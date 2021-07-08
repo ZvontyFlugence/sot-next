@@ -15,6 +15,7 @@ export interface IParty extends Document {
   cpCandidates: ICandidate[],
   congressCandidates: ICandidate[],
   ppCandidates: ICandidate[],
+  color: string,
 }
 
 export enum EconomicStance {
@@ -145,6 +146,7 @@ const PartySchema = new Schema({
   cpCandidates: { type: Array, default: [] },
   congressCandidates: { type: Array, default: [] },
   ppCandidates: { type: Array, default: [] },
+  color: { type: String, required: true },
 });
 
 let Party: Model<IParty> | null;

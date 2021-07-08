@@ -1,12 +1,16 @@
 import { EconomicStance, IParty, SocialStance } from "@/models/Party";
 import { ILeadershipInfo, ICountryInfo } from '@/pages/api/parties/[partyId]';
+import { UserActions } from "@/util/actions";
+import { refreshData, request, showToast } from "@/util/ui";
 import { Avatar } from "@chakra-ui/avatar";
 import { IconButton } from "@chakra-ui/button";
 import { EditIcon } from "@chakra-ui/icons";
 import { Image } from "@chakra-ui/image";
+import { useToast } from "@chakra-ui/react";
 import { Stat, StatLabel, StatNumber } from "@chakra-ui/stat";
 import { Tag } from "@chakra-ui/tag";
 import { useRouter } from "next/router";
+import { parseCookies } from "nookies";
 import { ImEnter, ImExit } from 'react-icons/im';
 
 interface IPartyHeadProps {
@@ -19,14 +23,50 @@ interface IPartyHeadProps {
 }
 
 const PartyHead: React.FC<IPartyHeadProps> = ({ party, leadershipInfo, countryInfo, ...props }) => {
+  const cookies = parseCookies();
   const router = useRouter();
+  const toast = useToast();
 
   const handleJoin = () => {
+    let payload = {
+      action: UserActions.JOIN_PARTY,
+      data: { partyId: party._id },
+    };
 
+    request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', data?.message);
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Join Party Failed', data?.error);
+      }
+    });
   }
 
   const handleLeave = () => {
+    let payload = {
+      action: UserActions.LEAVE_PARTY,
+      data: { partyId: party._id },
+    };
 
+    request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', data?.message);
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Leave Party Failed', data?.error);
+      }
+    });
   }
 
   return (

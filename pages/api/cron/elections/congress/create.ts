@@ -1,4 +1,5 @@
 import Election, { ElectionType, IElection } from "@/models/Election";
+import Party, { IParty } from "@/models/Party";
 import Region, { IRegion } from "@/models/Region";
 import { connectToDB } from "@/util/mongo";
 import { Types } from 'mongoose';
@@ -13,16 +14,30 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       // Ensure DB Connection
       await connectToDB();
 
+      // Clear all party congress candidates
+      let parties: IParty[] = await Party.find({}).exec();
+
+      for (let party of parties) {
+        party.congressCandidates = [];
+        party.save();
+      }
+
       // Create new inactive, uncompleted elections for every country
       let region_ids: number[] = await Region.find({})
         .exec()
         .then(docs => docs.map((doc: IRegion) => doc._id));
+
+      let date: Date = new Date(Date.now());
+      let year: number = date.getUTCDate() > 25 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear();
+      let month: number = date.getUTCDate() <= 25 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1;
 
       let electionsToInsert: IElection[] = region_ids.map((id: number) => {
         return new Election({
           _id: new Types.ObjectId(),
           type: ElectionType.Congress,
           typeId: id,
+          year,
+          month,
         });
       });
 

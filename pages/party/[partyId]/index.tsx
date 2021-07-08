@@ -40,7 +40,7 @@ const PartyPage: React.FC<IPartyPageProps> = ({ user, party, ...props }) => {
         {isManageMode ? (
           <ManageParty user_id={user._id} party={party} />
         ) : (
-          <PartyBody party={party} />
+          <PartyBody user_id={user._id} party={party} />
         )}
       </div>
     </Layout>

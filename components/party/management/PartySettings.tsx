@@ -23,6 +23,7 @@ const PartySettings: React.FC<IPartySettingsProps> = ({ user_id: _uid, party }) 
   const [name, setName] = useState<string>(party.name);
   const [econStance, setEconStance] = useState<EconomicStance>(party.economicStance as EconomicStance);
   const [socStance, setSocStance] = useState<SocialStance>(party.socialStance as SocialStance);
+  const [color, setColor] = useState<string>(party.color);
   const [file, setFile] = useState<File | null>(null);
 
   const handleFileChange = (e: any) => {
@@ -123,10 +124,31 @@ const PartySettings: React.FC<IPartySettingsProps> = ({ user_id: _uid, party }) 
     });
   }
 
+  const updateColor = () => {
+    let payload = {
+      action: PartyActions.UPDATE_COLOR,
+      data: { color },
+    };
+
+    request({
+      url: `/api/parties/${party._id}/doAction`,
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', data?.message);
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Update Party Color Failed', data?.error);
+      }
+    });
+  }
+
   return (
     <div className='bg-night shadow-md rounded w-full px-4 py-2'>
       <h3 className='text-xl text-accent font-semibold'>Party Settings</h3>
-      <div className="flex items-center gap-8 mt-4 text-white">
+      <div className="flex items-start gap-8 mt-4 text-white">
         <div className='flex flex-col gap-4 flex-grow'>
           <FormControl>
             <FormLabel>Party Name</FormLabel>
@@ -167,21 +189,6 @@ const PartySettings: React.FC<IPartySettingsProps> = ({ user_id: _uid, party }) 
               Update Stance
             </Button>
           </FormControl>
-        </div>
-        <div className='flex flex-col gap-4 flex-grow'>
-          <FormControl>
-            <FormLabel className="text-xl">Party Logo</FormLabel>
-            <Input type='file' accept='image/*' onChange={handleFileChange} />
-            <Button
-              className='mt-2'
-              variant='outline'
-              color='accent-alt'
-              colorScheme='whiteAlpha'
-              onClick={updateLogo}
-            >
-              Update Logo
-            </Button>
-          </FormControl>
           <FormControl>
             <FormLabel>Social Stance</FormLabel>
             <p className='text-center'>{SocialStance.toString(socStance)}</p>
@@ -206,6 +213,33 @@ const PartySettings: React.FC<IPartySettingsProps> = ({ user_id: _uid, party }) 
               onClick={updateSocStance}
             >
               Update Stance
+            </Button>
+          </FormControl>
+        </div>
+        <div className='flex flex-col gap-4 flex-grow'>
+          <FormControl>
+            <FormLabel className="text-xl">Party Logo</FormLabel>
+            <Input type='file' accept='image/*' onChange={handleFileChange} />
+            <Button
+              className='mt-2'
+              variant='outline'
+              color='accent-alt'
+              colorScheme='whiteAlpha'
+              onClick={updateLogo}
+            >
+              Update Logo
+            </Button>
+          </FormControl>
+          <FormControl>
+            <FormLabel className='text-xl'>Party Color</FormLabel>
+            <Input type='text' value={color} onChange={e => setColor(e.target.value)} />
+            <Button
+              className='mt-2'
+              variant='outline'
+              color='accent-alt'
+              onClick={updateColor}
+            >
+              Update Color
             </Button>
           </FormControl>
         </div>      

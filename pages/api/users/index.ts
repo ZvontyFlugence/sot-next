@@ -3,11 +3,9 @@ import User, { IUser } from '@/models/User';
 import Country, { ICountry } from '@/models/Country';
 import Region, { IRegion } from '@/models/Region';
 import bcrypt from 'bcrypt';
-import mongoose from 'mongoose';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { validateToken } from '@/util/auth';
-import * as emailValidator from 'deep-email-validator';
-import { OutputFormat } from 'deep-email-validator/dist/output/output';
+import EmailValidator from 'email-deep-validator';
 
 interface IGetUserResponse {
   status_code: number,
@@ -84,7 +82,7 @@ async function post(req) {
   }
 
   // Deep Email Validation to ensure real accounts only
-  const { valid } = await isEmailValid(email);
+  const valid = await isEmailValid(email);
   if (!valid) {
     result.status_code = 400;
     result.payload = { success: false, error: 'Invalid/Non-Existant Email Address' };
@@ -138,6 +136,7 @@ async function post(req) {
     password: hashed_pw,
     country,
     location: region._id,
+    residence: region._id,
     wallet: [{ currency: target_country.currency, amount: 25.00 }],
   });
 
@@ -145,6 +144,11 @@ async function post(req) {
   return result;
 }
 
-async function isEmailValid(email: string): Promise<OutputFormat> {
-  return emailValidator.validate(email);
+async function isEmailValid(email: string): Promise<boolean> {
+  const emailValidator = new EmailValidator();
+  let results = await emailValidator.verify(email);
+
+  console.log(results);
+
+  return results.wellFormed && results.validDomain && results.validMailbox !== false;
 }

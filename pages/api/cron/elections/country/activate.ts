@@ -13,12 +13,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
       // Update every inactive, uncompleted election to become active
       let date: Date = new Date(Date.now());
+      let month: number = date.getUTCDate() <= 5 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1;
+      let year: number = date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear();
 
       const update = {
         query: {
           type: ElectionType.CountryPresident,
-          month: date.getUTCMonth(),
-          year: date.getUTCFullYear(),
+          month,
+          year,
           isActive: false,
           isCompleted: false,
         },
@@ -26,6 +28,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           isActive: true,
         },
       };
+
+      // TODO: Update all political parties to clear their candidate list (if not already done by now?)
 
       const updated = await Election.updateMany(update.query, update.changes).exec();
       

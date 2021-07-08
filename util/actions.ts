@@ -11,12 +11,17 @@ export const UserActions = {
   DONATE: 'donate',
   GIFT: 'gift',
   HEAL: 'heal',
+  JOIN_PARTY: 'join_party',
+  LEAVE_PARTY: 'leave_party',
   LEVEL_UP: 'level_up',
   LIKE_ARTICLE: 'like_article',
   LIKE_SHOUT: 'like_shout',
   READ_ALERT: 'read_alert',
   READ_THREAD: 'read_thread',
   REMOVE_FRIEND: 'remove_friend',
+  RUN_FOR_CONGRESS: 'run_for_congress',
+  RUN_FOR_CP: 'run_for_cp',
+  RUN_FOR_PP: 'run_for_pp',
   SEND_FR: 'send_fr',
   SEND_MSG: 'send_msg',
   SEND_SHOUT: 'send_shout',
@@ -30,6 +35,7 @@ export const UserActions = {
   UPDATE_NAME: 'update_name',
   UPDATE_PW: 'update_pw',
   UPLOAD_PFP: 'upload_pfp',
+  VOTE: 'vote',
   WORK: 'work',
 };
 
@@ -58,6 +64,10 @@ export const NewspaperActions = {
 };
 
 export const PartyActions = {
+  EDIT_MEMBER: 'edit_member',
+  NOMINATE_CP: 'nominate_cp',
+  NOMINATE_CONGRESS: 'nominate_congress',
+  UPDATE_COLOR: 'update_color',
   UPDATE_ECON: 'update_econ',
   UPDATE_LOGO: 'update_logo',
   UPDATE_NAME: 'update_name',  

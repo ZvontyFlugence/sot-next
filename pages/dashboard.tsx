@@ -6,6 +6,7 @@ import Dailies from '@/components/dashboard/Dailies';
 import Shouts from '@/components/dashboard/Shouts';
 import News from '@/components/dashboard/News';
 import Layout from '@/components/Layout';
+import ElectionMsg from '@/components/dashboard/ElectionMsg';
 
 interface IDashboardProps {
   user: IUser,
@@ -13,10 +14,19 @@ interface IDashboardProps {
 }
 
 export default function Dashboard({ user, ...props }: IDashboardProps) {
+  let date: Date = new Date(Date.now());
+
   return user ? (
     <Layout user={user}>
       <h1 className='text-2xl text-accent pl-4 font-semibold'>Dashboard</h1>
       <div className='hidden md:block'>
+        <ElectionMsg
+          country={user.country}
+          party={user.party}
+          day={date.getUTCDate()}
+          month={date.getUTCMonth() + 1}
+          year={date.getUTCFullYear()}
+        />
         <SimpleGrid className='pl-8 pr-12' columns={2}>
           <Box>
             <Dailies user={user} />

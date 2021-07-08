@@ -1,0 +1,22 @@
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    name: Deploy Prod
+    steps:
+      - name: Connect to Dropdlet via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DIGITAL_OCEAN_HOST }}
+          username: ${{ secrets.DIGITAL_OCEAN_USERNAME }}
+          key: ${{ secrets.DIGITAL_OCEAN_KEY }}
+          script: |
+            cd ${{ secrets.DROPLET_TARGET }}
+            git checkout main
+            git pull
+            yarn build
+            pm2 restart 1
