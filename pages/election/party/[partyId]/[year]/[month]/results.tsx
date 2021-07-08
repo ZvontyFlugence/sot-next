@@ -2,45 +2,42 @@ import Layout from '@/components/Layout';
 import Select from '@/components/Select';
 import { ICountry } from '@/models/Country';
 import Election, { ElectionType, ICandidate, IElection } from '@/models/Election';
-import Region, { IRegion } from '@/models/Region';
+import Party, { IParty } from '@/models/Party';
 import { IUser } from '@/models/User';
-import { UserActions } from '@/util/actions';
-import { findVote, jsonify } from '@/util/apiHelpers';
+import { jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
-import { refreshData, request, showToast } from '@/util/ui';
-import { Avatar, Button, Table, Tbody, Td, Th, Thead, Tr, useToast } from '@chakra-ui/react';
+import { request } from '@/util/ui';
+import { Avatar, Button, flexbox, Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 import { useEffect, useState } from 'react';
 
-interface ICongressElection {
+interface IPPResults {
   user?: IUser,
   isAuthenticated: boolean,
   election: IElection,
   country: number,
 }
 
-const CongressElection: React.FC<ICongressElection> = ({ user, election, country: countryId, ...props }) => {
+const PPResults: React.FC<IPPResults> = ({ user, election, country, ...props }) => {
   const cookies = parseCookies();
   const router = useRouter();
-  const toast = useToast();
 
-  const [country, setCountry] = useState<number>(countryId);
-  const [selectedRegion, setSelectedRegion] = useState<number>(election.typeId);
+  const [selectedCountry, setSelectedCountry] = useState<number>(country);
   const [countries, setCountries] = useState<ICountry[]>([]);
-  const [regions, setRegions] = useState<IRegion[]>([]);
+  const [selectedParty, setSelectedParty] = useState<number>(election.typeId);
+  const [parties, setParties] = useState<IParty[]>([]);
 
   useEffect(() => {
     request({
-      url: `/api/countries/${country}/regions`,
+      url: `/api/countries/${selectedCountry}/parties`,
       method: 'GET',
       token: cookies.token,
     }).then(data => {
-      if (data.regions) {
-        setRegions(
-          data.regions.sort((a: IRegion, b: IRegion) => a.name.localeCompare(b.name))
+      if (data.parties)
+        setParties(
+          data.parties.sort((a: IParty, b: IParty) => a.name.localeCompare(b.name))
         );
-      }
     });
 
     request({
@@ -57,59 +54,34 @@ const CongressElection: React.FC<ICongressElection> = ({ user, election, country
 
   useEffect(() => {
     request({
-      url: `/api/countries/${country}/regions`,
+      url: `/api/countries/${selectedCountry}/parties`,
       method: 'GET',
       token: cookies.token,
     }).then(data => {
-      if (data.regions)
-        setRegions(
-          data.regions.sort((a: IRegion, b: IRegion) => a.name.localeCompare(b.name))
+      if (data.parties)
+        setParties(
+          data.parties.sort((a: IParty, b: IParty) => a.name.localeCompare(b.name))
         );
-    })
-  }, [country]);
+    });
+  }, [selectedCountry]);
 
   const goToElection = () => {
-    router.push(`/election/congress/${selectedRegion}/${election.year}/${election.month}`);
-  }
-
-  const handleVote = (candidate: number) => {
-    let payload = {
-      action: UserActions.VOTE,
-      data: { candidate, location: user.location, election: election._id },
-    };
-
-    request({
-      url: '/api/me/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    }).then(data => {
-      if (data.success) {
-        showToast(toast, 'success', data?.message);
-        refreshData(router);
-      } else {
-        showToast(toast, 'error', 'Failed to Vote', data?.error);
-      }
-    });
-  }
-
-  const hasUserVoted = (): boolean => {
-    let foundVote: boolean[] = election?.candidates.map((can: ICandidate) => {
-      return (can.votes as number[]).findIndex((vote: number) => findVote(vote, user._id)) >= 0;
-    });
-
-    return foundVote.some(vote => vote === true);
+    router.push(`/election/party/${selectedParty}/${election.year}/${election.month}/results`);
   }
 
   return user ? (
     <Layout user={user}>
       <div className='flex justify-between items-center'>
         <h1 className='text-xl text-accent font-semibold'>
-          Congress Election: {election?.month}/25/{election?.year}
+          Party Election Results: {election?.month}/15/{election?.year}
         </h1>
         <div className='flex items-center gap-4 pr-8'>
           {countries.length > 0 && (
-            <Select className='border border-white border-opacity-25 rounded shadow-md' selected={country} onChange={(val) => setCountry(val as number)}>
+            <Select
+              className='border border-white border-opacity-25 rounded shadow-md'
+              selected={selectedCountry}
+              onChange={(val) => setSelectedCountry(val as number)}
+            >
               {countries.map((country: ICountry, i: number) => (
                 <Select.Option key={i} value={country._id}>
                   {country.name}
@@ -118,26 +90,31 @@ const CongressElection: React.FC<ICongressElection> = ({ user, election, country
               ))}
             </Select>
           )}
-          {selectedRegion && regions.length > 0 && (
-            <Select className='border border-white border-opacity-25 rounded shadow-md' selected={selectedRegion} onChange={(val) => setSelectedRegion(val as number)}>
-                {regions.map((region: IRegion, i: number) => (
-                  <Select.Option key={i} value={region._id}>
-                    {region.name}
-                  </Select.Option>
-                ))}
+          {selectedParty && parties.length > 0 && (
+            <Select
+              className='border border-white border-opacity-25 rounded shadow-md'
+              selected={selectedParty}
+              onChange={(val) => setSelectedParty(val as number)}
+            >
+              {parties.map((party: IParty, i: number) => (
+                <Select.Option key={i} value={party._id}>
+                  <Avatar src={party.image} name={party.name} />
+                  {party.name}
+                </Select.Option>
+              ))}
             </Select>
           )}
           <Button size='sm' colorScheme='blue' onClick={goToElection}>Go</Button>
         </div>
       </div>
-      <div className='mt-4 mr-8 p-4 bg-night rounded shadow-md text-white'>
+      <div className='mt-4 mr-8 p-4 bg-night rouded shadow-md text-white'>
         <h3 className='text-lg text-accent font-semibold'>Candidates</h3>
         <Table>
           <Thead>
             <Tr>
               <Th color='white'>Candidate</Th>
               <Th color='white'>Party</Th>
-              <Th color='white'>Action</Th>
+              <Th color='white'>Votes</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -156,16 +133,7 @@ const CongressElection: React.FC<ICongressElection> = ({ user, election, country
                   </div>
                 </Td>
                 <Td>
-                  {new Date(Date.now()).getUTCDate() === 25 && (
-                    <Button
-                      size='sm'
-                      colorScheme='blue'
-                      onClick={() => handleVote(can.id)}
-                      disabled={hasUserVoted() || user.location !== user.residence}
-                    >
-                      Vote
-                    </Button>
-                  )}
+                  {(can.votes as number[]).length}
                 </Td>
               </Tr>
             ))}
@@ -190,43 +158,36 @@ export const getServerSideProps = async ctx => {
     };
   }
 
-  let regionId: number = Number.parseInt(params.regionId);
+  let partyId: number = Number.parseInt(params.partyId);
   let year: number = Number.parseInt(params.year);
   let month: number = Number.parseInt(params.month);
 
   let query = {
-    type: ElectionType.Congress,
-    typeId: regionId,
+    type: ElectionType.PartyPresident,
+    typeId: partyId,
     year,
     month,
   };
 
   let election: IElection = await Election.findOne(query).exec();
-  if (!election) {
+  if (!election || election.isActive || !election.isCompleted) {
     return {
       redirect: {
         permanent: false,
         destination: '/dashboard',
       },
     };
-  } else if (!election.isActive && election.isCompleted) {
-    return {
-      redirect: {
-        permanent: false,
-        destination: `/election/congress/${regionId}/${year}/${month}/results`,
-      },
-    };
   }
 
-  let region: IRegion = await Region.findOne({ _id: election.typeId }).exec();
+  let party: IParty = await Party.findOne({ _id: election.typeId }).exec();
 
   return {
     props: {
       ...result,
       election: jsonify(election),
-      country: jsonify(region.owner),
+      country: jsonify(party.country),
     },
   };
 }
 
-export default CongressElection;
+export default PPResults;

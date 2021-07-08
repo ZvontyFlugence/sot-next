@@ -1,4 +1,6 @@
 import Layout from '@/components/Layout';
+import Select from '@/components/Select';
+import { ICountry } from '@/models/Country';
 import Election, { ECVote, ElectionType, ICandidate, IElection } from '@/models/Election';
 import { IUser } from '@/models/User';
 import { UserActions } from '@/util/actions';
@@ -8,8 +10,7 @@ import { refreshData, request, showToast } from '@/util/ui';
 import { Table, Thead, Tr, Th, Tbody, Td, Avatar, Button, useToast } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
-import React from 'react';
-
+import React, { useEffect, useState } from 'react';
 interface ICPElection {
   user?: IUser,
   isAuthenticated: boolean,
@@ -20,6 +21,28 @@ const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+
+  const [countries, setCountries] = useState<ICountry[]>([]);
+
+  useEffect(() => {
+    request({
+      url: '/api/countries',
+      method: 'GET',
+      token: cookies.token,
+    }).then(data => {
+      if (data.countries)
+        setCountries(
+          data.countries.sort((a: ICountry, b: ICountry) => {
+            if (a.name < b.name)
+              return -1;
+            else if (a.name > b.name)
+              return 1;
+
+            return 0;
+          })
+        );
+    });
+  }, []);
 
   const handleVote = (candidate: number) => {
     let payload = {
@@ -50,11 +73,29 @@ const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
     return foundVote.some(vote => vote === true);
   }
 
+  const goToElection = (country: number) => {
+    router.push(`/election/country/${country}/${election.year}/${election.month}`);
+  }
+
   return user ? (
     <Layout user={user}>
-      <h1 className='text-xl text-accent h-brand font-semibold'>
-        Country President Election: {election?.month}/5/{election?.year}
-      </h1>
+      <div className='flex justify-between items-center'>
+        <h1 className='text-xl text-accent h-brand font-semibold'>
+          Country President Election: {election?.month}/5/{election?.year}
+        </h1>
+        <div className='flex items-center gap-4 pr-8'>
+          {countries.length > 0 && (
+            <Select className='border border-white border-opacity-25 rounded shadow-md' selected={election?.typeId} onChange={(val) => goToElection(val as number)}>
+              {countries.map((country: ICountry, i: number) => (
+                <Select.Option key={i} value={country._id}>
+                  {country.name}
+                  <i className={`ml-2 flag-icon flag-icon-${country.flag_code}`} />
+                </Select.Option>
+              ))}
+            </Select>
+          )}
+        </div>
+      </div>
       <div className='mt-4 mr-8 p-4 bg-night rounded shadow-md text-white'>
         <h3 className='text-lg text-accent h-brand font-semibold'>Candidates</h3>
         <Table>

@@ -51,16 +51,33 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           });
 
           // TODO: Figure out alternate ways to appropriate congress seats
-          // Candidate is one of three winners, as long as the candidate received at least 1 vote, and has the top 
+          // Candidate is one of three winners, as long as the candidate received at least 1 vote, and is in the top 3 
           let receivedVotes = candidates.filter((candidate: ICandidate) => candidate.votes.length > 0);
           election.winner = receivedVotes.length >= 3 ? receivedVotes.splice(0, 3).map(c => c.id) : receivedVotes.map(c => c.id);
           election.isActive = false;
           election.isCompleted = true;
 
+          // Update Winners with alert and gold
+          for (let winner of election.winner) {
+            let { locationName } = election.candidates.find(can => can.id === winner);
+            let alert = {
+              read: false,
+              type: 'ELECTED_CONGRESS',
+              message: `You have been elected to Congress as a representative of ${locationName} and awarded 5 gold`,
+              timestamp: new Date(Date.now()),
+            };
+
+            await User.updateOne({ _id: winner }, { $inc: { gold: 5 }, $push: { alerts: alert } });
+          }
+
           // Set representatives for Region
           let updatedRegion = await Region.updateOne({ _id: election.typeId }, { $set: { representatives: election.winner ?? [] } });
           if (!updatedRegion)
             throw new Error('Failed to Update Region Representatives');
+
+          // Push to country congress list
+          let region = await Region.findOne({ _id: election.typeId }).exec();
+          await Country.updateOne({ _id: region.owner }, { $push: { 'government.congress': { $each: election.winner } } });
 
           return await election.save();
         }));

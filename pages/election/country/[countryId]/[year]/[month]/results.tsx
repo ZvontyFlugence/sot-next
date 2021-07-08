@@ -1,13 +1,13 @@
 import Layout from '@/components/Layout';
-import { ElectionSystem } from '@/models/Country';
-import Election, { ECVote, ElectionType, ICandidate, IElection } from '@/models/Election';
+import Select from '@/components/Select';
+import { ElectionSystem, ICountry } from '@/models/Country';
+import Election, { ElectionType, ICandidate, IElection } from '@/models/Election';
 import { IPath, IRegion } from '@/models/Region';
 import { IUser } from '@/models/User';
-import { UserActions } from '@/util/actions';
 import { jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
 import { MAP_STYLE } from '@/util/constants';
-import { pSBC, refreshData, request, showToast } from '@/util/ui';
+import { pSBC, request } from '@/util/ui';
 import { Table, Thead, Tr, Th, Tbody, Td, Avatar, useToast } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
@@ -21,9 +21,31 @@ interface ICPElection {
 }
 
 const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
+  const cookies = parseCookies();
   const router = useRouter();
+  const toast = useToast();
 
-  console.log('Election', election);
+  const [countries, setCountries] = useState<ICountry[]>([]);
+
+  useEffect(() => {
+    request({
+      url: '/api/countries',
+      method: 'GET',
+      token: cookies.token,
+    }).then(data => {
+      if (data.countries)
+        setCountries(
+          data.countries.sort((a: ICountry, b: ICountry) => {
+            if (a.name < b.name)
+              return -1;
+            else if (a.name > b.name)
+              return 1;
+
+            return 0;
+          })
+        );
+    });
+  }, []);
 
   const getCandidateResults = (candidateId: number) => {
     if (election?.tally && (election.winner as number) > -1) {
@@ -34,11 +56,29 @@ const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
     }
   }
 
+  const goToElection = (country: number) => {
+    router.push(`/election/country/${country}/${election.year}/${election.month}/results`);
+  }
+
   return user ? (
     <Layout user={user}>
-      <h1 className='text-xl text-accent h-brand font-semibold'>
-        Country President Election Results: {election?.month}/{election?.year}
-      </h1>
+      <div className='flex justify-between items-center'>
+        <h1 className='text-xl text-accent h-brand font-semibold'>
+          Country President Election Results: {election?.month}/5/{election?.year}
+        </h1>
+        <div className='flex items-ceter gap-4 pr-8'>
+          {countries.length > 0 && (
+            <Select className='border border-white border-opacity-25 rounded shadow-md' selected={election?.typeId} onChange={(val) => goToElection(val as number)}>
+              {countries.map((country: ICountry, i: number) => (
+                <Select.Option key={i} value={country._id}>
+                  {country.name}
+                  <i className={`ml-2 flag-icon flag-icon-${country.flag_code}`} />
+                </Select.Option>
+              ))}
+            </Select>
+          )}
+        </div>
+      </div>
       <div className='flex justify-center my-4'>
         <div className='px-4 py-2 rounded shadow-md bg-blue-300 bg-opacity-50 text-white'>
           {election.system === ElectionSystem.ElectoralCollege ? (
@@ -125,7 +165,7 @@ export const getServerSideProps = async ctx => {
   };
 
   let election: IElection = await Election.findOne(query).exec();
-  if (!election) {
+  if (!election || election.isActive || !election.isCompleted) {
     return {
       redirect: {
         permanent: false,

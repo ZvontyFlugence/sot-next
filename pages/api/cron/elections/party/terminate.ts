@@ -18,7 +18,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       await session.withTransaction(async () => {
         let date: Date = new Date(Date.now());
         const query = {
-          month: date.getUTCMonth(),
+          month: date.getUTCMonth() + 1,
           year: date.getUTCFullYear(),
           isActive: true,
           type: ElectionType.PartyPresident,
@@ -59,8 +59,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           election.isActive = false;
           election.isCompleted = true;
 
+          // Update user with alert and gold
+          if (election.winner !== null) {
+            let { partyName } = election.candidates.find(can => can.id === election.winner);
+            let alert = {
+              read: false,
+              type: 'ELECTED_PP',
+              message: `You have been elected as Party President of ${partyName} and awarded 5 gold`,
+              timestamp: new Date(Date.now()),
+            };
+
+            await User.updateOne({ _id: election.winner }, { $inc: { gold: 5 }, $push: { alerts: alert } });
+          }
+
           // Set winner as Party President
-          let updatedParty = await Party.updateOne({ _id: election.typeId }, { $set: {  } });
+          let updatedParty = await Party.updateOne({ _id: election.typeId }, { $set: { president: election.winner, vp: -1 } });
           if (!updatedParty)
             throw new Error('Failed to Update Party President');
 
