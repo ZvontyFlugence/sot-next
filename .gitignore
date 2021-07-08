@@ -20,6 +20,9 @@ _static/
 .DS_Store
 *.pem
 
+# Digital Ocean PM2
+ecosystem.config.js
+
 # debug
 npm-debug.log*
 yarn-debug.log*
