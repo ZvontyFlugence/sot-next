@@ -1,13 +1,13 @@
-name: Deploy to PROD
+name: Deploy to DEV
 on:
   push:
     branches:
-      - main
+      - dev
 
 jobs:
-  deploy-prod:
+  deploy-dev:
     runs-on: ubuntu-latest
-    name: Deploy Prod
+    name: Connect, Build, Deploy
     steps:
       - name: Connect to Droplet via SSH
         uses: appleboy/ssh-action@master
@@ -17,7 +17,7 @@ jobs:
           key: ${{ secrets.DIGITAL_OCEAN_KEY }}
           script: |
             cd ${{ secrets.DROPLET_TARGET }}
-            git checkout main
+            git checkout dev
             git pull
             yarn build
-            pm2 restart ecosystem.config.js --only "sot-next-prod"
+            pm2 restart ecosystem.config.js --only "sot-next-dev"
