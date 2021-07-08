@@ -20,4 +20,4 @@ jobs:
             git checkout main
             git pull
             yarn build
-            pm2 restart prod
+            pm2 restart ecosystem.config.js --only "sot-next-prod"
