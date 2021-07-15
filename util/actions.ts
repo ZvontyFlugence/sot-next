@@ -73,3 +73,12 @@ export const PartyActions = {
   UPDATE_NAME: 'update_name',  
   UPDATE_SOC: 'update_soc',
 };
+
+export const GovActions = {
+  PROPOSE_LAW: 'propose_law',
+  RESIGN: 'resign',
+}
+
+export const PresidentActions = {
+  RESIGN: 'resign',
+}

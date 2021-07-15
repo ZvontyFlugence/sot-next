@@ -2,12 +2,11 @@ import { ICountry } from '@/models/Country';
 import { IUser } from '@/models/User';
 import { request } from '@/util/ui';
 import { Avatar, Button } from '@chakra-ui/react';
-import { data } from 'autoprefixer';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
 import { useEffect, useState } from 'react';
 
-interface IGovernment {
+interface IGovernmentTab {
   country: ICountry;
 }
 
@@ -17,13 +16,18 @@ interface ICabinetInfo {
   mot?: IUser,
 }
 
-const Government: React.FC<IGovernment> = ({ country }) => {
+export interface ICongressUser extends IUser {
+  residenceName?: string;
+}
+
+const Government: React.FC<IGovernmentTab> = ({ country }) => {
   const cookies = parseCookies();
   const router = useRouter();
 
   const [cp, setCP] = useState<IUser>();
   const [vp, setVP] = useState<IUser>();
   const [cabinet, setCabinet] = useState<ICabinetInfo>({});
+  const [congress, setCongress] = useState<ICongressUser[]>([]);
 
   useEffect(() => {
     if (country.government.president) {
@@ -78,6 +82,17 @@ const Government: React.FC<IGovernment> = ({ country }) => {
       }).then(data => {
         if (data.success)
           setCabinet(prev => ({ ...prev, mot: data.user }));
+      });
+    }
+
+    if (country.government.congress.length > 0) {
+      request({
+        url: `/api/countries/${country._id}/congress`,
+        method: 'GET',
+        token: cookies.token,
+      }).then(data => {
+        if (data.success)
+          setCongress(data.congress);
       });
     }
   }, [country]);
@@ -153,7 +168,15 @@ const Government: React.FC<IGovernment> = ({ country }) => {
       </div>
       <h4 className='text-lg mt-4'>Legislature</h4>
       <div className='flex flex-col gap-2'>
-        
+        {congress.map((member: ICongressUser, i: number) => (
+          <div key={i} className='flex items-center gap-2 max-w-min'>
+            <div className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/profile/${member._id}`)}>
+              <Avatar src={member.image} name={member.username} />
+              <span>{member.username}</span>
+            </div>
+            <span className='cursor-pointer' onClick={() => router.push(`/region/${member.residence}`)}>{member.residenceName}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

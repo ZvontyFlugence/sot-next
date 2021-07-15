@@ -1,3 +1,4 @@
+import { LawType } from '@/util/apiHelpers';
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface ICountry extends Document {
@@ -10,6 +11,20 @@ export interface ICountry extends Document {
   exchangeOffers: Array<Object>,
   capital: number,
   government: IGovernment,
+  policies: {
+    allies: IAlly[],
+    governmentType: GovernmentType,
+    embargos: IEmbargo[],
+    minWage: number,
+    taxes: {
+      import: number,
+      income: number,
+      vat: number,
+    },
+    welcomeMessage: string,
+  }
+  pendingLaws: ILaw[],
+  pastLaws: ILaw[],
 }
 
 export interface IGovernment {
@@ -19,6 +34,43 @@ export interface IGovernment {
   congress: ICongressMember[],
   electionSystem: ElectionSystem,
   totalElectoralVotes?: number,
+}
+
+export enum GovernmentType {
+  DEMOCRACY = 'democracy',
+  DICTATORSHIP = 'dictatorship',
+  OLIGARCHY = 'oligarchy',
+}
+
+export interface IEmbargo {
+  country: number,
+  expires: Date,
+  products: number[], // TDB if necessary
+}
+
+export interface IAlly {
+  country: number,
+  expires: Date,
+}
+
+export interface ILaw {
+  id: string,
+  type: LawType,
+  details: IChangeIncomeTax,
+  proposed: Date,
+  proposedBy: number,
+  expires: Date,
+  votes: ILawVote[],
+  passed?: boolean,
+}
+
+export interface ILawVote {
+  id: number;
+  choice: 'yes' | 'no' | 'abstain';
+}
+
+export interface IChangeIncomeTax {
+  percent: number
 }
 
 export interface ICabinet {
@@ -54,6 +106,9 @@ const CountrySchema = new Schema({
   exchangeOffers: { type: Array, default: []},
   capital: { type: Number, required: true },
   government: { type: Object, required: true },
+  policies: { type: Object, required: true },
+  pendingLaws: { type: Array, default: [] },
+  pastLaws: { type: Array, default: [] },
 }, { _id: false });
 
 let Country: Model<ICountry> | null;
