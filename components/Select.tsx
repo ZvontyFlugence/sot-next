@@ -66,10 +66,10 @@ const Select: React.FC<ISelectComponent> & ISelectOptions = ({ children, ...prop
       {open && (
         <div className='absolute top-12 w-max max-h-64 rounded bg-night text-white overflow-x-hidden overflow-y-auto shadow z-50'>
           {React.Children.map(children, (child: React.ReactElement) => {
-            return !child.props.disabled ? (
-              <Select.Option onClick={(e) => handleSelect(e, child?.props?.value, child?.props?.children)}  {...child.props} />
+            return !child?.props?.disabled ? (
+              <Select.Option onClick={(e) => handleSelect(e, child?.props?.value, child?.props?.children)}  {...child?.props} />
             ) : (
-              <Select.Option {...child.props} />
+              <Select.Option className='bg-gray-500 bg-opacity-25 px-2 py-1' {...child?.props} />
             );
           })}
         </div>
