@@ -77,6 +77,7 @@ export const PartyActions = {
 export const GovActions = {
   PROPOSE_LAW: 'propose_law',
   RESIGN: 'resign',
+  VOTE_LAW: 'vote_law',
 }
 
 export const PresidentActions = {

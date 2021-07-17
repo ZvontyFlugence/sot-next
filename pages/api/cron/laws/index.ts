@@ -18,17 +18,18 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       await session.withTransaction(async () => {
         let date: Date = new Date(Date.now());
         let countries: ICountry[] = await Country.find({ pendingLaws: { $exists: true, $ne: [] }});
+        let updates: { [key: string]: any } = {};
 
         return await Promise.all(countries.map(async (country: ICountry) => {
           for (let pendingLaw of country.pendingLaws) {
             // Only handle laws that have expired
-            if (new Date(pendingLaw.expires) < date) {
+            if (new Date(pendingLaw.expires) <= date) {
               // Decide if law passes
               let score: number = pendingLaw.votes.reduce((accum: number, vote: ILawVote) => {
                 if (vote.choice === 'yes')
-                  return accum++;
+                  accum++;
                 else if (vote.choice === 'no')
-                  return accum--;
+                  accum--;
                 
                 return accum;
               }, 0);
@@ -39,7 +40,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 // Update Country Policy
                 switch (pendingLaw.type) {
                   case LawType.INCOME_TAX: {
-                    country.policies.taxes.income = pendingLaw.details.percent;
+                    updates['policies.taxes.income'] = pendingLaw.details.percentage;
                     break;
                   }
                   default:
@@ -51,7 +52,20 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             }
           }
 
-          return await country.save();
+          country.pastLaws.push(...country.pendingLaws.filter(law => law.passed !== undefined));
+          country.pendingLaws = country.pendingLaws.filter(law => law.passed === undefined);
+
+          return await country.updateOne({
+            $push: {
+              pastLaws: {
+                $each: country.pendingLaws.filter(law => law.passed !== undefined)
+              }
+            },
+            $set: {
+              pendingLaws: country.pendingLaws.filter(law => law.passed === undefined),
+              ...updates,
+            },
+          });
         }));
       });
 

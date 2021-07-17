@@ -56,7 +56,7 @@ export interface IAlly {
 export interface ILaw {
   id: string,
   type: LawType,
-  details: IChangeIncomeTax,
+  details: IChangeIncomeTax | IChangeImportTax | IChangeVATTax,
   proposed: Date,
   proposedBy: number,
   expires: Date,
@@ -70,7 +70,15 @@ export interface ILawVote {
 }
 
 export interface IChangeIncomeTax {
-  percent: number
+  percentage: number;
+}
+
+export interface IChangeImportTax {
+  [productId: number]: number;
+}
+
+export interface IChangeVATTax {
+  [productId: number]: number;
 }
 
 export interface ICabinet {

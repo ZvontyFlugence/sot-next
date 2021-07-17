@@ -2,8 +2,7 @@ import { GovActions } from '@/util/actions';
 import { validateToken } from '@/util/auth';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { LawType } from '@/util/apiHelpers';
-import Country, { IChangeIncomeTax, ICountry, ILaw } from '@/models/Country';
-import { data } from 'autoprefixer';
+import Country, { IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, ILaw, ILawVote } from '@/models/Country';
 import User, { IAlert } from '@/models/User';
 
 interface IGovActionRequest {
@@ -27,7 +26,12 @@ interface IBaseParams {
 
 interface IProposeLaw extends IBaseParams {
   lawType: LawType,
-  lawDetails?: IChangeIncomeTax
+  lawDetails?: IChangeIncomeTax | IChangeImportTax | IChangeVATTax,
+}
+
+interface IVoteLaw extends IBaseParams {
+  lawId: string,
+  vote: 'yes' | 'no' | 'abstain',
 }
 
 interface IResign extends IBaseParams {}
@@ -63,6 +67,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           let result = await resign(data as IResign);
           return res.status(result.status_code).json(result.payload);
         }
+        case GovActions.VOTE_LAW: {
+          let result = await vote(data as IVoteLaw);
+          return res.status(result.status_code).json(result.payload);
+        }
         default:
           return res.status(400).json({ error: 'Invalid Congress Action' });
       }
@@ -83,15 +91,17 @@ async function propose_law(data: IProposeLaw): Promise<IGovActionResult> {
     government.congress.findIndex(mem => mem.id === data.user_id) === -1 && !Object.values(government.cabinet).includes(data.user_id))
     return { status_code: 400, payload: { success: false, error: 'You\'re Not A Government Member' } };
 
-  // Ensure if User is a Cabinet member, User holds the MoT (Treasury) title
-  if (Object.values(government.cabinet).includes(data.user_id) && data.user_id !== government.cabinet.mot)
-    return { status_code: 400, payload: { success: false, error: 'You\'re Not Allowed To Propose This Law' } };
-
   let res: IGovActionResult;
 
   switch (data.lawType) {
-    case LawType.INCOME_TAX: {
-      res = await change_income_tax(data.user_id, data.country_id, data.lawDetails as IChangeIncomeTax);
+    case LawType.INCOME_TAX:
+    case LawType.IMPORT_TAX:
+    case LawType.VAT_TAX: {
+      // Ensure if User is a Cabinet member, User holds the MoT (Treasury) title
+      if (Object.values(government.cabinet).includes(data.user_id) && data.user_id !== government.cabinet.mot)
+        return { status_code: 400, payload: { success: false, error: 'You\'re Not Allowed To Propose This Law' } };
+
+      res = await create_new_law(data);
       break;
     }
     default:
@@ -125,7 +135,31 @@ async function resign(data: IResign): Promise<IGovActionResult> {
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
-async function change_income_tax(userId: number, countryId: number, lawDetails: IChangeIncomeTax): Promise<IGovActionResult> {
+async function vote(data: IVoteLaw): Promise<IGovActionResult> {
+  let country: ICountry = await Country.findOne({ _id: data.country_id }).exec();
+  if (!country)
+    return { status_code: 404, payload: { success: false, error: 'Country Not Found' } };
+  
+  // Validate User is in Government
+  const { government } = country;
+  if (data.user_id !== government.president && data.user_id !== government.vp &&
+    government.congress.findIndex(mem => mem.id === data.user_id) === -1 && !Object.values(government.cabinet).includes(data.user_id))
+    return { status_code: 400, payload: { success: false, error: 'You\'re Not A Government Member' } };
+
+  let lawIndex: number = country.pendingLaws.findIndex(law => law.id === data.lawId);
+  if (lawIndex === -1)
+    return { status_code: 404, payload: { success: false, error: 'Law Proposal Not Found' } };
+
+  let voteObj: ILawVote = { id: data.user_id, choice: data.vote };
+
+  let updated = await country.updateOne({ $push: { [`pendingLaws.${lawIndex}.votes`]: voteObj } }).exec();
+  if (updated)
+    return { status_code: 200, payload: { success: true, message: 'Law Proposal Vote Submitted' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function create_new_law(data: IProposeLaw): Promise<IGovActionResult> {
   let now = new Date(Date.now());
 
   // Generate Law ID
@@ -134,15 +168,15 @@ async function change_income_tax(userId: number, countryId: number, lawDetails: 
 
   const newLaw: ILaw = {
     id: buffer.toString('hex'),
-    type: LawType.INCOME_TAX,
-    details: lawDetails,
+    type: data.lawType,
+    details: data.lawDetails,
     proposed: now,
-    proposedBy: userId,
+    proposedBy: data.user_id,
     expires: new Date(now.setUTCDate(now.getUTCDate() + 1)),  // 24 hrs from proposed time
     votes: [],
   };
 
-  let updated = await Country.updateOne({ _id: countryId }, { $push: { pendingLaws: newLaw } }).exec()
+  let updated = await Country.updateOne({ _id: data.country_id }, { $push: { pendingLaws: newLaw } }).exec()
   if (updated)
     return { status_code: 200, payload: { success: true, message: 'Change Income Tax Law Proposed' } };
 

@@ -10,6 +10,7 @@ import { refreshData, request, showToast } from '@/util/ui';
 import { GovActions } from '@/util/actions';
 import { useEffect } from 'react';
 import { format, formatDuration } from 'date-fns';
+import { ITEMS } from '@/util/constants';
 
 interface ILawsTab {
   country: ICountry;
@@ -122,15 +123,47 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
         </Button>
       </div>
       <h4 className='text-lg mt-4 mb-2 text-center'>Current Policies</h4>
-      <div className='flex items-center justify-center gap-24'>
+      <div className='flex items-start justify-center gap-24'>
         <div className='flex flex-col gap-2'>
           <p>Minimum Wage: {country.policies.minWage.toFixed(2)} <i className={`flag-icon flag-icon-${country.flag_code}`} /> {country.currency}</p>
           <p>Income Tax: {country.policies.taxes.income}%</p>
-          <p>Value-Added Tax: {country.policies.taxes.vat}%</p>
+          <div>
+            Value-Added Tax:
+            {ITEMS.reduce((accum: any[], item: any) => {
+              let exists: boolean = accum.findIndex((p: any) => p?.name === item.name) !== -1;
+
+              if (!exists)
+                accum.push(item);
+
+              return accum;
+            }, []).map((item: any, i: number) => (
+              <p key={i} className='flex items-center justify-start gap-2'>
+                <i className={`sot-icon ${item?.image}`} title={item?.name} />
+                <span>{item?.name}</span>
+                <span>{(country.policies.taxes?.vat && country.policies.taxes.vat[item?.id]) || 0}%</span>
+              </p>
+            ))}
+          </div>
         </div>
         <div className='flex flex-col gap-2'>
           <p>Government Type: <span className='capitalize'>{country.policies.governmentType}</span></p>
-          <p>Import Tax: {country.policies.taxes.import}%</p>
+          <div>
+            Import Tax:
+            {ITEMS.reduce((accum: any[], item: any) => {
+              let exists: boolean = accum.findIndex((p: any) => p?.name === item.name) !== -1;
+
+              if (!exists)
+                accum.push(item);
+
+              return accum;
+            }, []).map((item: any, i: number) => (
+              <p key={i} className='flex items-center'>
+                <i className={`sot-icon ${item?.image}`} title={item?.name} />
+                <span className='ml-2'>{item?.name}</span>
+                <span className='ml-2'>{(country.policies.taxes?.import && country.policies.taxes.import[item?.id]) || 0}%</span>
+              </p>
+            ))}
+          </div>
           <p>Embargoes: {country.policies.embargos.length}</p>
         </div>
       </div>
@@ -277,7 +310,7 @@ function LawLink({ countryId, law }: ILawLink) {
       </div>
       <div>
         <Button size='sm' colorScheme='blue' onClick={() => router.push(`/country/${countryId}/law/${law.id}`)}>
-          {new Date(law.expires) > new Date(Date.now()) ? 'Vote' : 'Results'}
+          {new Date(law.expires) > new Date(Date.now()) ? 'Vote' : 'View'}
         </Button>
       </div>
     </div>
