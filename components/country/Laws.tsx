@@ -124,7 +124,7 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
       </div>
       <h4 className='text-lg mt-4 mb-2 text-center'>Current Policies</h4>
       <div className='flex items-start justify-center gap-24'>
-        <div className='flex flex-col gap-2'>
+        <div className='flex flex-col align-start gap-2'>
           <p>Minimum Wage: {country.policies.minWage.toFixed(2)} <i className={`flag-icon flag-icon-${country.flag_code}`} /> {country.currency}</p>
           <p>Income Tax: {country.policies.taxes.income}%</p>
           <div>
@@ -137,7 +137,7 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
 
               return accum;
             }, []).map((item: any, i: number) => (
-              <p key={i} className='flex items-center justify-start gap-2'>
+              <p key={i} className='flex items-center gap-2'>
                 <i className={`sot-icon ${item?.image}`} title={item?.name} />
                 <span>{item?.name}</span>
                 <span>{(country.policies.taxes?.vat && country.policies.taxes.vat[item?.id]) || 0}%</span>
@@ -145,7 +145,7 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
             ))}
           </div>
         </div>
-        <div className='flex flex-col gap-2'>
+        <div className='flex flex-col align-start gap-2'>
           <p>Government Type: <span className='capitalize'>{country.policies.governmentType}</span></p>
           <div>
             Import Tax:
@@ -157,10 +157,10 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
 
               return accum;
             }, []).map((item: any, i: number) => (
-              <p key={i} className='flex items-center'>
+              <p key={i} className='flex justify-start items-center gap-2'>
                 <i className={`sot-icon ${item?.image}`} title={item?.name} />
-                <span className='ml-2'>{item?.name}</span>
-                <span className='ml-2'>{(country.policies.taxes?.import && country.policies.taxes.import[item?.id]) || 0}%</span>
+                <span>{item?.name}</span>
+                <span>{(country.policies.taxes?.import && country.policies.taxes.import[item?.id]) || 0}%</span>
               </p>
             ))}
           </div>
