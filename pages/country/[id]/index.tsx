@@ -20,7 +20,7 @@ const CountryPage: React.FC<ICountryPage> = ({ user, country, ...props }) => {
       <div className='px-2 pt-2 md:px-24'>
         <CountryHead country={country} countries={props.countries} />
         <div className='flex mt-4'>
-          <CountryBody country={country} />
+          <CountryBody country={country} user={user} />
         </div>
       </div>
     </Layout>

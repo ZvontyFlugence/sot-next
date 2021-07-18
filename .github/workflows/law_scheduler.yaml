@@ -1,0 +1,12 @@
+name: Law Scheduler Workflow
+on:
+  schedule:
+    - cron: '* * * * *'
+jobs:
+  scheduler:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --request POST \
+          --url '${{ secrets.APP_URL }}/api/cron/laws' \
+          --header 'Authorization: Bearer ${{ secrets.ACTIONS_KEY }}'

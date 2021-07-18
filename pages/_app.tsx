@@ -13,6 +13,8 @@ import MaintenancePage from './maintenance';
 const queryClient = new QueryClient();
 const theme = extendTheme({ colors });
 
+const { NEXT_PUBLIC_MAINTENANCE_MODE: MAINTENANCE_MODE } = process.env;
+
 function MyApp({ Component, pageProps }) {
   return (
     <QueryClientProvider client={queryClient}>
@@ -24,7 +26,7 @@ function MyApp({ Component, pageProps }) {
           <link href="https://fonts.googleapis.com/css2?family=Unica+One&display=swap" rel="stylesheet" />
           <script id='googleMaps' src={`/api/gmap/maps/api/js?key=${process.env.NEXT_PUBLIC_GMAP_KEY}`}></script>
         </Head>
-        {process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true' ? (
+        {(typeof MAINTENANCE_MODE === 'boolean' && MAINTENANCE_MODE === true) || MAINTENANCE_MODE === 'true' ? (
           <MaintenancePage />
         ) : (
           <Component {...pageProps} />

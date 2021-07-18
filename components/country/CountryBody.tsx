@@ -1,16 +1,19 @@
 import { ICountry } from "@/models/Country";
+import { IUser } from "@/models/User";
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/tabs";
 import React, { useState } from "react";
 import Select from "../Select";
 import Demographics from "./Demographics";
 import Government from "./Government";
+import LawsTab from "./Laws";
 import Regions from "./Regions";
 
 interface ICountryBody {
   country: ICountry,
+  user: IUser,
 }
 
-const CountryBody: React.FC<ICountryBody> = ({ country }) => {
+const CountryBody: React.FC<ICountryBody> = ({ country, user }) => {
   const [selected, setSelected] = useState<string>('');
 
   const TABS = {
@@ -19,7 +22,7 @@ const CountryBody: React.FC<ICountryBody> = ({ country }) => {
     'Government': <Government country={country} />,
     'Economy': <></>,
     'Military': <></>,
-    'Laws': <></>,
+    'Laws': <LawsTab country={country} user={user} />,
 };
 
   return (
