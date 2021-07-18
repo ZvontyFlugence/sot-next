@@ -1,0 +1,23 @@
+name: Deploy to DEV
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    name: Connect, Build, Deploy
+    steps:
+      - name: Connect to Droplet via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DIGITAL_OCEAN_HOST }}
+          username: ${{ secrets.DIGITAL_OCEAN_USERNAME }}
+          key: ${{ secrets.DIGITAL_OCEAN_KEY }}
+          script: |
+            cd ${{ secrets.DROPLET_TARGET }}
+            git checkout dev
+            git pull
+            yarn build
+            pm2 restart ecosystem.config.js --only "sot-next-dev"
