@@ -1,3 +1,5 @@
+import { IGameItem } from "./ui";
+
 // Different Types of Companies That Can Be Create
 export const COMPANY_TYPES = [
   { text: 'Wheat', item: 0, css: 'sot-icon sot-wheat' },
@@ -20,7 +22,7 @@ export const RESOURCES = [
 ];
 
 // Items (Raw => quality: 0 + Manufactured => 1...5)
-export const ITEMS = [
+export const ITEMS: IGameItem[] = [
   { id: 0, name: 'Wheat', quality: 0, image: 'sot-icon sot-wheat' },
   { id: 1, name: 'Iron', quality: 0, image: 'sot-icon sot-iron' },
   { id: 2, name: 'Oil', quality: 0, image: 'sot-icon sot-oil' },

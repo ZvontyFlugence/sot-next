@@ -8,6 +8,13 @@ export function refreshData(router: NextRouter) {
   router.replace(router.asPath);
 }
 
+export interface IGameItem {
+  id: number;
+  name: string;
+  quality: number;
+  image: string;
+}
+
 export interface IRequest {
   url: string,
   method: 'GET' | 'POST',
