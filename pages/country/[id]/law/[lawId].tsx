@@ -1,5 +1,5 @@
 import User, { IUser } from '@/models/User';
-import Country, { IChangeIncomeTax, ICountry, ILaw, ILawVote } from '@/models/Country';
+import Country, { IChangeImportTax, IChangeIncomeTax, ICountry, ILaw, ILawVote } from '@/models/Country';
 import Layout from '@/components/Layout';
 import { getCurrentUser } from '@/util/auth';
 import { destroyCookie, parseCookies } from 'nookies';
@@ -8,7 +8,8 @@ import { Avatar, Button, Stat, StatHelpText, StatLabel, StatNumber, Tag, TagLabe
 import { addMinutes, format } from 'date-fns';
 import { useRouter } from 'next/router';
 import { GovActions } from '@/util/actions';
-import { refreshData, request, showToast } from '@/util/ui';
+import { IGameItem, refreshData, request, showToast } from '@/util/ui';
+import { ITEMS } from '@/util/constants';
 
 interface ILawPage {
   user: IUser;
@@ -49,10 +50,26 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
     return 'Failed';
   }
 
-  const getProposalDescription = (): string => {
+  const getProposalDescription = (): string | React.ReactElement => {
     switch (law.type) {
       case LawType.INCOME_TAX:
         return ` proposed changing the income tax from ${country.policies.taxes.income}% to ${(law.details as IChangeIncomeTax).percentage}%`;
+      case LawType.IMPORT_TAX:
+      case LawType.VAT_TAX: {
+        let productId: number = Number.parseInt(Object.keys(law.details)[0]) ?? -1;
+        if (productId === -1)
+          return '';
+
+        let item: IGameItem = ITEMS[productId];
+
+        return (
+          <span className='flex items-center gap-2'>
+            proposed changing the {law.type === LawType.IMPORT_TAX ? 'import' : 'VAT'} tax for
+            <i className={item.image} title={item.name} />
+            {item.name} to {(law.details as IChangeImportTax)[productId]}%
+          </span>
+        );
+      }
       default:
         return '';
     }
@@ -117,11 +134,11 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
               <Avatar
                 src={props.govMembersInfo[law.proposedBy].image}
                 size='sm'
-                name={props.govMembersInfo[law.proposedBy].name}
+                name={props.govMembersInfo[law.proposedBy]?.name}
                 ml={-1}
                 mr={2}
               />
-              <TagLabel>{props.govMembersInfo[law.proposedBy].name}</TagLabel>
+              <TagLabel className='text-accent-alt'>{props.govMembersInfo[law.proposedBy]?.name}</TagLabel>
             </Tag>
             <span>
               {getProposalDescription()}
@@ -143,8 +160,8 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
             </Stat>
             {yesVotes.map(({ id, choice: _choice }: ILawVote, i: number) => (
               <div key={i} className='flex items-center gap-4 cursor-pointer' onClick={() => router.push(`/profile/${id}`)}>
-                <Avatar src={props.govMembersInfo[id].image} name={props.govMembersInfo[id].name} />
-                <span>{props.govMembersInfo[id].name}</span>
+                <Avatar src={props.govMembersInfo[id].image} name={props.govMembersInfo[id]?.name} />
+                <span>{props.govMembersInfo[id]?.name}</span>
               </div>
             ))}
           </div>
@@ -162,8 +179,8 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
             </Stat>
             {abstainVotes.map(({ id, choice: _choice }: ILawVote, i: number) => (
               <div key={i} className='flex items-center gap-4 cursor-pointer' onClick={() => router.push(`/profile/${id}`)}>
-                <Avatar src={props.govMembersInfo[id].image} name={props.govMembersInfo[id].name} />
-                <span>{props.govMembersInfo[id].name}</span>
+                <Avatar src={props.govMembersInfo[id].image} name={props.govMembersInfo[id]?.name} />
+                <span>{props.govMembersInfo[id]?.name}</span>
               </div>
             ))}
           </div>
@@ -181,8 +198,8 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
             </Stat>
             {noVotes.map(({ id, choice: _choice }: ILawVote, i: number) => (
               <div key={i} className='flex items-center gap-4 cursor-pointer' onClick={() => router.push(`/profile/${id}`)}>
-                <Avatar src={props.govMembersInfo[id].image} name={props.govMembersInfo[id].name} />
-                <span>{props.govMembersInfo[id].name}</span>
+                <Avatar src={props.govMembersInfo[id].image} name={props.govMembersInfo[id]?.name} />
+                <span>{props.govMembersInfo[id]?.name}</span>
               </div>
             ))}
           </div>

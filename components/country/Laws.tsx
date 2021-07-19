@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
 import { useCallback, useState } from 'react';
 import Select from '@/components/Select';
-import { refreshData, request, showToast } from '@/util/ui';
+import { IGameItem, refreshData, request, showToast } from '@/util/ui';
 import { GovActions } from '@/util/actions';
 import { useEffect } from 'react';
 import { format, formatDuration } from 'date-fns';
@@ -21,6 +21,7 @@ interface ILawDetails {
   [detail: string]: any;
 }
 
+// TODO: Add paging for pastLaws
 const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
   const cookies = parseCookies();
   const router = useRouter();
@@ -30,6 +31,7 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
 
   const [lawType, setLawType] = useState<LawType | null>(null);
   const [lawDetails, setLawDetails] = useState<ILawDetails>({});
+  const [product, setProduct] = useState<number | null>(null);
 
   const getGovernmentRole = (): string => {
     switch (user._id) {
@@ -66,6 +68,17 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
     }
   }
 
+  const getUniqueItems = (): IGameItem[] => {
+    return ITEMS.reduce((accum: IGameItem[], item: IGameItem) => {
+      let exists: boolean = accum.findIndex((p: IGameItem) => p?.name === item.name) !== -1;
+
+      if (!exists)
+        accum.push(item);
+
+      return accum;
+    }, []);
+  }
+
   const getLawFormDetails = useCallback(() => {
     switch (lawType) {
       case LawType.INCOME_TAX:
@@ -73,6 +86,24 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
           <IncomeTaxLawForm
             value={lawDetails.percentage || country.policies.taxes.income}
             setValue={(val) => setLawDetails(prevDetails => ({ ...prevDetails, percentage: val }))}
+          />
+        );
+      case LawType.IMPORT_TAX:
+        return (
+          <OtherTaxLawForm
+            product={product}
+            percentage={(country.policies.taxes?.import && country.policies.taxes?.import[product]) || 0}
+            setProduct={(val) => setProduct(val)}
+            setPercentage={(productId, val) => setLawDetails({ [productId]: val })}
+          />
+        );
+      case LawType.VAT_TAX:
+        return (
+          <OtherTaxLawForm
+            product={product}
+            percentage={(country.policies.taxes?.vat && country.policies.taxes?.vat[product]) || 0}
+            setProduct={(val) => setProduct(val)}
+            setPercentage={(productId, val) => setLawDetails({ [productId]: val })}
           />
         );
       default:
@@ -125,45 +156,40 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
       <h4 className='text-lg mt-4 mb-2 text-center'>Current Policies</h4>
       <div className='flex items-start justify-center gap-24'>
         <div className='flex flex-col align-start gap-2'>
+          <p>Government Type: <span className='capitalize'>{country.policies.governmentType}</span></p>
           <p>Minimum Wage: {country.policies.minWage.toFixed(2)} <i className={`flag-icon flag-icon-${country.flag_code}`} /> {country.currency}</p>
           <p>Income Tax: {country.policies.taxes.income}%</p>
+          
+        </div>
+        <div className='flex flex-col align-start gap-2'>
           <div>
-            Value-Added Tax:
-            {ITEMS.reduce((accum: any[], item: any) => {
-              let exists: boolean = accum.findIndex((p: any) => p?.name === item.name) !== -1;
-
-              if (!exists)
-                accum.push(item);
-
-              return accum;
-            }, []).map((item: any, i: number) => (
-              <p key={i} className='flex items-center gap-2'>
-                <i className={`sot-icon ${item?.image}`} title={item?.name} />
-                <span>{item?.name}</span>
-                <span>{(country.policies.taxes?.vat && country.policies.taxes.vat[item?.id]) || 0}%</span>
+            Import Tax:
+            {getUniqueItems().map((item: IGameItem, i: number) => (
+              <p key={i} className='flex justify-start items-center'>
+                <span className='flex items-center gap-2'>
+                  <i className={`sot-icon ${item?.image}`} title={item?.name} />
+                  {item?.name}
+                </span>
+                <span className='ml-2'>{(country.policies.taxes?.import && country.policies.taxes.import[item?.id]) || 0}%</span>
               </p>
             ))}
           </div>
         </div>
         <div className='flex flex-col align-start gap-2'>
-          <p>Government Type: <span className='capitalize'>{country.policies.governmentType}</span></p>
           <div>
-            Import Tax:
-            {ITEMS.reduce((accum: any[], item: any) => {
-              let exists: boolean = accum.findIndex((p: any) => p?.name === item.name) !== -1;
-
-              if (!exists)
-                accum.push(item);
-
-              return accum;
-            }, []).map((item: any, i: number) => (
-              <p key={i} className='flex justify-start items-center gap-2'>
-                <i className={`sot-icon ${item?.image}`} title={item?.name} />
-                <span>{item?.name}</span>
-                <span>{(country.policies.taxes?.import && country.policies.taxes.import[item?.id]) || 0}%</span>
-              </p>
-            ))}
-          </div>
+              Value-Added Tax:
+              {getUniqueItems().map((item: IGameItem, i: number) => (
+                <p key={i} className='flex items-center'>
+                  <span className='flex items-center gap-2'>
+                    <i className={`sot-icon ${item?.image}`} title={item?.name} />
+                    {item?.name}
+                  </span>
+                  <span className='ml-2'>{(country.policies.taxes?.vat && country.policies.taxes.vat[item?.id]) || 0}%</span>
+                </p>
+              ))}
+            </div>
+        </div>
+        <div className='flex flex-col align-start gap-2'>
           <p>Embargoes: {country.policies.embargos.length}</p>
         </div>
       </div>
@@ -197,6 +223,23 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
                 </Select.Option>
                 <Select.Option value={LawType.INCOME_TAX}>
                   <span className='capitalize'>{LawType.INCOME_TAX.replace(/_/g, ' ')}</span>
+                </Select.Option>
+                <Select.Option value={LawType.IMPORT_TAX}>
+                  <span className='capitalize'>{LawType.IMPORT_TAX.replace(/_/g, ' ')}</span>
+                </Select.Option>
+                <Select.Option value={LawType.VAT_TAX}>
+                  <span className='capitalize'>
+                    {LawType.VAT_TAX.replace(/_/g, ' ')
+                      .split(' ')
+                      .map((txt: string, idx: number) => {
+                        if (idx === 0)
+                          return txt.toUpperCase();
+                        
+                        return txt;
+                      })
+                      .join(' ')
+                    }
+                  </span>
                 </Select.Option>
               </Select>
             </FormControl>
@@ -241,6 +284,73 @@ function IncomeTaxLawForm({ value, setValue }: IIncomeTaxLawForm) {
   );
 }
 
+interface IOtherTaxLawForm {
+  product: number | null;
+  setProduct: (productId: number) => void;
+  percentage: number;
+  setPercentage: (productId: number, percentage: number) => void;
+}
+
+function OtherTaxLawForm({ product, percentage, setProduct, setPercentage }: IOtherTaxLawForm) {
+  const [productId, setProductId] = useState<number | null>(product);
+
+  const updateProduct = (value: number) => {
+    setProductId(value);
+    setProduct(value);
+  }
+
+  return (
+    <>
+      <div className='mt-2'>
+        <FormControl>
+          <FormLabel>Product</FormLabel>
+          <Select className='border border-white border-opacity-25 rounded shadow-md' selected={product} onChange={(value) => updateProduct(value as number)}>
+            <Select.Option disabled value={null}>
+              Select Product Type
+            </Select.Option>
+            {ITEMS.reduce((accum: IGameItem[], item: any) => {
+              let exists = accum.findIndex((p: IGameItem) => p.name === item.name) !== -1;
+
+              if (!exists)
+                accum.push(item);
+
+              return accum;
+            }, []).map((item: IGameItem, i: number) => (
+              <Select.Option key={i} value={item.id}>
+                <p className='flex items-center'>
+                  <span className='flex items-center gap-2'>
+                    <i className={`sot-icon ${item.image}`} title={item.name} />
+                    {item.name}
+                  </span>
+                </p>
+              </Select.Option>
+            ))}
+          </Select>
+        </FormControl>
+      </div>
+      <div className='mt-2'>
+        <FormControl>
+          <FormLabel>Percentage</FormLabel>
+          <NumberInput
+          className='border border-white border-opacity-25 rounded shadow-md'
+          min={0}
+          max={100}
+          step={1}
+          defaultValue={percentage}
+          onChange={(_, val) => setPercentage(productId, val)}
+        >
+          <NumberInputField />
+          <NumberInputStepper >
+            <NumberIncrementStepper />
+            <NumberDecrementStepper />
+          </NumberInputStepper>
+        </NumberInput>
+        </FormControl>
+      </div>
+    </>
+  );
+}
+
 interface ILawLink {
   countryId: number;
   law: ILaw;
@@ -267,6 +377,10 @@ function LawLink({ countryId, law }: ILawLink) {
     switch (type) {
       case LawType.INCOME_TAX:
         return 'Change Income Tax';
+      case LawType.IMPORT_TAX:
+        return 'Change Import Tax';
+      case LawType.VAT_TAX:
+        return 'Change VAT Tax';
       default:
         return 'Unknown Law';
     }

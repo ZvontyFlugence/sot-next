@@ -161,6 +161,7 @@ async function vote(data: IVoteLaw): Promise<IGovActionResult> {
 
 async function create_new_law(data: IProposeLaw): Promise<IGovActionResult> {
   let now = new Date(Date.now());
+  let tomorrow = new Date(new Date(now).setUTCDate(now.getUTCDate() + 1));
 
   // Generate Law ID
   const { randomBytes } = await import('crypto');
@@ -172,7 +173,7 @@ async function create_new_law(data: IProposeLaw): Promise<IGovActionResult> {
     details: data.lawDetails,
     proposed: now,
     proposedBy: data.user_id,
-    expires: new Date(now.setUTCDate(now.getUTCDate() + 1)),  // 24 hrs from proposed time
+    expires: tomorrow,  // 24 hrs from proposed time
     votes: [],
   };
 

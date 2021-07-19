@@ -1,4 +1,4 @@
-import Country, { ICountry, ILawVote } from '@/models/Country';
+import Country, { IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, ILawVote } from '@/models/Country';
 import { LawType } from '@/util/apiHelpers';
 import { connectToDB } from '@/util/mongo';
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -40,7 +40,19 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 // Update Country Policy
                 switch (pendingLaw.type) {
                   case LawType.INCOME_TAX: {
-                    updates['policies.taxes.income'] = pendingLaw.details.percentage;
+                    updates['policies.taxes.income'] = (pendingLaw.details as IChangeIncomeTax).percentage;
+                    break;
+                  }
+                  case LawType.IMPORT_TAX: {
+                    let importDetails = pendingLaw.details as IChangeImportTax;
+                    let productId: number = Number.parseInt(Object.keys(importDetails)[0]);
+                    updates[`policies.taxes.import.${productId}`] = importDetails[productId];
+                    break;
+                  }
+                  case LawType.VAT_TAX: {
+                    let vatDetails = pendingLaw.details as IChangeVATTax;
+                    let productId: number = Number.parseInt(Object.keys(vatDetails)[0]);
+                    updates[`policies.taxes.vat.${productId}`] = vatDetails[productId];
                     break;
                   }
                   default:
@@ -56,13 +68,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           country.pendingLaws = country.pendingLaws.filter(law => law.passed === undefined);
 
           return await country.updateOne({
-            $push: {
-              pastLaws: {
-                $each: country.pendingLaws.filter(law => law.passed !== undefined)
-              }
-            },
             $set: {
-              pendingLaws: country.pendingLaws.filter(law => law.passed === undefined),
+              pendingLaws: country.pendingLaws,
+              pastLaws: country.pastLaws,
               ...updates,
             },
           });
