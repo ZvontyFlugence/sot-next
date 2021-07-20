@@ -2,36 +2,39 @@ import { GovActions } from '@/util/actions';
 import { validateToken } from '@/util/auth';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { LawType } from '@/util/apiHelpers';
-import Country, { IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, ILaw, ILawVote } from '@/models/Country';
+import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, IEmbargo, IGovernment, IImpeachCP, ILaw, ILawVote, IPrintMoney, ISetMinWage } from '@/models/Country';
 import User, { IAlert } from '@/models/User';
 
 interface IGovActionRequest {
-  action: string,
-  data: IProposeLaw | IResign
+  action: string;
+  data: IProposeLaw | IResign;
 }
 
 interface IGovActionResult {
-  status_code: number,
+  status_code: number;
   payload: {
-    success: boolean,
-    error?: string,
-    message?: string,
-  },
+    success: boolean;
+    error?: string;
+    message?: string;
+  };
 }
 
 interface IBaseParams {
-  user_id?: number,
-  country_id?: number,
+  user_id?: number;
+  country_id?: number;
 }
 
 interface IProposeLaw extends IBaseParams {
-  lawType: LawType,
-  lawDetails?: IChangeIncomeTax | IChangeImportTax | IChangeVATTax,
+  lawType: LawType;
+  lawDetails?: (
+    IChangeIncomeTax | IChangeImportTax | IChangeVATTax | IEmbargo | IAlly | IImpeachCP |
+    ISetMinWage | IPrintMoney
+  );
 }
 
 interface IVoteLaw extends IBaseParams {
-  lawId: string,
-  vote: 'yes' | 'no' | 'abstain',
+  lawId: string;
+  vote: 'yes' | 'no' | 'abstain';
 }
 
 interface IResign extends IBaseParams {}
@@ -91,40 +94,82 @@ async function propose_law(data: IProposeLaw): Promise<IGovActionResult> {
     government.congress.findIndex(mem => mem.id === data.user_id) === -1 && !Object.values(government.cabinet).includes(data.user_id))
     return { status_code: 400, payload: { success: false, error: 'You\'re Not A Government Member' } };
 
+  // Validation based on law type
+  let isValid = validate_law(data, government);
+  if (!isValid)
+    return { status_code: 400, payload: { success: false, error: 'You\'re Not Allowed To Propose This Law' } };
+
   let res: IGovActionResult;
 
   switch (data.lawType) {
+    case LawType.ALLIANCE: {
+      let sourceRes = await create_new_law(data);
+      let targetRes = await create_new_law({
+        ...data,
+        country_id: (data.lawDetails as IAlly).country,
+        lawDetails: { ...data.lawDetails, country: data.country_id },
+      });
+
+      if (sourceRes?.status_code === 200 && targetRes?.status_code === 200) {
+        let targetCountry: ICountry = await Country.findOne({ _id: (data.lawDetails as IAlly).country }).exec();
+        let { government: target } = targetCountry;
+        // Send Alert to All Gov Members for both countries that a new law has been proposed
+        let govMembers: number[] = [
+          government.president,
+          government.vp,
+          ...Object.values(government.cabinet),
+          ...government.congress.map(mem => mem.id),
+          target.president,
+          target.vp,
+          ...Object.values(target.cabinet),
+          ...target.congress.map(mem => mem.id),
+        ];
+
+        const alert: IAlert = {
+          type: 'LAW_PROPOSED',
+          read: false,
+          message: 'A New Law Has Been Proposed!',
+          timestamp: new Date(Date.now()),
+        };
+
+        await User.updateMany({ _id: { $in: govMembers } }, { $push: { alerts: alert } }).exec();
+      }
+
+      res = sourceRes;
+      break;
+    }
+    case LawType.EMBARGO:
+    case LawType.IMPEACH_CP:
     case LawType.INCOME_TAX:
     case LawType.IMPORT_TAX:
+    case LawType.MINIMUM_WAGE:
+    case LawType.PRINT_MONEY:
     case LawType.VAT_TAX: {
-      // Ensure if User is a Cabinet member, User holds the MoT (Treasury) title
-      if (Object.values(government.cabinet).includes(data.user_id) && data.user_id !== government.cabinet.mot)
-        return { status_code: 400, payload: { success: false, error: 'You\'re Not Allowed To Propose This Law' } };
-
       res = await create_new_law(data);
+
+      if (res?.status_code === 200) {
+        // Send Alert to All Gov Members that a new law has been proposed
+        let govMembers: number[] = [
+          country.government.president,
+          country.government.vp,
+          ...Object.values(country.government.cabinet),
+          ...government.congress.map(mem => mem.id)
+        ];
+    
+        const alert: IAlert = {
+          type: 'LAW_PROPOSED',
+          read: false,
+          message: 'A New Law Has Been Proposed!',
+          timestamp: new Date(Date.now()),
+        };
+    
+        await User.updateMany({ _id: { $in: govMembers } }, { $push: { alerts: alert } }).exec();
+      }
+
       break;
     }
     default:
       return { status_code: 400, payload: { success: false, error: 'Unknown Law Type' } };
-  }
-
-  if (res?.status_code === 200) {
-    // Send Alert to All Gov Members that a new law has been proposed
-    let govMembers: number[] = [
-      country.government.president,
-      country.government.vp,
-      ...Object.values(country.government.cabinet),
-      ...government.congress.map(mem => mem.id)
-    ];
-
-    const alert: IAlert = {
-      type: 'LAW_PROPOSED',
-      read: false,
-      message: 'A New Law Has Been Proposed!',
-      timestamp: new Date(Date.now()),
-    };
-
-    await User.updateMany({ _id: { $in: govMembers } }, { $push: { alerts: alert } }).exec();
   }
 
   return res;
@@ -179,7 +224,30 @@ async function create_new_law(data: IProposeLaw): Promise<IGovActionResult> {
 
   let updated = await Country.updateOne({ _id: data.country_id }, { $push: { pendingLaws: newLaw } }).exec()
   if (updated)
-    return { status_code: 200, payload: { success: true, message: 'Change Income Tax Law Proposed' } };
+    return { status_code: 200, payload: { success: true, message: 'Law Proposed' } };
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+function validate_law(data: IProposeLaw, government: IGovernment): boolean {
+  switch (data.lawType) {
+    case LawType.ALLIANCE:
+      // Ensure if User is a Cabinet member, User is NOT the MoT
+      return !(Object.values(government.cabinet).includes(data.user_id) && data.user_id === government.cabinet.mot);
+    case LawType.EMBARGO:
+      // Ensure if User is a Cabinet member, User holds the MoT (Treasury) or MoFA (Foreign Affairs) title
+      return !(Object.values(government.cabinet).includes(data.user_id) && data.user_id !== government.cabinet.mofa && data.user_id !== government.cabinet.mot);
+    case LawType.IMPEACH_CP:
+      // User must be in congress or VP
+      return government.congress.map(mem => mem.id).includes(data.user_id) || data.user_id === government.vp;
+    case LawType.IMPORT_TAX:
+    case LawType.INCOME_TAX:
+    case LawType.MINIMUM_WAGE:
+    case LawType.PRINT_MONEY:
+    case LawType.VAT_TAX:
+      // Ensure if User is a Cabinet member, User holds the MoT (Treasury) title
+      return !(Object.values(government.cabinet).includes(data.user_id) && data.user_id !== government.cabinet.mot);
+    default:
+      return false;
+  }
 }

@@ -1,9 +1,9 @@
 import User, { IUser } from '@/models/User';
-import Country, { IChangeImportTax, IChangeIncomeTax, ICountry, ILaw, ILawVote } from '@/models/Country';
+import Country, { IChangeImportTax, IChangeIncomeTax, ICountry, ILaw, ILawVote, IPrintMoney, ISetMinWage } from '@/models/Country';
 import Layout from '@/components/Layout';
 import { getCurrentUser } from '@/util/auth';
 import { destroyCookie, parseCookies } from 'nookies';
-import { jsonify, LawType } from '@/util/apiHelpers';
+import { jsonify, LawType, roundMoney } from '@/util/apiHelpers';
 import { Avatar, Button, Stat, StatHelpText, StatLabel, StatNumber, Tag, TagLabel, useToast } from '@chakra-ui/react';
 import { addMinutes, format } from 'date-fns';
 import { useRouter } from 'next/router';
@@ -34,6 +34,10 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
         return 'Change Income Tax Law Proposal';
       case LawType.IMPORT_TAX:
         return 'Change Import Tax Law Proposal';
+      case LawType.MINIMUM_WAGE:
+        return 'Change Minimum Wage Law Proposal';
+      case LawType.PRINT_MONEY:
+        return 'Print Money Law Proposal';
       case LawType.VAT_TAX:
         return 'Change VAT Tax Law Proposal';
       default:
@@ -67,6 +71,26 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
             proposed changing the {law.type === LawType.IMPORT_TAX ? 'import' : 'VAT'} tax for
             <i className={item.image} title={item.name} />
             {item.name} to {(law.details as IChangeImportTax)[productId]}%
+          </span>
+        );
+      }
+      case LawType.MINIMUM_WAGE:
+        return (
+          <span className='flex items-center gap-2'>
+            proposed changing the national minimum wage from {country.policies.minWage.toFixed(2)}
+            {country.currency} <i className={`flag-icon flag-icon-${country.flag_code}`} title={country.name} />
+            to {(law.details as ISetMinWage).wage.toFixed(2)} {country.currency}
+            <i className={`flag-icon flag-icon-${country.flag_code}`} title={country.name} />
+          </span>
+        );
+      case LawType.PRINT_MONEY: {
+        let amount = (law.details as IPrintMoney).amount;
+        return (
+          <span className='flex items-center gap-2'>
+            proposed printing {amount.toFixed(2)}
+            {country.currency} <i className={`flag-icon flag-icon-${country.flag_code}`} title={country.name} />
+            for {roundMoney(amount * 0.005).toFixed(2)}
+            <i className={'sot-icon sot-coin'} title={'Gold'} />
           </span>
         );
       }

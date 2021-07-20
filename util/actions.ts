@@ -75,11 +75,9 @@ export const PartyActions = {
 };
 
 export const GovActions = {
+  ATTACK_REGION: 'attack_region',
   PROPOSE_LAW: 'propose_law',
   RESIGN: 'resign',
+  RETREAT: 'retreat',
   VOTE_LAW: 'vote_law',
-}
-
-export const PresidentActions = {
-  RESIGN: 'resign',
 }

@@ -1,5 +1,5 @@
-import Country, { IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, ILawVote } from '@/models/Country';
-import { LawType } from '@/util/apiHelpers';
+import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, IEmbargo, ILawVote, IPrintMoney, ISetMinWage } from '@/models/Country';
+import { LawType, roundMoney } from '@/util/apiHelpers';
 import { connectToDB } from '@/util/mongo';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -39,6 +39,27 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 pendingLaw.passed = true;
                 // Update Country Policy
                 switch (pendingLaw.type) {
+                  case LawType.ALLIANCE: {
+                    updates['policies.allies'] = [...country.policies.allies, (pendingLaw.details as IAlly)];
+                    break;
+                  }
+                  case LawType.EMBARGO: {
+                    updates['policies.embargos'] = [...country.policies.embargos, (pendingLaw.details as IEmbargo)];
+                    break;
+                  }
+                  case LawType.IMPEACH_CP: {
+                    // TODO: Send Alert to CP that they've been impeached
+                    let replacement: number | null = null;
+                    if (country.government.vp && country.government.vp > 0) {
+                      // Replace CP with VP
+                      replacement = country.government.vp;
+                    }
+
+                    // Remove CP and don't replace him, VP becomes null, but Cabinet stays
+                    updates['government.president'] = replacement;
+                    updates['government.vp'] = null;
+                    break;
+                  }
                   case LawType.INCOME_TAX: {
                     updates['policies.taxes.income'] = (pendingLaw.details as IChangeIncomeTax).percentage;
                     break;
@@ -47,6 +68,24 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     let importDetails = pendingLaw.details as IChangeImportTax;
                     let productId: number = Number.parseInt(Object.keys(importDetails)[0]);
                     updates[`policies.taxes.import.${productId}`] = importDetails[productId];
+                    break;
+                  }
+                  case LawType.MINIMUM_WAGE: {
+                    updates['policies.minWage'] = (pendingLaw.details as ISetMinWage).wage;
+                    break;
+                  }
+                  case LawType.PRINT_MONEY: {
+                    // Adds amount of money chosen, removes cost (0.005g per 1 CC) from treasury
+                    let printDetails = pendingLaw.details as IPrintMoney;
+                    let cost: number = roundMoney(printDetails.amount * 0.005);
+
+                    if (!country.treasury['gold'] || country.treasury['gold'] < cost) {
+                      pendingLaw.passed = false;
+                      break;
+                    }
+
+                    updates[`treasury.${country.currency}`] = roundMoney((country.treasury[country.currency] ?? 0) + printDetails.amount);
+                    updates[`treasury.gold`] = roundMoney(country.treasury['gold'] - cost);
                     break;
                   }
                   case LawType.VAT_TAX: {
