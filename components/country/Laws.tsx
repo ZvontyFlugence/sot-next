@@ -82,6 +82,10 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
       return false;
 
     switch (lawType) {
+      case LawType.ALLIANCE:
+        return govRole !== 'MoT';
+      case LawType.EMBARGO:
+        return govRole !== 'MoD';
       case LawType.IMPORT_TAX:
       case LawType.INCOME_TAX:
       case LawType.MINIMUM_WAGE:
@@ -342,7 +346,7 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
             {lawType !== null && getLawFormDetails()}
           </ModalBody>
           <ModalFooter className='flex items-center gap-4'>
-            <Button size='sm' colorScheme='green' onClick={proposeLaw}>Propose</Button>
+            <Button size='sm' colorScheme='green' onClick={proposeLaw} disabled={!canProposeLaw()}>Propose</Button>
             <Button size='sm' variant='outline' colorScheme='whiteAlpha' onClick={handleCloseModal}>Cancel</Button>
           </ModalFooter>
         </ModalContent>

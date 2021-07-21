@@ -1,4 +1,5 @@
 import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, IEmbargo, ILawVote, IPrintMoney, ISetMinWage } from '@/models/Country';
+import User, { IAlert } from '@/models/User';
 import { LawType, roundMoney } from '@/util/apiHelpers';
 import { connectToDB } from '@/util/mongo';
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -40,15 +41,28 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 // Update Country Policy
                 switch (pendingLaw.type) {
                   case LawType.ALLIANCE: {
-                    updates['policies.allies'] = [...country.policies.allies, (pendingLaw.details as IAlly)];
+                    let alliance: IAlly = (pendingLaw.details as IAlly);
+
+                    // Set Alliance Expiration for 30 days from now
+                    let expires: Date = new Date(Date.now());
+                    expires.setUTCDate(expires.getUTCDate() + 30);
+                    alliance.expires = expires;
+
+                    updates['policies.allies'] = [...country.policies.allies, alliance];
                     break;
                   }
                   case LawType.EMBARGO: {
-                    updates['policies.embargos'] = [...country.policies.embargos, (pendingLaw.details as IEmbargo)];
+                    let embargo: IEmbargo = (pendingLaw.details as IEmbargo);
+
+                    // Set Embargo Expiration for 30 days from now
+                    let expires: Date = new Date(Date.now());
+                    expires.setUTCDate(expires.getUTCDate() + 30);
+                    embargo.expires = expires;
+
+                    updates['policies.embargos'] = [...country.policies.embargos, embargo];
                     break;
                   }
                   case LawType.IMPEACH_CP: {
-                    // TODO: Send Alert to CP that they've been impeached
                     let replacement: number | null = null;
                     if (country.government.vp && country.government.vp > 0) {
                       // Replace CP with VP
@@ -58,6 +72,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     // Remove CP and don't replace him, VP becomes null, but Cabinet stays
                     updates['government.president'] = replacement;
                     updates['government.vp'] = null;
+
+                    let alert: IAlert = {
+                      type: 'IMPEACHED',
+                      read: false,
+                      message: 'You\'ve been impeached and removed from your position as Country President',
+                      timestamp: new Date(Date.now()),
+                    };
+
+                    await User.updateOne({ _id: country.government.president }, { $push: { alerts: alert } });
                     break;
                   }
                   case LawType.INCOME_TAX: {

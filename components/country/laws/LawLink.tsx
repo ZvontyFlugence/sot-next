@@ -14,6 +14,10 @@ function LawLink({ countryId, law }: ILawLink) {
 
 	const getLawName = () => {
 		switch (law.type) {
+        case LawType.ALLIANCE:
+            return 'Create Alliance With Country';
+        case LawType.EMBARGO:
+            return 'Embargo Country';
 		case LawType.INCOME_TAX:
 				return 'Change Income Tax';
 		case LawType.IMPORT_TAX:

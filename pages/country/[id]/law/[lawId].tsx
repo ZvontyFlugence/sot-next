@@ -1,5 +1,5 @@
 import User, { IUser } from '@/models/User';
-import Country, { IChangeImportTax, IChangeIncomeTax, ICountry, ILaw, ILawVote, IPrintMoney, ISetMinWage } from '@/models/Country';
+import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, ICountry, IEmbargo, ILaw, ILawVote, IPrintMoney, ISetMinWage } from '@/models/Country';
 import Layout from '@/components/Layout';
 import { getCurrentUser } from '@/util/auth';
 import { destroyCookie, parseCookies } from 'nookies';
@@ -10,6 +10,8 @@ import { useRouter } from 'next/router';
 import { GovActions } from '@/util/actions';
 import { IGameItem, refreshData, request, showToast } from '@/util/ui';
 import { ITEMS } from '@/util/constants';
+import { useState } from 'react';
+import { useEffect } from 'react';
 
 interface ILawPage {
   user: IUser;
@@ -24,12 +26,28 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
   const router = useRouter();
   const toast = useToast();
 
+  const [countries, setCountries] = useState<ICountry[]>([]);
+
   const yesVotes: ILawVote[] = law?.votes.filter(vote => vote.choice === 'yes') ?? [];
   const noVotes: ILawVote[] = law?.votes.filter(vote => vote.choice === 'no') ?? [];
   const abstainVotes: ILawVote[] = law?.votes.filter(vote => vote.choice === 'abstain') ?? [];
 
+  useEffect(() => {
+    request({
+      url: '/api/countries',
+      method: 'GET',
+    }).then(data => {
+      if (data?.countries)
+        setCountries(data.countries);
+    });
+  }, []);
+
   const getLawText = (): string => {
     switch (law.type) {
+      case LawType.ALLIANCE:
+        return 'Create Alliance With Country Law Proposal'
+      case LawType.EMBARGO:
+        return 'Embargo Country Law Proposal';
       case LawType.INCOME_TAX:
         return 'Change Income Tax Law Proposal';
       case LawType.IMPORT_TAX:
@@ -56,6 +74,34 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
 
   const getProposalDescription = (): string | React.ReactElement => {
     switch (law.type) {
+      case LawType.ALLIANCE: {
+        let target: ICountry = countries[(law.details as IAlly).country - 1];
+
+        return (
+          <span className='flex items-center gap-2'>
+            proposed enacting an alliance with the country,
+            <span className='flex items-center gap-2 cursor-pointer text-accent-alt' onClick={() => router.push(`/country/${target?._id}`)}>
+              {target?.name}
+              <i className={`flag-icon flag-icon-${target?.flag_code}`} title={target?.name} />
+            </span>
+            , which would expire in 30 days from the law's passage, pending passage in the target country.
+          </span>
+        );
+      }
+      case LawType.EMBARGO: {
+        let target: ICountry = countries[(law.details as IEmbargo).country - 1];
+
+        return (
+          <span className='flex items-center gap-2'>
+            proposed enacting an embargo on the country,
+            <span className='flex items-center gap-2 cursor-pointer text-accent-alt' onClick={() => router.push(`/country/${target?._id}`)}>
+              {target?.name}
+              <i className={`flag-icon flag-icon-${target?.flag_code}`} title={target?.name} />
+            </span>
+            , which would expire in 30 days from the law's passage.`
+          </span>
+        );
+      }
       case LawType.INCOME_TAX:
         return ` proposed changing the income tax from ${country.policies.taxes.income}% to ${(law.details as IChangeIncomeTax).percentage}%`;
       case LawType.IMPORT_TAX:
@@ -164,7 +210,7 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
               />
               <TagLabel className='text-accent-alt'>{props.govMembersInfo[law.proposedBy]?.name}</TagLabel>
             </Tag>
-            <span>
+            <span className='flex flex-wrap'>
               {getProposalDescription()}
             </span>
           </p>

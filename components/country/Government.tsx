@@ -131,6 +131,10 @@ const Government: React.FC<IGovernmentTab> = ({ country }) => {
   return (
     <div className='w-full'>
       <h2 className='text-xl text-accent'>Government</h2>
+      <h4 className='text-lg mt-4'>Government Info</h4>
+      <div className='flex flex-col gap-2'>
+        <p className='capitalize'>Government Type: {country.policies.governmentType}</p>
+      </div>
       <h4 className='text-lg mt-4'>Executive</h4>
       <div className='flex flex-col gap-2'>
         {cp && (

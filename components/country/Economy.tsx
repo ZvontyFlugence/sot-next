@@ -99,6 +99,10 @@ export default function Economy({ country }: IEconomy) {
           </p>
         ))}
       </div>
+      {/* TODO: Show Graphs of Economic trends over a given period or a fixed period of the past month */}
+      <div className='flex items-center gap-8'>
+        
+      </div>
     </div>
   );
 }
