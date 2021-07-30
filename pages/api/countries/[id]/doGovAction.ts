@@ -39,6 +39,7 @@ interface IVoteLaw extends IBaseParams {
 
 interface IResign extends IBaseParams {}
 
+// TODO: Add support for declare war, and attack region
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const validation_res = await validateToken(req, res);
   if (validation_res?.error)

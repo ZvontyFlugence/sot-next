@@ -46,7 +46,7 @@ export default function Economy({ country }: IEconomy) {
     <div className='w-full'>
       <h2 className='text-xl text-accent'>Economy</h2>
       <h4 className='text-lg mt-4 mb-2 text-center'>Current Economic Policies</h4>
-      <div className='flex items-start justify-center gap-24'>
+      <div className='flex md:flex-row flex-col items-start justify-center md:gap-24 gap-8'>
         <div className='flex flex-col align-start gap-2'>
           <p>Minimum Wage: {country.policies.minWage.toFixed(2)} <i className={`flag-icon flag-icon-${country.flag_code}`} /> {country.currency}</p>
           <p>Income Tax: {country.policies.taxes.income}%</p>

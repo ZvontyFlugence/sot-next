@@ -244,6 +244,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           result = await like_shout(data as IHandleShoutParams);
           return res.status(result.status_code).json(result.payload);
         }
+        case UserActions.MOVE_RESIDENCE: {
+          result = await move_residence(data as ITravelParams);
+          return res.status(result.status_code).json(result.payload);
+        }
         case UserActions.READ_ALERT: {
           result = await read_alert(data as IHandleAlertParams);
           return res.status(result.status_code).json(result.payload);
@@ -1176,10 +1180,10 @@ async function create_news(data: ICreateNewspaper): Promise<IUserActionResult> {
   if (!created)
     return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 
-  let updates = { gold: roundMoney(user.gold - 5), newspaper: 0 };
+  let updates = { gold: roundMoney(user.gold - 5), newspaper: created._id };
   let updated = await user.updateOne({ $set: updates }).exec();
   if (updated)
-    return { status_code: 200, payload: { success: true, newspaper: news_id, message: 'Newspaper Created' } };
+    return { status_code: 200, payload: { success: true, newspaper: created._id, message: 'Newspaper Created' } };
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
@@ -1438,6 +1442,22 @@ async function run_for_congress(data: IRunForOffice): Promise<IUserActionResult>
   let updatedParty = await party.save();
   if (updatedParty)
     return { status_code: 200, payload: { success: true, message: 'Candidacy Submitted' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function move_residence({ user_id, region_id }: ITravelParams): Promise<IUserActionResult> {
+  let user: IUser = await User.findOne({ _id: user_id }).exec();
+  if (!user)
+    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  
+  let region: IRegion = await Region.findOne({ _id: region_id, owner: user.country }).exec();
+  if (!region)
+    return { status_code: 404, payload: { success: false, error: 'Region Not Found Or Invalid Region For Relocation' } };
+
+  let updated = await user.updateOne({ $set: { residence: region_id } }).exec();
+  if (updated)
+    return { status_code: 200, payload: { success: true, message: 'Residence Updated' } };
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }

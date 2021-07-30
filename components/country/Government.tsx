@@ -138,7 +138,7 @@ const Government: React.FC<IGovernmentTab> = ({ country }) => {
       <h4 className='text-lg mt-4'>Executive</h4>
       <div className='flex flex-col gap-2'>
         {cp && (
-          <div className='flex justify-between'>
+          <div className='flex justify-between items-center'>
             <div className='flex items-center gap-2 max-w-min cursor-pointer' onClick={() => router.push(`/profile/${cp._id}`)}>
               <span>President:</span>
               <Avatar src={cp.image} name={cp.username} />

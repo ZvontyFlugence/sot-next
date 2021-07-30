@@ -78,7 +78,7 @@ export enum LawType {
   CHANGE_GOV_TYPE = 'change_gov_type',
   DECLARE_WAR = 'declare_war',
   EMBARGO = 'embargo', // Implemented
-  IMPEACH_CP = 'impeach_cp', // In Progress
+  IMPEACH_CP = 'impeach_cp', // Implemented
   IMPORT_TAX = 'import_tax', // Implemented
   INCOME_TAX = 'income_tax', // Implemented
   MINIMUM_WAGE = 'minimum_wage', // Implemented

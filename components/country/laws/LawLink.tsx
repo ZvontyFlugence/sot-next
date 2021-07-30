@@ -56,7 +56,7 @@ function LawLink({ countryId, law }: ILawLink) {
             <span className='text-accent-alt text-xl'>{getLawName()} {getStatus()}</span>
             <span>{getTimeRemaining()}</span>
         </div>
-        <div className='flex items-center gap-8'>
+        <div className='hidden md:flex items-center gap-8'>
             <Stat>
                 <StatLabel>Yes</StatLabel>
                 <StatNumber className='text-center'>

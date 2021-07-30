@@ -23,7 +23,7 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
-  const [region, setRegion] = useState(-1);
+  const [selectedRegion, setSelectedRegion] = useState(-1);
   const [username, setUsername] = useState('');
   const [newPw, setNewPw] = useState('');
   const [currPw, setCurrPw] = useState('');
@@ -86,7 +86,7 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
   const handleTravel = () => {
     let payload = {
       action: UserActions.TRAVEL,
-      data: { region_id: region },
+      data: { region_id: selectedRegion },
     };
 
     request({
@@ -97,10 +97,32 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
     }).then(data => {
       if (data.success) {
         showToast(toast, 'success', data?.message);
-        setRegion(-1);
+        setSelectedRegion(-1);
         refreshData(router);
       } else {
         showToast(toast, 'error', 'Relocation Failed', data?.error);
+      }
+    });
+  }
+
+  const handleMoveResidence = () => {
+    let payload = {
+      action: UserActions.MOVE_RESIDENCE,
+      data: { region_id: selectedRegion },
+    };
+
+    request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', data?.message);
+        setSelectedRegion(-1);
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Residence Relocation Failed', data?.error);
       }
     });
   }
@@ -165,9 +187,9 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
   return user ? (
     <Layout user={user}>
       <h1 className='text-2xl text-accent pl-4 font-semibold'>Settings</h1>
-      <div className='flex justify-center items-center w-full'>
+      <div className='flex md:flex-row flex-col justify-center items-center w-full'>
         <div className='flex flex-col gap-6 bg-night rounded shadow-md py-4 px-8 text-white'>
-          <div className='flex gap-8'>
+          <div className='flex md:flex-row flex-col gap-8'>
             <FormControl>
               <FormLabel className='text-xl'>Update Username</FormLabel>
               <Input type='text' defaultValue={user.username} onChange={e => setUsername(e.target.value)} />
@@ -197,7 +219,7 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
           </div>
           <FormControl>
             <FormLabel className='text-xl'>Update Password</FormLabel>
-            <div className='flex gap-8'>
+            <div className='flex md:flex-row flex-col md:gap-8 gap-2'>
               <Input
                 type='password'
                 placeholder='New Password'
@@ -236,7 +258,7 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
           </FormControl>
           <FormControl>
             <FormLabel className='text-xl'>Travel</FormLabel>
-            <Select className='border border-white border-opacity-25 rounded shadow-md' onChange={val => setRegion(val as number)}>
+            <Select className='border border-white border-opacity-25 rounded shadow-md' onChange={val => setSelectedRegion(val as number)}>
               <Select.Option value={-1} disabled>Select Region</Select.Option>
               {regionQuery.isSuccess && regionQuery.data?.regions?.map((region, i) => (
                 <Select.Option key={i} value={region._id}>{region.name}</Select.Option>
@@ -248,6 +270,24 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
               color='accent-alt'
               colorScheme='whiteAlpha'
               onClick={handleTravel}
+            >
+              Update
+            </Button>
+          </FormControl>
+          <FormControl>
+            <FormLabel className='text-xl'>Move Residence</FormLabel>
+            <Select className='border border-white border-opacity-25 rounded shadow-md' onChange={val => setSelectedRegion(val as number)}>
+              <Select.Option value={-1} disabled>Select Region</Select.Option>
+              {regionQuery.isSuccess && regionQuery.data?.regions?.filter(reg => reg.owner === user.country).map((region, i) => (
+                <Select.Option key={i} value={region._id}>{region.name}</Select.Option>
+              ))}
+            </Select>
+            <Button
+              className='mt-2'
+              variant='outline'
+              color='accent-alt'
+              colorScheme='whiteAlpha'
+              onClick={handleMoveResidence}
             >
               Update
             </Button>

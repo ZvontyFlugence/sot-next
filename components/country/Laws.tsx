@@ -217,7 +217,7 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
         </Button>
       </div>
       <h4 className='text-lg mt-4 mb-2 text-center'>Current Policies</h4>
-      <div className='flex items-start justify-center gap-24'>
+      <div className='flex md:flex-row flex-col items-start justify-center md:gap-24 gap-8'>
         <div className='flex flex-col align-start gap-2'>
           <p>Government Type: <span className='capitalize'>{country.policies.governmentType}</span></p>
           <p>Minimum Wage: {country.policies.minWage.toFixed(2)} <i className={`flag-icon flag-icon-${country.flag_code}`} /> {country.currency}</p>
@@ -279,7 +279,7 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
               onClick={() => setLawHistoryPage(curr => curr - 1)}
               disabled={lawHistoryPage === 0}
             />
-            <Button _hover={{ bg: 'initial', cursor: 'default' }}>{lawHistoryPage}</Button>
+            <Button _hover={{ bg: 'initial', cursor: 'default' }}>{lawHistoryPage + 1}</Button>
             <IconButton
               aria-label='Next Page'
               icon={<IoCaretForward />}
