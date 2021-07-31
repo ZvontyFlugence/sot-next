@@ -1,5 +1,6 @@
-import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, IEmbargo, ILawVote, IPrintMoney, ISetMinWage } from '@/models/Country';
+import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, IDeclareWar, IEmbargo, ILawVote, IPeaceTreaty, IPrintMoney, ISetMinWage } from '@/models/Country';
 import User, { IAlert } from '@/models/User';
+import War from '@/models/War';
 import { LawType, roundMoney } from '@/util/apiHelpers';
 import { connectToDB } from '@/util/mongo';
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -35,8 +36,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 return accum;
               }, 0);
 
-              // TODO: Do more checks like meeting quorum, etc.
-              if (score > 0) {
+              let govMembers: number[] = [
+                country.government.president,
+                country.government.vp,
+                ...Object.values(country.government.cabinet),
+                ...country.government.congress,
+              ].filter(mem => mem !== null && mem > 0);
+
+              // At least 50% of government members must vote to reach quorum
+              let quorum: number = govMembers.length / 2;
+
+              if (score > 0 && pendingLaw.votes.length >= quorum) {
                 pendingLaw.passed = true;
                 // Update Country Policy
                 switch (pendingLaw.type) {
@@ -49,6 +59,22 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     alliance.expires = expires;
 
                     updates['policies.allies'] = [...country.policies.allies, alliance];
+                    break;
+                  }
+                  case LawType.DECLARE_WAR: {
+                    let target: IDeclareWar = (pendingLaw.details as IDeclareWar);
+
+                    let targetCountry: ICountry = await Country.findOne({ _id: target.country });
+
+                    // Create new War record in DB
+                    let newWar = new War({
+                      source: country._id,
+                      target: targetCountry._id,
+                      sourceAllies: [country._id, ...country.policies.allies],
+                      targetAllies: [targetCountry._id, ...targetCountry.policies.allies],
+                    });
+
+                    await newWar.save();
                     break;
                   }
                   case LawType.EMBARGO: {
@@ -95,6 +121,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                   }
                   case LawType.MINIMUM_WAGE: {
                     updates['policies.minWage'] = (pendingLaw.details as ISetMinWage).wage;
+                    break;
+                  }
+                  case LawType.PEACE_TREATY: {
+                    let target: IPeaceTreaty = (pendingLaw.details as IPeaceTreaty);
+
+                    // Delete War Record in DB where source === country._id AND target === target.country
+                    await War.deleteOne({ source: country._id, target: target.country });
                     break;
                   }
                   case LawType.PRINT_MONEY: {

@@ -79,12 +79,20 @@ export interface IChangeVATTax {
   [productId: number]: number;
 }
 
+export interface IDeclareWar {
+  country: number;
+}
+
+export interface IPeaceTreaty {
+  country: number;
+}
+
 export interface ILaw {
   id: string;
   type: LawType;
   details: (
     IChangeIncomeTax | IChangeImportTax | IChangeVATTax | IEmbargo | IAlly | IImpeachCP |
-    ISetMinWage | IPrintMoney
+    ISetMinWage | IPrintMoney | IDeclareWar | IPeaceTreaty
   );
   proposed: Date;
   proposedBy: number;

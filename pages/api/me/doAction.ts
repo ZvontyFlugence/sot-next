@@ -1455,6 +1455,9 @@ async function move_residence({ user_id, region_id }: ITravelParams): Promise<IU
   if (!region)
     return { status_code: 404, payload: { success: false, error: 'Region Not Found Or Invalid Region For Relocation' } };
 
+  if (region.owner !== user.country)
+    return { status_code: 400, payload: { success: false, error: 'Residence Region Owner Must Match Citizenship' } };
+
   let updated = await user.updateOne({ $set: { residence: region_id } }).exec();
   if (updated)
     return { status_code: 200, payload: { success: true, message: 'Residence Updated' } };

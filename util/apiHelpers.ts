@@ -76,13 +76,13 @@ export interface GetElectionsResponse {
 export enum LawType {
   ALLIANCE = 'alliance', // Implemented
   CHANGE_GOV_TYPE = 'change_gov_type',
-  DECLARE_WAR = 'declare_war',
+  DECLARE_WAR = 'declare_war', // In Progress
   EMBARGO = 'embargo', // Implemented
   IMPEACH_CP = 'impeach_cp', // Implemented
   IMPORT_TAX = 'import_tax', // Implemented
   INCOME_TAX = 'income_tax', // Implemented
   MINIMUM_WAGE = 'minimum_wage', // Implemented
-  PEACE_TREATY = 'peace_treaty',
+  PEACE_TREATY = 'peace_treaty', // In Progress
   PRINT_MONEY = 'print_money', // Implemented
   VAT_TAX = 'vat_tax', // Implemented
   WELCOME_MESSAGE = 'welcome_message',
