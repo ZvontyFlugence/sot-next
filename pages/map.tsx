@@ -173,7 +173,7 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
           <Button size='sm' variant='solid' colorScheme='blue' onClick={() => setMode('political')}>Political</Button>
           <Button size='sm' variant='solid' colorScheme='green' onClick={() => setMode('resources')}>Resources</Button>
         </div>
-        <div className='mt-4 mr-8'>
+        <div className='mt-4 md:mx-8'>
           {overlays && (
             <MapComponent overlays={overlays} />
           )}
