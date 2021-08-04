@@ -115,7 +115,7 @@ const GoodsMarket: React.FC<IGoodsMarket> = ({ user, ...props }) => {
           <p className='text-white'>Country has no product offers</p>
         )}
         {query.isSuccess && query.data?.productOffers.length > 0 && (
-          <Table bgColor='night' color='white'>
+          <Table variant='unstyled' bgColor='night' color='white'>
             <Thead>
               <Tr>
                 <Th color='white'>Company</Th>

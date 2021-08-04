@@ -42,11 +42,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 }
 
 interface IGetPartiesRequest {
-  country?: number,
+  country?: number;
 }
 
 interface IGetPartiesResponse {
-  parties?: IParty[]
+  parties?: IParty[];
 }
 
 async function getParties(data: IGetPartiesRequest): Promise<IGetPartiesResponse> {

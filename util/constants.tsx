@@ -1,4 +1,4 @@
-import { IGameItem } from "./ui";
+import { IGameItem, IRankingTypeMap } from "./ui";
 
 // Different Types of Companies That Can Be Create
 export const COMPANY_TYPES = [
@@ -35,6 +35,40 @@ export const ITEMS: IGameItem[] = [
   { id: 9, name: 'Bread', quality: 4, image: 'sot-icon sot-bread' },
   { id: 10, name: 'Bread', quality: 5, image: 'sot-icon sot-bread' },
 ];
+
+// Ranking Types
+export const RANKING_TYPES: IRankingTypeMap = {
+  'country': {
+    label: (
+      <span>Countries</span>
+    ),
+    route: '/rankings/countries',
+  },
+  'citizens': {
+    label: (
+      <span>Citizens</span>
+    ),
+    route: '/rankings/citizens?scope=global&stat=xp',
+  },
+  'newspapers': {
+    label: (
+      <span>Newspapers</span>
+    ),
+    route: '/rankings/newspapers',
+  },
+  'parties': {
+    label: (
+      <span>Parties</span>
+    ),
+    route: `/rankings/parties`,
+  },
+};
+
+// Citizen Stat Types
+export const CitizenStats = {
+  STRENGTH: 'strength',
+  XP: 'xp',
+};
 
 // Google Map Style
 export const MAP_STYLE = [

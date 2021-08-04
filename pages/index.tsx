@@ -14,7 +14,7 @@ interface IIndexProps {
   isAuthenticated: boolean,
 }
 
-export default function Index(props: IIndexProps) {
+export default function Index(_props: IIndexProps) {
   const router = useRouter();
 
   const citizenQuery = useQuery('topCits', async () => {

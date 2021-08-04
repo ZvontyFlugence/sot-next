@@ -99,7 +99,7 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
           <p className='text-white'>Country has no job offers</p>
         )}
         {query.isSuccess && query.data?.jobOffers.length > 0 && (
-          <Table bgColor='night' color='white'>
+          <Table variant='unstyled' bgColor='night' color='white'>
             <Thead>
               <Tr>
                 <Th color='white'>Company</Th>

@@ -22,6 +22,15 @@ export interface IRequest {
   token?: string,
 }
 
+export interface IRankingTypeMap {
+  [type: string]: IRankingType;
+}
+
+export interface IRankingType {
+  label: React.ReactNode;
+  route: string;
+}
+
 interface IRequestOpts {
   method: string,
   headers?: {

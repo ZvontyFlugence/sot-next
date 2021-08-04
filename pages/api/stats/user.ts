@@ -2,11 +2,7 @@ import User, { IUser, IUserStats } from '@/models/User';
 import Country, { ICountry } from '@/models/Country';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectToDB } from '@/util/mongo';
-
-const CitizenStats = {
-  STRENGTH: 'strength',
-  XP: 'xp',
-}
+import { CitizenStats } from '@/util/constants';
 
 interface IResult {
   status_code: number,
@@ -22,13 +18,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       const { scope, stat, sort, limit, country } = req.query;
 
       if (typeof scope !== 'string' || typeof stat !== 'string' || (sort && typeof sort !== 'string') ||
-        typeof limit !== 'string' || (country && typeof country !== 'string')) {
+        (limit && typeof limit !== 'string') || (country && typeof country !== 'string')) {
         return res.status(400).json({ error: 'Invalid Query Parameters' });
       }
 
       let result: IResult;
       try {
-        result = await get(scope, stat, stat as string, Number.parseInt(limit), Number.parseInt(country as string));
+        result = await get(scope, stat, sort as string, Number.parseInt(limit as string), Number.parseInt(country as string));
       } catch (_e) {
         result = { status_code: 400, payload: { error: 'Something Went Wrong!' } };
       }
@@ -40,7 +36,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
 }
 
-async function get(scope: string, stat: string, sort: string, limit: number, country?: number): Promise<IResult> {
+async function get(scope: string, stat: string, sort: string = 'desc', limit?: number, country?: number): Promise<IResult> {
   let citizens: IUser[];
 
   // Ensure db connection established
@@ -50,10 +46,12 @@ async function get(scope: string, stat: string, sort: string, limit: number, cou
   switch (scope) {
     case 'country': {
       citizens = await User.find({ country }).exec();
+      break;
     }
     case 'global':
     default: {
       citizens = await User.find({}).exec();
+      break;
     }    
   }
 
