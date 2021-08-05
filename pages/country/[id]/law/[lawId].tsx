@@ -82,7 +82,7 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
             proposed enacting an alliance with the country,
             <span className='flex items-center gap-2 cursor-pointer text-accent-alt' onClick={() => router.push(`/country/${target?._id}`)}>
               {target?.name}
-              <i className={`flag-icon flag-icon-${target?.flag_code}`} title={target?.name} />
+              <i className={`flag-icon flag-icon-${target?.flag_code} rounded shadow-md`} title={target?.name} />
             </span>
             , which would expire in 30 days from the law's passage, pending passage in the target country.
           </span>
@@ -96,7 +96,7 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
             proposed enacting an embargo on the country,
             <span className='flex items-center gap-2 cursor-pointer text-accent-alt' onClick={() => router.push(`/country/${target?._id}`)}>
               {target?.name}
-              <i className={`flag-icon flag-icon-${target?.flag_code}`} title={target?.name} />
+              <i className={`flag-icon flag-icon-${target?.flag_code} rounded shadow-md`} title={target?.name} />
             </span>
             , which would expire in 30 days from the law's passage.`
           </span>
@@ -124,7 +124,7 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
         return (
           <span className='flex items-center gap-2'>
             proposed changing the national minimum wage from {country.policies.minWage.toFixed(2)}
-            {country.currency} <i className={`flag-icon flag-icon-${country.flag_code}`} title={country.name} />
+            {country.currency} <i className={`flag-icon flag-icon-${country.flag_code} rounded shadow-md`} title={country.name} />
             to {(law.details as ISetMinWage).wage.toFixed(2)} {country.currency}
             <i className={`flag-icon flag-icon-${country.flag_code}`} title={country.name} />
           </span>
@@ -134,7 +134,7 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
         return (
           <span className='flex items-center gap-2'>
             proposed printing {amount.toFixed(2)}
-            {country.currency} <i className={`flag-icon flag-icon-${country.flag_code}`} title={country.name} />
+            {country.currency} <i className={`flag-icon flag-icon-${country.flag_code} rounded shadow-md`} title={country.name} />
             for {roundMoney(amount * 0.005).toFixed(2)}
             <i className={'sot-icon sot-coin'} title={'Gold'} />
           </span>
@@ -189,7 +189,7 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
         <div className='p-4 bg-night rounded shadow-md'>
           <h1 className='text-accent text-2xl'>
             {getLawText()} ({getLawStatus()})
-            <i className={`ml-4 cursor-pointer flag-icon flag-icon-${country.flag_code}`} title={country.name} onClick={() => router.push(`/country/${country._id}`)} />
+            <i className={`ml-4 cursor-pointer flag-icon flag-icon-${country.flag_code} rounded shadow-md`} title={country.name} onClick={() => router.push(`/country/${country._id}`)} />
           </h1>
           <h3>
             <span>

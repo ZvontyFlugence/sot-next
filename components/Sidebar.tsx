@@ -141,7 +141,7 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
                 </span>
               </p>
               <span
-                className={`cursor-pointer flag-icon flag-icon-${locationQuery.data.locationInfo.owner_flag}`}
+                className={`cursor-pointer flag-icon flag-icon-${locationQuery.data.locationInfo.owner_flag} rounded shadow-md`}
                 onClick={() => router.push(`/country/${locationQuery.data.locationInfo.owner_id}`)}
               ></span>
             </div>
@@ -161,7 +161,7 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
                   <span>
                     {walletQuery.data.walletInfo[user.country].amount.toFixed(2)}
                     <span
-                      className={`ml-2 cursor-pointer flag-icon flag-icon-${walletQuery.data.walletInfo[user.country].flag_code}`}
+                      className={`ml-2 cursor-pointer flag-icon flag-icon-${walletQuery.data.walletInfo[user.country].flag_code} rounded shadow-md`}
                       onClick={() => router.push(`/country/${user.country}`)}
                     ></span>
                   </span>

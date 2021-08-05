@@ -134,7 +134,7 @@ const ManageTreasury: React.FC<IManageTreasury> = ({ funds, gold, user, ...props
             <StatLabel>{props.currency}</StatLabel>
             <StatNumber>
               <span className='mr-2'>{defaultCC > -1 && funds[defaultCC].amount.toFixed(2) || 0.00}</span>
-              <i className={`flag-icon flag-icon-${props.locationInfo.owner_flag}`} />
+              <i className={`flag-icon flag-icon-${props.locationInfo.owner_flag} rounded shadow-md`} />
             </StatNumber>
           </Stat>
         </StatGroup>

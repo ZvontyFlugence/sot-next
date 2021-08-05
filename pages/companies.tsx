@@ -145,7 +145,7 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
                     <Td>
                       <span>{comp.location_info?.region_name}</span>,&nbsp;
                       <span>{comp.location_info?.owner_name}</span>
-                      <span className={`ml-4 flag-icon flag-icon-${comp.location_info?.owner_flag}`}></span>
+                      <span className={`ml-4 flag-icon flag-icon-${comp.location_info?.owner_flag} rounded shadow-md`}></span>
                     </Td>
                   </Tr>
                 ))
@@ -182,7 +182,7 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
                       <p>
                         <span>{comp.location_info?.region_name}</span>,&nbsp;
                         <span>{comp.location_info?.owner_name}</span>
-                        <span className={`ml-4 flag-icon flag-icon-${comp.location_info?.owner_flag}`}></span>
+                        <span className={`ml-4 flag-icon flag-icon-${comp.location_info?.owner_flag} rounded shadow-md`}></span>
                       </p>
                     </div>
                   </div>

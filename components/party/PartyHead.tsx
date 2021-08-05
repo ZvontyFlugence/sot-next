@@ -78,7 +78,7 @@ const PartyHead: React.FC<IPartyHeadProps> = ({ party, leadershipInfo, countryIn
             <h3 className='text-2xl font-semibold text-accent'>
               {party.name}
               <i
-                className={`ml-4 cursor-pointer flag-icon flag-icon-${countryInfo.flag}`}
+                className={`ml-4 cursor-pointer flag-icon flag-icon-${countryInfo.flag} rounded shadow-md`}
                 onClick={() => router.push(`/country/${party.country}`)}
                 title={countryInfo.name}
               />
@@ -163,7 +163,7 @@ const PartyHead: React.FC<IPartyHeadProps> = ({ party, leadershipInfo, countryIn
               <h3 className='text-xl font-semibold text-accent'>
                 {party.name}
                 <i
-                  className={`ml-2 cursor-pointer flag-icon flag-icon-${countryInfo.flag}`}
+                  className={`ml-2 cursor-pointer flag-icon flag-icon-${countryInfo.flag} rounded shadow-md`}
                   onClick={() => router.push(`/country/${party.country}`)}
                   title={countryInfo.name}
                 />
