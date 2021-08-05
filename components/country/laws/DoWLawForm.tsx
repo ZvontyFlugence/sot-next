@@ -7,12 +7,13 @@ import {
 } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 
-interface IEmbargoLawForm {
-  setCountry: (countryId: number) => void,
+interface IDoWLawForm {
+  country: number;
+  setCountry: (countryId: number) => void;
 }
 
-// TODO: Filter out countries already embargoed
-export default function EmbargoLawForm({ setCountry }: IEmbargoLawForm) {
+// TODO: Filter out countries that are already at war with user's country
+export default function DoWLawForm({ country, setCountry }: IDoWLawForm) {
   const [countries, setCountries] = useState<ICountry[]>([]);
   const [selected, setSelected] = useState<number>(0);
 
@@ -37,7 +38,7 @@ export default function EmbargoLawForm({ setCountry }: IEmbargoLawForm) {
         <FormLabel>Country:</FormLabel>
         <Select className='border border-white border-opacity-25 rounded shadow-md' selected={selected} onChange={updateCountry}>
           <Select.Option disabled value={0}>Select Country</Select.Option>
-          {countries.map((c: ICountry, i: number) => (
+          {countries.filter(c => c._id !== country).map((c: ICountry, i: number) => (
             <Select.Option key={i} value={c._id}>
               <span className='flex items-center gap-2'>
                 {c.name}
@@ -49,4 +50,4 @@ export default function EmbargoLawForm({ setCountry }: IEmbargoLawForm) {
       </FormControl>
     </div>
   );
-};
+}

@@ -1,4 +1,4 @@
-import { ICountry, ILaw } from '@/models/Country';
+import { ICountry, IEmbargo, ILaw } from '@/models/Country';
 import { IUser } from '@/models/User';
 import { LawType } from '@/util/apiHelpers';
 import {
@@ -19,7 +19,7 @@ import {
 } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Select from '@/components/Select';
 import { IGameItem, refreshData, request, showToast } from '@/util/ui';
 import { GovActions } from '@/util/actions';
@@ -32,6 +32,9 @@ import PrintMoneyLawForm from './laws/PrintMoneyLawForm';
 import MinWageLawForm from './laws/MinWageLawForm';
 import EmbargoLawForm from './laws/EmbargoLawForm';
 import AllianceLawForm from './laws/AllianceLawForm';
+import { formatDistanceStrict } from 'date-fns';
+import DoWLawForm from './laws/DoWLawForm';
+import TreatyLawForm from './laws/TreatyLawForm';
 
 interface ILawsTab {
   country: ICountry;
@@ -53,7 +56,17 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
   const [lawDetails, setLawDetails] = useState<ILawDetails>({});
   const [product, setProduct] = useState<number | null>(null);
   const [lawHistoryPage, setLawHistoryPage] = useState(0);
-  const [lawHistoryPageSize, setLawHistoryPageSize] = useState(5);
+  const [lawHistoryPageSize, setLawHistoryPageSize] = useState(3);
+  const [countries, setCountries] = useState<ICountry[]>([]);
+
+  useEffect(() => {
+    request({
+      url: '/api/countries',
+      method: 'GET',
+      token: cookies.token,
+    })
+      .then(data => setCountries(data.countries ?? []));
+  }, []);
 
   const getGovernmentRole = (): string => {
     switch (user._id) {
@@ -115,6 +128,10 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
         return (
           <AllianceLawForm setCountry={(countryId) => setLawDetails({ country: countryId })} />
         );
+      case LawType.DECLARE_WAR:
+        return (
+          <DoWLawForm country={country._id} setCountry={(countryId) => setLawDetails({ country: countryId })} />
+        );
       case LawType.EMBARGO:
         return (
           <EmbargoLawForm setCountry={(countryId) => setLawDetails({ country: countryId })} />
@@ -138,6 +155,10 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
       case LawType.MINIMUM_WAGE:
         return (
           <MinWageLawForm setAmount={(value) => setLawDetails({ wage: value })} />
+        );
+      case LawType.PEACE_TREATY:
+        return (
+          <TreatyLawForm country={country._id} setCountry={(countryId) => setLawDetails({ country: countryId })} />
         );
       case LawType.PRINT_MONEY:
         return (
@@ -220,7 +241,7 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
       <div className='flex md:flex-row flex-col items-start justify-center md:gap-24 gap-8'>
         <div className='flex flex-col align-start gap-2'>
           <p>Government Type: <span className='capitalize'>{country.policies.governmentType}</span></p>
-          <p>Minimum Wage: {country.policies.minWage.toFixed(2)} <i className={`flag-icon flag-icon-${country.flag_code}`} /> {country.currency}</p>
+          <p>Minimum Wage: {country.policies.minWage.toFixed(2)} <i className={`flag-icon flag-icon-${country.flag_code} rounded shadow-md`} /> {country.currency}</p>
           <p>Income Tax: {country.policies.taxes.income}%</p>
           
         </div>
@@ -253,12 +274,23 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
             </div>
         </div>
         <div className='flex flex-col align-start gap-2'>
-          <p>Embargoes: {country.policies.embargos.length}</p>
+          <p>Embargoes:</p>
+          <div>
+            {country.policies.embargos.map((embargo: IEmbargo, i: number) => (
+              <div key={i} className='flex justify-between items-center'>
+                <p className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/country/${embargo.country}`)}>
+                  <i className={`flag-icon flag-icon-${countries[embargo.country - 1]?.flag_code} rounded shadow-md`} />
+                  {countries[embargo.country - 1]?.name}
+                </p>
+                <span className='ml-8 text-gray-300 text-sm'>{formatDistanceStrict(new Date(embargo?.expires), new Date(Date.now()))}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       <h4 className='text-lg mt-4 mb-2 text-center'>Pending Laws</h4>
       <div className='flex flex-col justify-center items-center gap-2'>
-        {country.pendingLaws.length > 0 ? country.pendingLaws.map((law: ILaw, i: number) => (
+        {country.pendingLaws.length > 0 ? country.pendingLaws.slice(0).reverse().map((law: ILaw, i: number) => (
           <LawLink key={i} law={law} countryId={country._id} />
         )) : (
           <p>Country Has No Pending Laws</p>
@@ -266,12 +298,12 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
       </div>
       <h4 className='text-lg mt-4 mb-2 text-center'>Law History</h4>
       <div className='flex flex-col justify-center items-center gap-2'>
-        {country.pastLaws.length > 0 ? country.pastLaws.slice(...Object.values(getPageDetails())).map((law: ILaw, i: number) => (
+        {country.pastLaws.length > 0 ? country.pastLaws.slice(0).reverse().slice(...Object.values(getPageDetails())).map((law: ILaw, i: number) => (
           <LawLink key={i} law={law} countryId={country._id} />
         )) : (
           <p>Country Has No Past Laws</p>
         )}
-        <div className='flex justify-center items-center gap-8 mt-4'>
+        <div className='flex justify-center items-center gap-8 my-4'>
           <ButtonGroup isAttached variant='outline'>
             <IconButton
               aria-label='Previous Page'
@@ -288,7 +320,7 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
             />
           </ButtonGroup>
           <Select className='border border-white border-opacity-25 rounded shadow-md' selected={lawHistoryPageSize} onChange={(value) => setLawHistoryPageSize(value as number)}>
-            {[5, 10, 15, 25, 50].map((num: number, i: number) => (
+            {[3, 5, 10, 15, 25, 50].map((num: number, i: number) => (
               <Select.Option key={i} value={num}>{num}</Select.Option>
             ))}
           </Select>
@@ -309,6 +341,9 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
                 <Select.Option value={LawType.ALLIANCE}>
                   <span className='capitalize'>{LawType.ALLIANCE}</span>
                 </Select.Option>
+                <Select.Option value={LawType.DECLARE_WAR}>
+                  <span className='capitalize'>{LawType.DECLARE_WAR.replace(/_/g, ' ')}</span>
+                </Select.Option>
                 <Select.Option value={LawType.EMBARGO}>
                   <span className='capitalize'>{LawType.EMBARGO}</span>
                 </Select.Option>
@@ -323,6 +358,9 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
                 </Select.Option>
                 <Select.Option value={LawType.MINIMUM_WAGE}>
                   <span className='capitalize'>{LawType.MINIMUM_WAGE.replace(/_/g, ' ')}</span>
+                </Select.Option>
+                <Select.Option value={LawType.PEACE_TREATY}>
+                  <span className='capitalize'>{LawType.PEACE_TREATY.replace(/_/g, ' ')}</span>
                 </Select.Option>
                 <Select.Option value={LawType.PRINT_MONEY}>
                   <span className='capitalize'>{LawType.PRINT_MONEY.replace(/_/g, ' ')}</span>

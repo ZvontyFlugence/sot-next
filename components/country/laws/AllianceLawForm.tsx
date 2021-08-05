@@ -38,10 +38,10 @@ export default function AllianceLawForm({ setCountry }: IAllianceLawForm) {
         <Select className='border border-white border-opacity-25 rounded shadow-md' selected={selected} onChange={updateCountry}>
           <Select.Option disabled value={0}>Select Country</Select.Option>
           {countries.map((c: ICountry, i: number) => (
-            <Select.Option value={c._id}>
+            <Select.Option key={i} value={c._id}>
               <span className='flex items-center gap-2'>
                 {c.name}
-                <i className={`flag-icon flag-icon-${c.flag_code}`} title={c.name} />
+                <i className={`flag-icon flag-icon-${c.flag_code} rounded shadow-md`} title={c.name} />
               </span>
             </Select.Option>
           ))}

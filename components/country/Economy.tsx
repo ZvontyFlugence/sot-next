@@ -1,6 +1,8 @@
-import { ICountry } from '@/models/Country';
+import { ICountry, IEmbargo } from '@/models/Country';
 import { ITEMS } from '@/util/constants';
 import { IGameItem, request } from '@/util/ui';
+import { formatDistanceStrict } from 'date-fns';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 interface IEconomy {
@@ -8,6 +10,8 @@ interface IEconomy {
 }
 
 export default function Economy({ country }: IEconomy) {
+  const router = useRouter();
+  
   const [countries, setCountries] = useState<ICountry[]>([]);
 
   useEffect(() => {
@@ -48,7 +52,7 @@ export default function Economy({ country }: IEconomy) {
       <h4 className='text-lg mt-4 mb-2 text-center'>Current Economic Policies</h4>
       <div className='flex md:flex-row flex-col items-start justify-center md:gap-24 gap-8'>
         <div className='flex flex-col align-start gap-2'>
-          <p>Minimum Wage: {country.policies.minWage.toFixed(2)} <i className={`flag-icon flag-icon-${country.flag_code}`} /> {country.currency}</p>
+          <p>Minimum Wage: {country.policies.minWage.toFixed(2)} <i className={`flag-icon flag-icon-${country.flag_code} rounded shadow-md`} /> {country.currency}</p>
           <p>Income Tax: {country.policies.taxes.income}%</p>
         </div>
         <div className='flex flex-col align-start gap-2'>
@@ -80,7 +84,18 @@ export default function Economy({ country }: IEconomy) {
             </div>
         </div>
         <div className='flex flex-col align-start gap-2'>
-          <p>Embargoes: {country.policies.embargos.length}</p>
+          <p>Embargoes:</p>
+          <div>
+            {country.policies.embargos.map((embargo: IEmbargo, i: number) => (
+              <div key={i} className='flex justify-between items-center'>
+                <p className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/country/${embargo.country}`)}>
+                  <i className={`flag-icon flag-icon-${countries[embargo.country - 1]?.flag_code} rounded shadow-md`} />
+                  {countries[embargo.country - 1]?.name}
+                </p>
+                <span className='ml-8 text-gray-300 text-sm'>{formatDistanceStrict(new Date(embargo?.expires), new Date(Date.now()))}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       <h4 className='text-lg mt-4 mb-2 text-center'>Treasury</h4>
@@ -89,7 +104,7 @@ export default function Economy({ country }: IEconomy) {
           <p className='capitalize'>
             {currency.toLowerCase() !== 'gold' ? (
               <span>
-                {amount.toFixed(2)} {currency} <i className={`flag-icon flag-icon-${getCountryFlag(currency)}`} title={currency} />
+                {amount.toFixed(2)} {currency} <i className={`flag-icon flag-icon-${getCountryFlag(currency)} rounded shadow-md`} title={currency} />
               </span>
             ) : (
               <span>
