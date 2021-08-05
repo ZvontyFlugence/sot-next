@@ -1298,6 +1298,18 @@ async function join_party(data: IHandlePartyMembership): Promise<IUserActionResu
 }
 
 async function leave_party(data: IHandlePartyMembership): Promise<IUserActionResult> {
+  // Prevent Leaving Party During An Election
+  let now = new Date(Date.now());
+  switch (now.getUTCDate()) {
+    case 5:
+    case 15:
+    case 25:
+      return { status_code: 400, payload: { success: false, error: 'Cannot Leave Party During Elections' } };
+    default:
+      break;
+  }
+
+  // Validate Party Membership
   let party: IParty = await Party.findOne({ _id: data.partyId }).exec();
   if (!party)
     return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
@@ -1447,6 +1459,15 @@ async function run_for_congress(data: IRunForOffice): Promise<IUserActionResult>
 }
 
 async function move_residence({ user_id, region_id }: ITravelParams): Promise<IUserActionResult> {
+  let now = new Date(Date.now());
+  switch (now.getUTCDate()) {
+    case 5:
+    case 25:
+      return { status_code: 400, payload: { success: false, error: 'Cannot Change Residence During Presidential or Congressional Elections' } };
+    default:
+      break;
+  }
+
   let user: IUser = await User.findOne({ _id: user_id }).exec();
   if (!user)
     return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
