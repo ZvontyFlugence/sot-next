@@ -97,8 +97,14 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
     switch (lawType) {
       case LawType.ALLIANCE:
         return govRole !== 'MoT';
+      case LawType.DECLARE_WAR:
+        return govRole === 'CP' || govRole === 'VCP' || govRole === 'MoD';
       case LawType.EMBARGO:
         return govRole !== 'MoD';
+      case LawType.IMPEACH_CP:
+        return govRole === 'CM' || govRole === 'VCP';
+      case LawType.PEACE_TREATY:
+        return govRole === 'CP' || govRole === 'VCP' || govRole === 'MoFA';
       case LawType.IMPORT_TAX:
       case LawType.INCOME_TAX:
       case LawType.MINIMUM_WAGE:

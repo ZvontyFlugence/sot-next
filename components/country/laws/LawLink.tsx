@@ -16,20 +16,26 @@ function LawLink({ countryId, law }: ILawLink) {
 		switch (law.type) {
         case LawType.ALLIANCE:
             return 'Create Alliance With Country';
+        case LawType.DECLARE_WAR:
+            return 'Declare War';
         case LawType.EMBARGO:
             return 'Embargo Country';
 		case LawType.INCOME_TAX:
-				return 'Change Income Tax';
+            return 'Change Income Tax';
+        case LawType.IMPEACH_CP:
+            return 'Impeach Country President';
 		case LawType.IMPORT_TAX:
-				return 'Change Import Tax';
+            return 'Change Import Tax';
 		case LawType.MINIMUM_WAGE:
-				return 'Change Minimum Wage';
+            return 'Change Minimum Wage';
+        case LawType.PEACE_TREATY:
+            return 'Sign Peace Treaty';
 		case LawType.PRINT_MONEY:
-				return 'Print Money';
+            return 'Print Money';
 		case LawType.VAT_TAX:
-				return 'Change VAT Tax';
+            return 'Change VAT Tax';
 		default:
-				return 'Unknown Law';
+            return 'Unknown Law';
 		}
 	}
 

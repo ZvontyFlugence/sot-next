@@ -44,7 +44,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
               ].filter(mem => mem !== null && mem > 0);
 
               // At least 50% of government members must vote to reach quorum
-              let quorum: number = govMembers.length / 2;
+              let quorum: number = Math.ceil(govMembers.length / 2);
 
               if (score > 0 && pendingLaw.votes.length >= quorum) {
                 pendingLaw.passed = true;
@@ -74,7 +74,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                       targetAllies: [targetCountry._id, ...targetCountry.policies.allies],
                     });
 
-                    await newWar.save();
+                    newWar.save();
                     break;
                   }
                   case LawType.EMBARGO: {
@@ -126,6 +126,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                   case LawType.PEACE_TREATY: {
                     let target: IPeaceTreaty = (pendingLaw.details as IPeaceTreaty);
 
+                    // TODO: Ensure both countries accept the treaty
                     // Delete War Record in DB where source === country._id AND target === target.country
                     await War.deleteOne({ source: country._id, target: target.country });
                     break;

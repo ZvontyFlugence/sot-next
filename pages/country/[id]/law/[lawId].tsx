@@ -1,5 +1,5 @@
 import User, { IUser } from '@/models/User';
-import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, ICountry, IEmbargo, ILaw, ILawVote, IPrintMoney, ISetMinWage } from '@/models/Country';
+import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, ICountry, IEmbargo, ILaw, ILawVote, IPeaceTreaty, IPrintMoney, ISetMinWage } from '@/models/Country';
 import Layout from '@/components/Layout';
 import { getCurrentUser } from '@/util/auth';
 import { destroyCookie, parseCookies } from 'nookies';
@@ -45,15 +45,21 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
   const getLawText = (): string => {
     switch (law.type) {
       case LawType.ALLIANCE:
-        return 'Create Alliance With Country Law Proposal'
+        return 'Create Alliance With Country Law Proposal';
+      case LawType.DECLARE_WAR:
+        return 'Declare War Law Proposal';
       case LawType.EMBARGO:
         return 'Embargo Country Law Proposal';
       case LawType.INCOME_TAX:
         return 'Change Income Tax Law Proposal';
+      case LawType.IMPEACH_CP:
+        return 'Impeach Country President Law Proposal';
       case LawType.IMPORT_TAX:
         return 'Change Import Tax Law Proposal';
       case LawType.MINIMUM_WAGE:
         return 'Change Minimum Wage Law Proposal';
+      case LawType.PEACE_TREATY:
+        return 'Sign Peace Treaty Law Proposal';
       case LawType.PRINT_MONEY:
         return 'Print Money Law Proposal';
       case LawType.VAT_TAX:
@@ -85,6 +91,19 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
               <i className={`flag-icon flag-icon-${target?.flag_code} rounded shadow-md`} title={target?.name} />
             </span>
             , which would expire in 30 days from the law's passage, pending passage in the target country.
+          </span>
+        );
+      }
+      case LawType.DECLARE_WAR: {
+        let target: ICountry = countries[(law.details as IPeaceTreaty).country - 1];
+
+        return (
+          <span className='flex items-center gap-2'>
+            proposed a declaration of war against the country,
+            <span className='flex items-center gap-2 cursor-pointer text-accent-alt' onClick={() => router.push(`/country/${target?._id}`)}>
+              {target?.name}
+              <i className={`flag-icon flag-icon-${target?.flag_code} rounded shadow-md`} title={target?.name} />
+            </span>.
           </span>
         );
       }

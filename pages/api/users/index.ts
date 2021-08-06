@@ -147,8 +147,5 @@ async function post(req) {
 async function isEmailValid(email: string): Promise<boolean> {
   const emailValidator = new EmailValidator();
   let results = await emailValidator.verify(email);
-
-  console.log(results);
-
   return results.wellFormed && results.validDomain && results.validMailbox !== false;
 }

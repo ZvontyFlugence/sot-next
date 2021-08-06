@@ -2,7 +2,7 @@ import { GovActions } from '@/util/actions';
 import { validateToken } from '@/util/auth';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { LawType } from '@/util/apiHelpers';
-import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, IEmbargo, IGovernment, IImpeachCP, ILaw, ILawVote, IPrintMoney, ISetMinWage } from '@/models/Country';
+import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, IEmbargo, IGovernment, IImpeachCP, ILaw, ILawVote, IPeaceTreaty, IPrintMoney, ISetMinWage } from '@/models/Country';
 import User, { IAlert } from '@/models/User';
 
 interface IGovActionRequest {
@@ -139,6 +139,44 @@ async function propose_law(data: IProposeLaw): Promise<IGovActionResult> {
       res = sourceRes;
       break;
     }
+    case LawType.PEACE_TREATY: {
+      // Create Treaty law in both countries (source + target)
+      let sourceRes = await create_new_law(data);
+      let targetRes = await create_new_law({
+        ...data,
+        country_id: (data.lawDetails as IPeaceTreaty).country,
+        lawDetails: { ...data.lawDetails, country: data.country_id },
+      });
+
+      if (sourceRes?.status_code === 200 && targetRes?.status_code === 200) {
+        let targetCountry: ICountry = await Country.findOne({ _id: (data.lawDetails as IPeaceTreaty).country }).exec();
+        let { government: target } = targetCountry;
+        // Send Alert to All Gov Members for both countries that a new law has been proposed
+        let govMembers: number[] = [
+          government.president,
+          government.vp,
+          ...Object.values(government.cabinet),
+          ...government.congress.map(mem => mem.id),
+          target.president,
+          target.vp,
+          ...Object.values(target.cabinet),
+          ...target.congress.map(mem => mem.id),
+        ];
+
+        const alert: IAlert = {
+          type: 'LAW_PROPOSED',
+          read: false,
+          message: 'A New Law Has Been Proposed!',
+          timestamp: new Date(Date.now()),
+        };
+
+        await User.updateMany({ _id: { $in: govMembers } }, { $push: { alerts: alert } }).exec();
+      }
+      
+      res = sourceRes;
+      break;
+    }
+    case LawType.DECLARE_WAR:
     case LawType.EMBARGO:
     case LawType.IMPEACH_CP:
     case LawType.INCOME_TAX:
@@ -235,12 +273,18 @@ function validate_law(data: IProposeLaw, government: IGovernment): boolean {
     case LawType.ALLIANCE:
       // Ensure if User is a Cabinet member, User is NOT the MoT
       return !(Object.values(government.cabinet).includes(data.user_id) && data.user_id === government.cabinet.mot);
+    case LawType.DECLARE_WAR:
+      // Ensure User is CP, vCP, or MoD
+      return data.user_id === government.president || data.user_id === government.vp || data.user_id === government.cabinet.mod;
     case LawType.EMBARGO:
       // Ensure if User is a Cabinet member, User holds the MoT (Treasury) or MoFA (Foreign Affairs) title
       return !(Object.values(government.cabinet).includes(data.user_id) && data.user_id !== government.cabinet.mofa && data.user_id !== government.cabinet.mot);
     case LawType.IMPEACH_CP:
       // User must be in congress or VP
       return government.congress.map(mem => mem.id).includes(data.user_id) || data.user_id === government.vp;
+    case LawType.PEACE_TREATY:
+      // Ensure USer is CP, vCP, or MoFA
+      return data.user_id === government.president || data.user_id === government.vp || data.user_id === government.cabinet.mofa;
     case LawType.IMPORT_TAX:
     case LawType.INCOME_TAX:
     case LawType.MINIMUM_WAGE:
