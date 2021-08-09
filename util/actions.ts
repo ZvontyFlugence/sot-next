@@ -76,9 +76,9 @@ export const PartyActions = {
 };
 
 export const GovActions = {
-  ATTACK: 'attack',
-  PROPOSE_LAW: 'propose_law',
+  ATTACK: 'attack', // In Progress
+  PROPOSE_LAW: 'propose_law', // Implemented
   RESIGN: 'resign',
   RETREAT: 'retreat',
-  VOTE_LAW: 'vote_law',
+  VOTE_LAW: 'vote_law', // Implemented
 }

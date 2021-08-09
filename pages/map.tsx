@@ -96,7 +96,7 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
       status: 'info',
       title: (
         <span>
-          {region.name}
+          {region.name} ({region._id})
           &nbsp;
           <i className={`flag-icon flag-icon-${owners[region.owner-1].flag_code} rounded shadow-md`} />
         </span>

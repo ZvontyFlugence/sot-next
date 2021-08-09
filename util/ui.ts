@@ -31,6 +31,10 @@ export interface IRankingType {
   route: string;
 }
 
+export interface IRegionSet {
+  [regionID: number]: string;
+}
+
 interface IRequestOpts {
   method: string,
   headers?: {

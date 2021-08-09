@@ -23,7 +23,7 @@ const CountryBody: React.FC<ICountryBody> = ({ country, user }) => {
     'Regions': <Regions country_id={country._id} capital={country.capital} />,
     'Government': <Government country={country} />,
     'Economy': <Economy country={country} />,
-    'Military': <Military country={country} />,
+    'Military': <Military country={country} user={user} />,
     'Laws': <LawsTab country={country} user={user} />,
 };
 

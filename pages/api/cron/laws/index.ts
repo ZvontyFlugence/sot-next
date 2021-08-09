@@ -70,8 +70,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     let newWar = new War({
                       source: country._id,
                       target: targetCountry._id,
-                      sourceAllies: [country._id, ...country.policies.allies],
-                      targetAllies: [targetCountry._id, ...targetCountry.policies.allies],
+                      sourceAllies: [country._id, ...country.policies.allies.map(ally => ally.country)],
+                      targetAllies: [targetCountry._id, ...targetCountry.policies.allies.map(ally => ally.country)],
                     });
 
                     newWar.save();

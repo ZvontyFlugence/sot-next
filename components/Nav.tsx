@@ -99,7 +99,7 @@ const Nav: React.FC<INav> = ({ user }) => {
                   <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Companies</MenuItem>
                 </MenuList>
               </Menu>
-              <Box className='cursor-pointer hover:text-accent'>Battles</Box>
+              <Box className='cursor-pointer hover:text-accent' onClick={() => router.push('/battles')}>Battles</Box>
               <Menu>
                 <MenuButton className='hover:text-accent'>
                   <span className='mr-2'>Social</span>
@@ -151,7 +151,7 @@ const Nav: React.FC<INav> = ({ user }) => {
                   <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Companies</MenuItem>
                 </MenuGroup>
                 <MenuDivider />
-                <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }}>Battles</MenuItem>
+                <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push('/battles')}>Battles</MenuItem>
                 <MenuDivider />
                 <MenuGroup title='Social'>
                   <MenuItem _hover={{ bg: 'accent-alt' }} _focus={{ bg: 'accent-alt' }} onClick={() => router.push(`/country/${user.country}`)}>My Country</MenuItem>

@@ -3,7 +3,10 @@ import { validateToken } from '@/util/auth';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { LawType } from '@/util/apiHelpers';
 import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, IEmbargo, IGovernment, IImpeachCP, ILaw, ILawVote, IPeaceTreaty, IPrintMoney, ISetMinWage } from '@/models/Country';
-import User, { IAlert } from '@/models/User';
+import User, { IAlert, IUser } from '@/models/User';
+import War, { IWar } from '@/models/War';
+import Region, { IRegion } from '@/models/Region';
+import Battle, { IBattle } from '@/models/Battle';
 
 interface IGovActionRequest {
   action: string;
@@ -39,7 +42,12 @@ interface IVoteLaw extends IBaseParams {
 
 interface IResign extends IBaseParams {}
 
-// TODO: Add support for declare war, and attack region
+interface IAttackRegion extends IBaseParams {
+  warId: string;
+  targetCountry: number;
+  targetRegion: number;
+}
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const validation_res = await validateToken(req, res);
   if (validation_res?.error)
@@ -63,6 +71,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       data.country_id = country_id;
 
       switch (action) {
+        case GovActions.ATTACK: {
+          let result = await attack_region(data as IAttackRegion);
+          return res.status(result.status_code).json(result.payload);
+        }
         case GovActions.PROPOSE_LAW: {
           let result = await propose_law(data as IProposeLaw);
           return res.status(result.status_code).json(result.payload);
@@ -264,6 +276,55 @@ async function create_new_law(data: IProposeLaw): Promise<IGovActionResult> {
   let updated = await Country.updateOne({ _id: data.country_id }, { $push: { pendingLaws: newLaw } }).exec()
   if (updated)
     return { status_code: 200, payload: { success: true, message: 'Law Proposed' } };
+
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+}
+
+async function attack_region(data: IAttackRegion): Promise<IGovActionResult> {
+  let war: IWar = await War.findOne({ _id: data.warId }).exec();
+  if (!war)
+    return { status_code: 404, payload: { success: false, error: 'War Not Found' } };
+  else if (!war?.sourceAllies.includes(data.country_id) && !war?.targetAllies.includes(data.country_id))
+    return { status_code: 400, payload: { success: false, error: 'Country Not A War Participant' } };
+  else if (!war?.sourceAllies.includes(data.targetCountry) && !war?.targetAllies.includes(data.targetCountry))
+    return { status_code: 400, payload: { success: false, error: 'Target Country Not A War Participant' } };
+
+  let region: IRegion = await Region.findOne({ _id: data.targetRegion, owner: data.targetCountry }).exec();
+  if (!region)
+    return { status_code: 404, payload: { success: false, error: 'Region Not Found' } };
+
+  // Check if existing battle is in region
+  let now = new Date(Date.now());
+  let existing = await Battle.findOne({
+    region: data.targetRegion,
+    end: { $lte: now },
+    winner: { $exists: false }
+  }).exec();
+
+  if (existing)
+    return { status_code: 400, payload: { success: false, error: 'Battle Already Active In Region' } };
+
+  // Use residence over location, so players dont need to be in region before attack to have a decent wall
+  // Also makes residence more useful and to keep country citizens spread over entire country (residence-wise)
+  // This allows Electoral Systems to make more sense, since all citizens won't sit in a single region.
+  let regionCitizens: IUser[] = await User.find({ residence: data.targetRegion, country: data.targetCountry }).exec();
+
+  // Create Battle
+  let battle: IBattle = new Battle({
+    war: data.warId,
+    attacker: data.country_id,
+    defender: data.targetCountry,
+    region: data.targetRegion,
+    wall: 100 * regionCitizens.length,
+  });
+
+  let created = await battle.save();
+  if (created) {
+    // Save to War Battles List
+    let updated = await war.updateOne({ $push: { battles: created._id } })
+    if (updated)
+      return { status_code: 200, payload: { success: true, message: 'Battle Started' } };
+  }
 
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }

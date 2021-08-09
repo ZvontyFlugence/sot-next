@@ -1,18 +1,16 @@
-import { ObjectId } from 'bson';
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { IBattle } from './Battle';
 
 export interface IWar extends Document {
-  _id?: ObjectId;
+  _id?: mongoose.Types.ObjectId;
   source: number;
   target: number;
   sourceAllies: number[];
   targetAllies: number[];
-  battles: IBattle[];
+  battles: mongoose.Types.ObjectId[];
 }
 
 const WarSchema = new Schema({
-  _id: { type: ObjectId, default: new ObjectId() },
+  _id: { type: mongoose.Types.ObjectId, default: new mongoose.Types.ObjectId() },
   source: { type: Number, required: true },
   target: { type: Number, required: true },
   sourceAllies: { type: Array, default: [] },
