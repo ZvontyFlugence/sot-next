@@ -13,12 +13,14 @@ import { pSBC } from "@/util/ui";
 import { jsonify } from "@/util/apiHelpers";
 import Nav from "@/components/Nav";
 import MapComponent from "@/components/MapComponent";
+import Battle, { IBattle } from "@/models/Battle";
 
 interface IMap {
   user: IUser,
   isAuthenticated: boolean,
   regions: IRegion[],
   owners: ICountry[],
+  regionBattles: number[],
 }
 
 const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
@@ -123,6 +125,9 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
 
   const getRegionColor = (region: IRegion) => {
     switch (mode) {
+      case 'battles': {
+        return props.regionBattles.includes(region._id) ? '#ff0000' : '#ffffff';
+      }
       case 'resources': {
         return getResourceColor(region.resource);
       }
@@ -170,8 +175,9 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
       <div className='mt-8'>
         <h1 className='text-2xl text-accent pl-4 font-semibold'>World Map</h1>
         <div className='flex justify-end gap-2 mr-8'>
-          <Button size='sm' variant='solid' colorScheme='blue' onClick={() => setMode('political')}>Political</Button>
-          <Button size='sm' variant='solid' colorScheme='green' onClick={() => setMode('resources')}>Resources</Button>
+          <Button size='sm' colorScheme='blue' onClick={() => setMode('political')}>Political</Button>
+          <Button size='sm' colorScheme='green' onClick={() => setMode('resources')}>Resources</Button>
+          <Button size='sm' colorScheme='red' onClick={() => setMode('battles')}>Battles</Button>
         </div>
         <div className='mt-4 md:mx-8'>
           {overlays && (
@@ -201,8 +207,16 @@ export const getServerSideProps = async ctx => {
   let regions: IRegion[] = await Region.find({}).exec();
   let owners: ICountry[] = await Country.find({}).exec();
 
+  let battles: IBattle[] = await Battle.find({ end: { $gte: new Date(Date.now()) }, winner: { $exists: false } })
+  let regionBattles: number[] = battles.map((battle: IBattle) => battle.region);
+
   return {
-    props: { ...result, regions: jsonify(regions), owners: jsonify(owners) },
+    props: {
+      ...result,
+      regions: jsonify(regions),
+      owners: jsonify(owners),
+      regionBattles: jsonify(regionBattles),
+    },
   };
 }
 
