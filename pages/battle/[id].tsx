@@ -1,4 +1,4 @@
-import BattleLink from '@/components/battles/BattleLink';
+import BattleLink, { IFighter } from '@/components/battles/BattleLink';
 import Layout from '@/components/Layout';
 import Battle, { IBattle } from '@/models/Battle';
 import Country, { ICountry } from '@/models/Country';
@@ -7,9 +7,10 @@ import User, { IUser } from '@/models/User';
 import War, { IWar } from '@/models/War';
 import { jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
-import { Avatar, Button } from '@chakra-ui/react';
+import { refreshData, request, showToast } from '@/util/ui';
+import { Avatar, Button, useToast } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
-import { destroyCookie } from 'nookies';
+import { destroyCookie, parseCookies } from 'nookies';
 
 interface IBattlePage {
   user: IUser;
@@ -22,7 +23,55 @@ interface IBattlePage {
 }
 
 export default function BattlePage({ user, battle, users, ...props }: IBattlePage) {
+  const cookies = parseCookies();
   const router = useRouter();
+  const toast = useToast();
+
+  const attackBattleHero = getBattleHero('attackers');
+  const defendBattleHero = getBattleHero('defenders');
+
+  function getBattleHero(side: 'attackers' | 'defenders'): number {
+    if (!battle.stats[side])
+      return -1;
+
+    let [_maxDmg, maxDmgId] = Object.entries(battle.stats[side])
+      .reduce((accum: [number, number], [fighterId, fighter]: [string, IFighter]) => {
+        if (fighter.damage > accum[0])
+          return [fighter.damage, Number.parseInt(fighterId)];
+        
+        return accum;
+      }, [0, -1]);
+
+    return maxDmgId;
+  }
+
+  const canFight = (): boolean => {
+    if (battle.end < new Date(Date.now()))
+      return false;
+
+    if (
+      props.war.sourceAllies.includes(user.country) ||
+      props.war.targetAllies.includes(user.country) ||
+      user.location === battle.region
+    )
+      return true;
+
+    return false;
+  }
+
+  const handleFight = () => {
+    request({
+      url: '/api/wars/fight',
+      method: 'POST',
+      payload: { battleId: battle._id },
+      token: cookies.token,
+    }).then(data => {
+      if (data?.success)
+        refreshData(router);
+      else
+        showToast(toast, 'error', 'Failed to Fight', data?.error);
+    });
+  }
   
   return user ? (
     <Layout user={user}>
@@ -32,46 +81,61 @@ export default function BattlePage({ user, battle, users, ...props }: IBattlePag
           attacker={props.countries[battle.attacker - 1]}
           defender={props.countries[battle.defender - 1]}
           regionName={props.regionName}
+          hideBtn
         />
-        <div className='flex justify-between items-start'>
+        <div className='flex justify-between items-start px-8'>
           <div className='flex flex-col gap-4'>
-            {battle.stats?.battleHeroes?.attacker !== -1 && (
-              <div className='flex flex-col gap-1 cursor-pointer' onClick={() => router.push(`/profile/${battle.stats.battleHeroes?.attacker}`)}>
-                <Avatar src={users[battle.stats.battleHeroes?.attacker - 1]?.image} name={users[battle.stats.battleHeroes?.attacker - 1]?.username} />
-                {users[battle.stats.battleHeroes?.attacker - 1]?.username}
-                {battle.stats.attackers[battle.stats.battleHeroes?.attacker].damage}
+            {attackBattleHero !== -1 ? (
+              <div className='flex flex-col items-center gap-1 cursor-pointer' onClick={() => router.push(`/profile/${attackBattleHero}`)}>
+                <Avatar boxSize="6.0rem" src={users[attackBattleHero - 1]?.image} name={users[attackBattleHero - 1]?.username} />
+                <span>{users[attackBattleHero - 1]?.username}</span>
+                <span>{battle.stats.attackers[attackBattleHero]?.damage} DMG</span>
               </div>
+            ) : (
+              <div>No Attacking Battle Hero</div>
             )}
-            {battle.stats?.recentHits?.attackers.map(({ userId, damage }, i: number) => (
-              <div key={i} className='flex items-center gap-2'>
-                <div className='flex flex-col gap-1 cursor-pointer' onClick={() => router.push(`/profile/${userId}`)}>
-                  <Avatar src={users[userId - 1].image} name={users[userId - 1].username} />
-                  {users[userId - 1].username}
+            <div className='flex flex-col gap-2 mt-12'>
+              <span className='text-center'>Recent Hits</span>
+              {battle.stats.recentHits.attackers.length > 0 ? battle.stats.recentHits.attackers.map(({ userId, damage }, i: number) => (
+                <div key={i} className='flex items-center gap-4'>
+                  <div className='flex items-center gap-1 cursor-pointer' onClick={() => router.push(`/profile/${userId}`)}>
+                    <Avatar src={users[userId - 1].image} name={users[userId - 1].username} />
+                    {users[userId - 1].username}
+                  </div>
+                  <span>{damage} DMG</span>
                 </div>
-                <span>{damage}</span>
-              </div>
-            ))}
+              )) : (
+                <span>No Recent Hits</span>
+              )}
+            </div>
           </div>
-          <div className='flex justify-center'>
-            <Button size='sm' colorScheme='red' onClick={() => null}>Fight</Button>
+          <div className='flex justify-center self-center'>
+            <Button size='sm' colorScheme='red' onClick={handleFight} disabled={!canFight()}>Fight</Button>
           </div>
           <div className='flex flex-col gap-4'>
-            {battle.stats?.battleHeroes?.defender !== -1 && (
-              <div className='flex flex-col gap-1 cursor-pointer' onClick={() => router.push(`/profile/${battle.stats.battleHeroes?.defender}`)}>
-                <Avatar src={users[battle.stats.battleHeroes?.defender - 1]?.image} name={users[battle.stats.battleHeroes?.defender - 1]?.username} />
-                {users[battle.stats.battleHeroes?.defender - 1]?.username}
-                {battle.stats.defenders[battle.stats.battleHeroes?.defender].damage}
+            {defendBattleHero !== -1 ? (
+              <div className='flex flex-col items-center gap-1 cursor-pointer' onClick={() => router.push(`/profile/${defendBattleHero}`)}>
+                <Avatar src={users[defendBattleHero - 1]?.image} name={users[defendBattleHero - 1]?.username} />
+                <span>{users[defendBattleHero - 1]?.username}</span>
+                <span>{battle.stats.defenders[defendBattleHero]?.damage}</span>
               </div>
+            ) : (
+              <div>No Defending Battle Hero</div>
             )}
-            {battle.stats?.recentHits?.defenders.map(({ userId, damage }, i: number) => (
-              <div key={i} className='flex items-center gap-2'>
-                <div className='flex flex-col gap-1 cursor-pointer' onClick={() => router.push(`/profile/${userId}`)}>
-                  <Avatar src={users[userId - 1].image} name={users[userId - 1].username} />
-                  {users[userId - 1].username}
+            <div className='flex flex-col mt-12'>
+              <span className='text-center'>Recent Hits</span>
+              {battle.stats.recentHits.defenders.length > 0 ? battle.stats.recentHits.defenders.map(({ userId, damage }, i: number) => (
+                <div key={i} className='flex items-center gap-2 mt-8'>
+                  <div className='flex flex-col items-center gap-1 cursor-pointer' onClick={() => router.push(`/profile/${userId}`)}>
+                    <Avatar src={users[userId - 1].image} name={users[userId - 1].username} />
+                    {users[userId - 1].username}
+                  </div>
+                  <span>{damage}</span>
                 </div>
-                <span>{damage}</span>
-              </div>
-            ))}
+              )) : (
+                <span>No Recent Hits</span>
+              )}
+            </div>          
           </div>
         </div>
       </div>

@@ -17,15 +17,16 @@ export interface IBattle extends Document {
   winner?: number;
 }
 
+// TODO: Remove battleHeroes field in favor of reduction on attackers/defenders dmg stats
 // Potentially Add More Stats like # of hits, etc.
 export interface IBattleStats {
-  attackers: {
+  attackers?: {
     [userId: number]: {
       country: number;
       damage: number;
     };
   };
-  defenders: {
+  defenders?: {
     [userId: number]: {
       country: number;
       damage: number;

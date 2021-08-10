@@ -138,6 +138,7 @@ async function post(req) {
     location: region._id,
     residence: region._id,
     wallet: [{ currency: target_country.currency, amount: 25.00 }],
+    patriotDmg: { [country]: 0 },
   });
 
   new_user.save();

@@ -16,7 +16,7 @@ interface IFighterSet {
   [userId: number]: IFighter;
 }
 
-interface IFighter {
+export interface IFighter {
   country: number;
   damage: number;
 }
@@ -75,8 +75,8 @@ export default function BattleLink({ battle, attacker, defender, regionName, ...
         <i className={`flag-icon flag-icon-${defender?.flag_code}`} />
         {defender?.name}
       </div>
-      {props.hideBtn && (
-        <Button colorScheme='blue' onClick={() => router.push(`/battle/${battle._id}`)}>{isDone ? 'View' : 'Fight'}</Button>
+      {!props.hideBtn && (
+        <Button colorScheme='blue' onClick={() => router.push(`/battle/${battle._id}${isDone ? '/view' : ''}`)}>{isDone ? 'View' : 'Fight'}</Button>
       )}
     </div>
   );
