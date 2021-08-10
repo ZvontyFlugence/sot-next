@@ -1,0 +1,19 @@
+name: Battle Scheduler Workflow
+on:
+  schedule:
+    - cron: '* * * * *'
+jobs:
+  scheduler-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --request POST \
+          --url '${{ secrets.APP_URL }}/api/cron/battles' \
+          --header 'Authorization: Bearer ${{ secrets.ACTIONS_KEY }}'
+  scheduler-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --request POST \
+          --url '${{ secrets.APP_DEV_URL }}/api/cron/battles' \
+          --header 'Authorization: Bearer ${{ secrets.ACTIONS_KEY }}'
