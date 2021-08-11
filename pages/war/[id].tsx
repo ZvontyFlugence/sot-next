@@ -60,7 +60,7 @@ export default function WarPage({ user, war, battles, countries, ...props }: IWa
         </div>
         <div className='flex flex-col gap-2 text-white'>
           <h3 className='text-2xl'>Battles</h3>
-          {battles.map((battle: IBattle, i: number) => (
+          {battles.slice(0).reverse().map((battle: IBattle, i: number) => (
             <BattleLink
               key={i}
               battle={battle}

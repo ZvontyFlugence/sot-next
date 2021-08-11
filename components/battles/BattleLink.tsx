@@ -69,7 +69,7 @@ export default function BattleLink({ battle, attacker, defender, regionName, ...
           <span>to</span>
           <span>{defenseDmg}</span>
         </div>
-        <span className='text-center'>{isDone ? 'Finished' : formatDistanceStrict(new Date(battle.end), new Date())} remaining</span>
+        <span className='text-center'>{isDone ? 'Finished' : `${ formatDistanceStrict(new Date(battle.end), new Date())} remaining`}</span>
       </div>
       <div className='flex items-center gap-2 text-2xl'>
         <i className={`flag-icon flag-icon-${defender?.flag_code}`} />

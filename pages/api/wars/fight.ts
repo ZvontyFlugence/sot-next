@@ -53,7 +53,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       let updates: { [key: string]: any } = { $inc: { xp: 1, totalDmg: dmg, militaryRank: milRankInc, health: -10 } };
       // TODO: Check for Damage Dealer, True Patriot acheivements
       if (user.country === battle.attacker || battle.defender) {
-        updates['$inc'][`patriotDmg.${user.country}`] += dmg;
+        updates['$inc'][`patriotDmg.${user.country}`] = dmg;
         if (user.xp + 1 >= neededXP(user.level)) {
           let alert = buildLevelUpAlert(user.level + 1);
           updates['$inc']['level'] = 1;

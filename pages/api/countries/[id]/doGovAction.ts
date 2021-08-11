@@ -308,6 +308,7 @@ async function attack_region(data: IAttackRegion): Promise<IGovActionResult> {
   // Also makes residence more useful and to keep country citizens spread over entire country (residence-wise)
   // This allows Electoral Systems to make more sense, since all citizens won't sit in a single region.
   let regionCitizens: IUser[] = await User.find({ residence: data.targetRegion, country: data.targetCountry }).exec();
+  let tomorrow = new Date(new Date(now).setUTCDate(now.getUTCDate() + 1));
 
   // Create Battle
   let battle: IBattle = new Battle({
@@ -316,6 +317,8 @@ async function attack_region(data: IAttackRegion): Promise<IGovActionResult> {
     defender: data.targetCountry,
     region: data.targetRegion,
     wall: 100 * regionCitizens.length,
+    start: now,
+    end: tomorrow,
   });
 
   let created = await battle.save();

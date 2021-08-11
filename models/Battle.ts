@@ -45,10 +45,6 @@ export interface IBattleStats {
     }[];
   };
   totalDamage: number;
-  battleHeroes: {
-    attacker: number;
-    defender: number;
-  };
 }
 
 const BattleSchema = new Schema({
@@ -57,8 +53,8 @@ const BattleSchema = new Schema({
   attacker: { type: Number, required: true },
   defender: { type: Number, required: true },
   region: { type: Number, required: true },
-  start: { type: Date, default: new Date(Date.now()) },
-  end: { type: Date, default: new Date(Date.now()).setUTCDate(new Date(Date.now()).getUTCDate() + 1) },
+  start: { type: Date, required: true },
+  end: { type: Date, required: true },
   wall: { type: Number, required: true },
   stats: {
     type: Object,
@@ -70,10 +66,6 @@ const BattleSchema = new Schema({
         defenders: [],
       },
       totalDamage: 0,
-      battleHeroes: {
-        attacker: -1,
-        defender: -1,
-      },
     },
   },
   winner: { type: Number },

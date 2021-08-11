@@ -108,9 +108,9 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
           <p className='flex justify-between'>
             <span>Core:</span>
             <span>
-              {owners[region.owner-1].nick}
+              {owners[region.core-1].nick}
               &nbsp;
-              <i className={`flag-icon flag-icon-${owners[region.owner-1].flag_code} rounded shadow-md`} />
+              <i className={`flag-icon flag-icon-${owners[region.core-1].flag_code} rounded shadow-md`} />
             </span>
           </p>
           <p className='flex justify-between'>

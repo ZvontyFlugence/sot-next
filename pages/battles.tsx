@@ -66,7 +66,7 @@ export default function Battles({ user, countries, battles, ...props }: IBattles
         </Select>
       </div>
       <div className='flex flex-col gap-4 bg-night mt-4 mr-8 p-4 rounded shadow-md text-white'>
-        {filteredBattles.length > 0 ? filteredBattles.map((battle: IBattle, i: number) => (
+        {filteredBattles.length > 0 ? filteredBattles.filter(b => new Date(b.end) > new Date()).slice(0).reverse().map((battle: IBattle, i: number) => (
           <BattleLink
             key={i}
             battle={battle}
