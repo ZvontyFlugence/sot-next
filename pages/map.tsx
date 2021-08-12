@@ -14,7 +14,6 @@ import { jsonify } from "@/util/apiHelpers";
 import Nav from "@/components/Nav";
 import MapComponent from "@/components/MapComponent";
 import Battle, { IBattle } from "@/models/Battle";
-import Head from "next/head";
 
 interface IMap {
   user: IUser,
@@ -172,11 +171,6 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
 
   return (
     <>
-      <Head>
-        {process.env.NEXT_PUBLIC_GMAP_KEY && (
-          <script id='googleMaps' src={`/api/gmap/maps/api/js?key=${process.env.NEXT_PUBLIC_GMAP_KEY}`}></script>
-        )}        
-      </Head>
       <Nav user={user} />
       <div className='mt-8'>
         <h1 className='text-2xl text-accent pl-4 font-semibold'>World Map</h1>

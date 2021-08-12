@@ -24,6 +24,9 @@ function MyApp({ Component, pageProps }) {
           <link rel='icon' type='image/png' href='/favicon.png' />
           <link rel="preconnect" href="https://fonts.gstatic.com" />
           <link href="https://fonts.googleapis.com/css2?family=Unica+One&display=swap" rel="stylesheet" />
+          {process.env.NEXT_PUBLIC_GMAP_KEY && (
+            <script id='googleMaps' src={`/api/gmap/maps/api/js?key=${process.env.NEXT_PUBLIC_GMAP_KEY}`} defer></script>
+          )}
         </Head>
         {(typeof MAINTENANCE_MODE === 'boolean' && MAINTENANCE_MODE === true) || MAINTENANCE_MODE === 'true' ? (
           <MaintenancePage />
