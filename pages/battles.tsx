@@ -30,11 +30,16 @@ export default function Battles({ user, countries, battles, ...props }: IBattles
 
   useEffect(() => {
     setFilteredBattles(() => {
+      let now = new Date(Date.now());
       return battles.filter((battle) => {
         const { country } = router.query;
         let war: IWar = props.wars.find(w => w._id === battle.war);
         if (!country)
           return true;
+
+        if (new Date(battle.end) <= now)
+          return false;
+
 
         let countryId = Number.parseInt(country as string);
         if (countryId === battle.attacker || countryId === battle.defender)
@@ -45,8 +50,8 @@ export default function Battles({ user, countries, battles, ...props }: IBattles
           return true;
 
         return false;
-      });
-    })
+      }).reverse();
+    });
   }, [router.query]);
 
   return user ? (
@@ -66,7 +71,7 @@ export default function Battles({ user, countries, battles, ...props }: IBattles
         </Select>
       </div>
       <div className='flex flex-col gap-4 bg-night mt-4 mr-8 p-4 rounded shadow-md text-white'>
-        {filteredBattles.length > 0 ? filteredBattles.filter(b => new Date(b.end) > new Date()).slice(0).reverse().map((battle: IBattle, i: number) => (
+        {filteredBattles.length > 0 ? filteredBattles.map((battle: IBattle, i: number) => (
           <BattleLink
             key={i}
             battle={battle}
