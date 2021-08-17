@@ -70,9 +70,9 @@ export default function BattleViewPage({ user, battle, users, ...props }: IBattl
           <div className='flex flex-col gap-4'>
             {defendBattleHero !== -1 ? (
               <div className='flex flex-col items-center gap-1 cursor-pointer' onClick={() => router.push(`/profile/${defendBattleHero}`)}>
-                <Avatar src={users[defendBattleHero - 1]?.image} name={users[defendBattleHero - 1]?.username} />
+                <Avatar boxSize='6.0rem' src={users[defendBattleHero - 1]?.image} name={users[defendBattleHero - 1]?.username} />
                 <span>{users[defendBattleHero - 1]?.username}</span>
-                <span>{battle.stats.defenders[defendBattleHero]?.damage}</span>
+                <span>{battle.stats.defenders[defendBattleHero]?.damage} DMG</span>
               </div>
             ) : (
               <div>No Defending Battle Hero</div>
