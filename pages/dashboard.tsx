@@ -9,8 +9,8 @@ import Layout from '@/components/Layout';
 import ElectionMsg from '@/components/dashboard/ElectionMsg';
 
 interface IDashboardProps {
-  user: IUser,
-  isAuthenticated: boolean
+  user: IUser;
+  isAuthenticated: boolean;
 }
 
 export default function Dashboard({ user, ...props }: IDashboardProps) {

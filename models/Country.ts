@@ -2,71 +2,69 @@ import { LawType } from '@/util/apiHelpers';
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface ICountry extends Document {
-  _id: number,
-  name: string,
-  nick: string,
-  flag_code: string,
-  currency: string,
-  color: string,
-  exchangeOffers: Array<Object>,
-  capital: number,
-  government: IGovernment,
+  _id: number;
+  name: string;
+  nick: string;
+  flag_code: string;
+  currency: string;
+  color: string;
+  exchangeOffers: Array<Object>;
+  capital: number;
+  government: IGovernment;
+  treasury: ITreasury;
   policies: {
-    allies: IAlly[],
-    governmentType: GovernmentType,
-    embargos: IEmbargo[],
-    minWage: number,
+    allies: IAlly[];
+    governmentType: GovernmentType;
+    embargos: IEmbargo[];
+    minWage: number;
     taxes: {
-      import: number,
-      income: number,
-      vat: number,
-    },
-    welcomeMessage: string,
-  }
-  pendingLaws: ILaw[],
-  pastLaws: ILaw[],
+      import: number;
+      income: number;
+      vat: number;
+    };
+    welcomeMessage: string;
+  };
+  pendingLaws: ILaw[];
+  pastLaws: ILaw[];
+}
+
+export interface ITreasury {
+  [currency: string]: number;
 }
 
 export interface IGovernment {
-  president?: number,
-  vp?: number,
-  cabinet: ICabinet,
-  congress: ICongressMember[],
-  electionSystem: ElectionSystem,
-  totalElectoralVotes?: number,
+  president?: number;
+  vp?: number;
+  cabinet: ICabinet;
+  congress: ICongressMember[];
+  electionSystem: ElectionSystem;
+  totalElectoralVotes?: number;
 }
 
 export enum GovernmentType {
   DEMOCRACY = 'democracy',
-  DICTATORSHIP = 'dictatorship',
-  OLIGARCHY = 'oligarchy',
+  DICTATORSHIP = 'dictatorship', // Only CP - No VP/Cabinet/Congress - No CP or Congress Elections
+  OLIGARCHY = 'oligarchy', // Only Congress - No CP/VP/Cabinet - No CP or Congress Elections
 }
 
 export interface IEmbargo {
-  country: number,
-  expires: Date,
-  products: number[], // TDB if necessary
+  country: number;
+  expires?: Date;
 }
 
 export interface IAlly {
-  country: number,
-  expires: Date,
+  country: number;
+  expires?: Date;
 }
 
-export interface ILaw {
-  id: string,
-  type: LawType,
-  details: IChangeIncomeTax | IChangeImportTax | IChangeVATTax,
-  proposed: Date,
-  proposedBy: number,
-  expires: Date,
-  votes: ILawVote[],
-  passed?: boolean,
+export interface IImpeachCP {}
+
+export interface ISetMinWage {
+  wage: number;
 }
 
-export interface ILawVote {
-  id: number;
-  choice: 'yes' | 'no' | 'abstain';
+export interface IPrintMoney {
+  amount: number;
 }
 
 export interface IChangeIncomeTax {
@@ -81,15 +79,42 @@ export interface IChangeVATTax {
   [productId: number]: number;
 }
 
+export interface IDeclareWar {
+  country: number;
+}
+
+export interface IPeaceTreaty {
+  country: number;
+}
+
+export interface ILaw {
+  id: string;
+  type: LawType;
+  details: (
+    IChangeIncomeTax | IChangeImportTax | IChangeVATTax | IEmbargo | IAlly | IImpeachCP |
+    ISetMinWage | IPrintMoney | IDeclareWar | IPeaceTreaty
+  );
+  proposed: Date;
+  proposedBy: number;
+  expires: Date;
+  votes: ILawVote[];
+  passed?: boolean;
+}
+
+export interface ILawVote {
+  id: number;
+  choice: 'yes' | 'no' | 'abstain';
+}
+
 export interface ICabinet {
-  mofa?: number,
-  mod?: number,
-  mot?: number,
+  mofa?: number;
+  mod?: number;
+  mot?: number;
 }
 
 export interface ICongressMember {
-  id: number,
-  location: number,
+  id: number;
+  location: number;
 }
 
 export enum ElectionSystem {
@@ -98,10 +123,10 @@ export enum ElectionSystem {
 }
 
 export interface ICountryStats {
-  _id?: number,
-  name?: string,
-  flag_code?: string,
-  population?: number,
+  _id?: number;
+  name?: string;
+  flag_code?: string;
+  population?: number;
 }
 
 const CountrySchema = new Schema({
@@ -114,6 +139,7 @@ const CountrySchema = new Schema({
   exchangeOffers: { type: Array, default: []},
   capital: { type: Number, required: true },
   government: { type: Object, required: true },
+  treasury: { type: Object, required: true },
   policies: { type: Object, required: true },
   pendingLaws: { type: Array, default: [] },
   pastLaws: { type: Array, default: [] },

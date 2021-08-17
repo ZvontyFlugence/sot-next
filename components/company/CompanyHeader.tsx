@@ -39,7 +39,7 @@ const CompanyHeader: React.FC<ICompHeader> = ({ company, locationInfo, ceoInfo, 
                 </span>
                 <span className='cursor-pointer' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
                   {locationInfo.owner_name}
-                  <span className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag}`}></span>
+                  <span className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`}></span>
                 </span>
               </p>
             </p>
@@ -106,7 +106,7 @@ const CompanyHeader: React.FC<ICompHeader> = ({ company, locationInfo, ceoInfo, 
                 </span>
                 <span className='cursor-pointer' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
                   {locationInfo.owner_name}
-                  <span className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag}`}></span>
+                  <span className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`}></span>
                 </span>
               </p>
             </div>

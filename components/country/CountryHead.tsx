@@ -19,12 +19,12 @@ const CountryHead: React.FC<ICountryHead> = ({ country, countries }) => {
       <div className="flex flex-row justify-between items-center gap-4">
         <h1 className='text-2xl'>
           { country.name }
-          <i className={`ml-2 flag-icon flag-icon-${country.flag_code}`} />
+          <i className={`ml-2 flag-icon flag-icon-${country.flag_code} rounded shadow-md`} />
         </h1>
         <Select className='border border-white border-opacity-25 rounded' onChange={val => goToCountry(val as number)}>
           {countries.map((c, i) => (
             <Select.Option key={i} value={c._id}>
-              <i className={`flag-icon flag-icon-${c.flag_code}`} />
+              <i className={`flag-icon flag-icon-${c.flag_code} rounded shadow-md`} />
             </Select.Option>
           ))}
         </Select>

@@ -82,7 +82,7 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
             {props.countries.map((country, i) => (
               <Select.Option value={country._id} key={i}>
                 {country.name}
-                <i className={`ml-2 flag-icon flag-icon-${country.flag_code}`} />
+                <i className={`ml-2 flag-icon flag-icon-${country.flag_code} rounded shadow-md`} />
               </Select.Option>
             ))}
           </Select>
@@ -99,7 +99,7 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
           <p className='text-white'>Country has no job offers</p>
         )}
         {query.isSuccess && query.data?.jobOffers.length > 0 && (
-          <Table bgColor='night' color='white'>
+          <Table variant='unstyled' bgColor='night' color='white'>
             <Thead>
               <Tr>
                 <Th color='white'>Company</Th>

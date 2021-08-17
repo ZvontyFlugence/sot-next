@@ -1,14 +1,17 @@
 import User, { IUser } from '@/models/User';
-import Country, { IChangeIncomeTax, ICountry, ILaw, ILawVote } from '@/models/Country';
+import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, ICountry, IEmbargo, ILaw, ILawVote, IPeaceTreaty, IPrintMoney, ISetMinWage } from '@/models/Country';
 import Layout from '@/components/Layout';
 import { getCurrentUser } from '@/util/auth';
 import { destroyCookie, parseCookies } from 'nookies';
-import { jsonify, LawType } from '@/util/apiHelpers';
+import { jsonify, LawType, roundMoney } from '@/util/apiHelpers';
 import { Avatar, Button, Stat, StatHelpText, StatLabel, StatNumber, Tag, TagLabel, useToast } from '@chakra-ui/react';
 import { addMinutes, format } from 'date-fns';
 import { useRouter } from 'next/router';
 import { GovActions } from '@/util/actions';
-import { refreshData, request, showToast } from '@/util/ui';
+import { IGameItem, refreshData, request, showToast } from '@/util/ui';
+import { ITEMS } from '@/util/constants';
+import { useState } from 'react';
+import { useEffect } from 'react';
 
 interface ILawPage {
   user: IUser;
@@ -23,16 +26,42 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
   const router = useRouter();
   const toast = useToast();
 
+  const [countries, setCountries] = useState<ICountry[]>([]);
+
   const yesVotes: ILawVote[] = law?.votes.filter(vote => vote.choice === 'yes') ?? [];
   const noVotes: ILawVote[] = law?.votes.filter(vote => vote.choice === 'no') ?? [];
   const abstainVotes: ILawVote[] = law?.votes.filter(vote => vote.choice === 'abstain') ?? [];
 
+  useEffect(() => {
+    request({
+      url: '/api/countries',
+      method: 'GET',
+    }).then(data => {
+      if (data?.countries)
+        setCountries(data.countries);
+    });
+  }, []);
+
   const getLawText = (): string => {
     switch (law.type) {
+      case LawType.ALLIANCE:
+        return 'Create Alliance With Country Law Proposal';
+      case LawType.DECLARE_WAR:
+        return 'Declare War Law Proposal';
+      case LawType.EMBARGO:
+        return 'Embargo Country Law Proposal';
       case LawType.INCOME_TAX:
         return 'Change Income Tax Law Proposal';
+      case LawType.IMPEACH_CP:
+        return 'Impeach Country President Law Proposal';
       case LawType.IMPORT_TAX:
         return 'Change Import Tax Law Proposal';
+      case LawType.MINIMUM_WAGE:
+        return 'Change Minimum Wage Law Proposal';
+      case LawType.PEACE_TREATY:
+        return 'Sign Peace Treaty Law Proposal';
+      case LawType.PRINT_MONEY:
+        return 'Print Money Law Proposal';
       case LawType.VAT_TAX:
         return 'Change VAT Tax Law Proposal';
       default:
@@ -49,10 +78,87 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
     return 'Failed';
   }
 
-  const getProposalDescription = (): string => {
+  const getProposalDescription = (): string | React.ReactElement => {
     switch (law.type) {
+      case LawType.ALLIANCE: {
+        let target: ICountry = countries[(law.details as IAlly).country - 1];
+
+        return (
+          <span className='flex items-center gap-2'>
+            proposed enacting an alliance with the country,
+            <span className='flex items-center gap-2 cursor-pointer text-accent-alt' onClick={() => router.push(`/country/${target?._id}`)}>
+              {target?.name}
+              <i className={`flag-icon flag-icon-${target?.flag_code} rounded shadow-md`} title={target?.name} />
+            </span>
+            , which would expire in 30 days from the law's passage, pending passage in the target country.
+          </span>
+        );
+      }
+      case LawType.DECLARE_WAR: {
+        let target: ICountry = countries[(law.details as IPeaceTreaty).country - 1];
+
+        return (
+          <span className='flex items-center gap-2'>
+            proposed a declaration of war against the country,
+            <span className='flex items-center gap-2 cursor-pointer text-accent-alt' onClick={() => router.push(`/country/${target?._id}`)}>
+              {target?.name}
+              <i className={`flag-icon flag-icon-${target?.flag_code} rounded shadow-md`} title={target?.name} />
+            </span>.
+          </span>
+        );
+      }
+      case LawType.EMBARGO: {
+        let target: ICountry = countries[(law.details as IEmbargo).country - 1];
+
+        return (
+          <span className='flex items-center gap-2'>
+            proposed enacting an embargo on the country,
+            <span className='flex items-center gap-2 cursor-pointer text-accent-alt' onClick={() => router.push(`/country/${target?._id}`)}>
+              {target?.name}
+              <i className={`flag-icon flag-icon-${target?.flag_code} rounded shadow-md`} title={target?.name} />
+            </span>
+            , which would expire in 30 days from the law's passage.`
+          </span>
+        );
+      }
       case LawType.INCOME_TAX:
         return ` proposed changing the income tax from ${country.policies.taxes.income}% to ${(law.details as IChangeIncomeTax).percentage}%`;
+      case LawType.IMPORT_TAX:
+      case LawType.VAT_TAX: {
+        let productId: number = Number.parseInt(Object.keys(law.details)[0]) ?? -1;
+        if (productId === -1)
+          return '';
+
+        let item: IGameItem = ITEMS[productId];
+
+        return (
+          <span className='flex items-center gap-2'>
+            proposed changing the {law.type === LawType.IMPORT_TAX ? 'import' : 'VAT'} tax for
+            <i className={item.image} title={item.name} />
+            {item.name} to {(law.details as IChangeImportTax)[productId]}%
+          </span>
+        );
+      }
+      case LawType.MINIMUM_WAGE:
+        return (
+          <span className='flex items-center gap-2'>
+            proposed changing the national minimum wage from {country.policies.minWage.toFixed(2)}
+            {country.currency} <i className={`flag-icon flag-icon-${country.flag_code} rounded shadow-md`} title={country.name} />
+            to {(law.details as ISetMinWage).wage.toFixed(2)} {country.currency}
+            <i className={`flag-icon flag-icon-${country.flag_code}`} title={country.name} />
+          </span>
+        );
+      case LawType.PRINT_MONEY: {
+        let amount = (law.details as IPrintMoney).amount;
+        return (
+          <span className='flex items-center gap-2'>
+            proposed printing {amount.toFixed(2)}
+            {country.currency} <i className={`flag-icon flag-icon-${country.flag_code} rounded shadow-md`} title={country.name} />
+            for {roundMoney(amount * 0.005).toFixed(2)}
+            <i className={'sot-icon sot-coin'} title={'Gold'} />
+          </span>
+        );
+      }
       default:
         return '';
     }
@@ -102,7 +208,7 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
         <div className='p-4 bg-night rounded shadow-md'>
           <h1 className='text-accent text-2xl'>
             {getLawText()} ({getLawStatus()})
-            <i className={`ml-4 cursor-pointer flag-icon flag-icon-${country.flag_code}`} title={country.name} onClick={() => router.push(`/country/${country._id}`)} />
+            <i className={`ml-4 cursor-pointer flag-icon flag-icon-${country.flag_code} rounded shadow-md`} title={country.name} onClick={() => router.push(`/country/${country._id}`)} />
           </h1>
           <h3>
             <span>
@@ -117,13 +223,13 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
               <Avatar
                 src={props.govMembersInfo[law.proposedBy].image}
                 size='sm'
-                name={props.govMembersInfo[law.proposedBy].name}
+                name={props.govMembersInfo[law.proposedBy]?.name}
                 ml={-1}
                 mr={2}
               />
-              <TagLabel>{props.govMembersInfo[law.proposedBy].name}</TagLabel>
+              <TagLabel className='text-accent-alt'>{props.govMembersInfo[law.proposedBy]?.name}</TagLabel>
             </Tag>
-            <span>
+            <span className='flex flex-wrap'>
               {getProposalDescription()}
             </span>
           </p>
@@ -143,8 +249,8 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
             </Stat>
             {yesVotes.map(({ id, choice: _choice }: ILawVote, i: number) => (
               <div key={i} className='flex items-center gap-4 cursor-pointer' onClick={() => router.push(`/profile/${id}`)}>
-                <Avatar src={props.govMembersInfo[id].image} name={props.govMembersInfo[id].name} />
-                <span>{props.govMembersInfo[id].name}</span>
+                <Avatar src={props.govMembersInfo[id].image} name={props.govMembersInfo[id]?.name} />
+                <span>{props.govMembersInfo[id]?.name}</span>
               </div>
             ))}
           </div>
@@ -162,8 +268,8 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
             </Stat>
             {abstainVotes.map(({ id, choice: _choice }: ILawVote, i: number) => (
               <div key={i} className='flex items-center gap-4 cursor-pointer' onClick={() => router.push(`/profile/${id}`)}>
-                <Avatar src={props.govMembersInfo[id].image} name={props.govMembersInfo[id].name} />
-                <span>{props.govMembersInfo[id].name}</span>
+                <Avatar src={props.govMembersInfo[id].image} name={props.govMembersInfo[id]?.name} />
+                <span>{props.govMembersInfo[id]?.name}</span>
               </div>
             ))}
           </div>
@@ -181,8 +287,8 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
             </Stat>
             {noVotes.map(({ id, choice: _choice }: ILawVote, i: number) => (
               <div key={i} className='flex items-center gap-4 cursor-pointer' onClick={() => router.push(`/profile/${id}`)}>
-                <Avatar src={props.govMembersInfo[id].image} name={props.govMembersInfo[id].name} />
-                <span>{props.govMembersInfo[id].name}</span>
+                <Avatar src={props.govMembersInfo[id].image} name={props.govMembersInfo[id]?.name} />
+                <span>{props.govMembersInfo[id]?.name}</span>
               </div>
             ))}
           </div>

@@ -16,6 +16,7 @@ export const UserActions = {
   LEVEL_UP: 'level_up',
   LIKE_ARTICLE: 'like_article',
   LIKE_SHOUT: 'like_shout',
+  MOVE_RESIDENCE: 'move_residence',
   READ_ALERT: 'read_alert',
   READ_THREAD: 'read_thread',
   REMOVE_FRIEND: 'remove_friend',
@@ -75,11 +76,9 @@ export const PartyActions = {
 };
 
 export const GovActions = {
-  PROPOSE_LAW: 'propose_law',
+  ATTACK: 'attack', // In Progress
+  PROPOSE_LAW: 'propose_law', // Implemented
   RESIGN: 'resign',
-  VOTE_LAW: 'vote_law',
-}
-
-export const PresidentActions = {
-  RESIGN: 'resign',
+  RETREAT: 'retreat',
+  VOTE_LAW: 'vote_law', // Implemented
 }

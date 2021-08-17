@@ -5,7 +5,7 @@ const { MONGO_URI } = process.env;
 const opts: ConnectOptions = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  useFindAndModify: true,
+  useFindAndModify: false,
   useCreateIndex: true,
 };
 

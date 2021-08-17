@@ -3,15 +3,16 @@ import { Button } from "@chakra-ui/button";
 import { FormControl, FormLabel } from "@chakra-ui/form-control";
 import { Input } from "@chakra-ui/input";
 import { Box, Center, Container } from "@chakra-ui/layout";
-import { Select } from "@chakra-ui/select";
 import { useToast } from "@chakra-ui/toast";
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState } from "react";
-import { useQuery, useMutation, UseMutationResult } from 'react-query';
+import { useQuery, useMutation } from 'react-query';
 import { getCurrentUser } from "@/util/auth";
 import { IUser } from "@/models/User";
 import { request } from "@/util/ui";
+import Select from "@/components/Select";
+import { ICountry } from "@/models/Country";
 
 interface IRegProps {
   user: IUser,
@@ -80,8 +81,8 @@ export default function Register(props: IRegProps) {
   return (
     <div className='h-full w-full overflow-hidden'>
       <Nav />
-      <Center h='90vh' w='100%' className='px-4 md:px-0'>
-        <Container className='bg-night pb-4 rounded text-white'>
+      <Center h='100vh' w='100%' className='px-4 md:px-0'>
+        <Container className='bg-night pb-4 rounded text-white -mt-24'>
           <h1 className='text-2xl text-center font-bold mb-4 mt-8'>Register</h1>
           <Box>
             <FormControl className='mb-4' isRequired>
@@ -102,11 +103,13 @@ export default function Register(props: IRegProps) {
             </FormControl>
             <FormControl className='mb-4' isRequired>
               <FormLabel>Country</FormLabel>
-              <Select placeholder='Select Country' onChange={e => setCountry(Number.parseInt(e.target.value))}>
-                {(!isLoading && !isError) && data?.countries?.map(c => (
-                  <option key={c._id} value={c._id}>
+              <Select className='border border-white border-opacity-25 rounded shadow-md' onChange={value => setCountry(value as number)}>
+                <Select.Option disabled value={0}>Select Country</Select.Option>
+                {(!isLoading && !isError) && data?.countries?.map((c: ICountry, i: number) => (
+                  <Select.Option key={i} value={c._id}>
                     {c.name}
-                  </option>
+                    <i className={`ml-2 flag-icon flag-icon-${c.flag_code} rounded shadow-md`} title={c.name} />
+                  </Select.Option>
                 ))}
               </Select>
             </FormControl>

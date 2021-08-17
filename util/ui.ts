@@ -8,11 +8,31 @@ export function refreshData(router: NextRouter) {
   router.replace(router.asPath);
 }
 
+export interface IGameItem {
+  id: number;
+  name: string;
+  quality: number;
+  image: string;
+}
+
 export interface IRequest {
   url: string,
   method: 'GET' | 'POST',
   payload?: any,
   token?: string,
+}
+
+export interface IRankingTypeMap {
+  [type: string]: IRankingType;
+}
+
+export interface IRankingType {
+  label: React.ReactNode;
+  route: string;
+}
+
+export interface IRegionSet {
+  [regionID: number]: string;
 }
 
 interface IRequestOpts {

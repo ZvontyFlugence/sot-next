@@ -89,7 +89,7 @@ const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
               {countries.map((country: ICountry, i: number) => (
                 <Select.Option key={i} value={country._id}>
                   {country.name}
-                  <i className={`ml-2 flag-icon flag-icon-${country.flag_code}`} />
+                  <i className={`ml-2 flag-icon flag-icon-${country.flag_code} rounded shadow-md`} />
                 </Select.Option>
               ))}
             </Select>

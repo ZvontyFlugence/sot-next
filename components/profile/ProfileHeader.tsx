@@ -95,7 +95,7 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
           <div className='flex flex-col w-full items-top'>
             <h3 className='flex gap-4 text-2xl text-accent font-semibold'>
               {profile.username}
-              <i className={`flag-icon flag-icon-${locationInfo.owner_flag}`} />
+              <i className={`flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
             </h3>
             <p className='flex flex-row items-center mt-4'>
               <span className='mr-2'>Location:</span>
@@ -104,7 +104,7 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
               </span>
               <span className='cursor-pointer' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
                 {locationInfo.owner_name}
-                <i className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag}`} />
+                <i className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
               </span>
             </p>
             <p className='flex flex-row items-center mt-4 gap-6'>
@@ -192,7 +192,7 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
             <Image boxSize='3.0rem' borderRadius='full' src={profile.image} alt={profile.username} />
             <h3 className='flex gap-4 text-2xl text-accent font-semibold'>
               {profile.username}
-              <i className={`flag-icon flag-icon-${locationInfo.owner_flag}`} />
+              <i className={`flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
             </h3>
           </div>
           <div className='flex flex-col text-sm'>
@@ -203,7 +203,7 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
               </span>
               <span className='cursor-pointer' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
                 {locationInfo.owner_name}
-                <i className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag}`} />
+                <i className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
               </span>
             </p>
             <p className='flex flex-row items-center mt-4 gap-6'>

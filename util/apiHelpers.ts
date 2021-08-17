@@ -74,17 +74,17 @@ export interface GetElectionsResponse {
 }
 
 export enum LawType {
-  ALLIANCE = 'alliance',
+  ALLIANCE = 'alliance', // Implemented
   CHANGE_GOV_TYPE = 'change_gov_type',
-  DECLARE_WAR = 'declare_war',
-  EMBARGO = 'embargo',
-  IMPEACH_CP = 'impeach_cp',
-  IMPORT_TAX = 'import_tax',
-  INCOME_TAX = 'income_tax',
-  MINIMUM_WAGE = 'minimum_wage',
-  PEACE_TREATY = 'peace_treaty',
-  PRINT_MONEY = 'print_money',
-  VAT_TAX = 'vat_tax',
+  DECLARE_WAR = 'declare_war', // In Progress
+  EMBARGO = 'embargo', // Implemented
+  IMPEACH_CP = 'impeach_cp', // Implemented
+  IMPORT_TAX = 'import_tax', // Implemented
+  INCOME_TAX = 'income_tax', // Implemented
+  MINIMUM_WAGE = 'minimum_wage', // Implemented
+  PEACE_TREATY = 'peace_treaty', // In Progress
+  PRINT_MONEY = 'print_money', // Implemented
+  VAT_TAX = 'vat_tax', // Implemented
   WELCOME_MESSAGE = 'welcome_message',
 }
 

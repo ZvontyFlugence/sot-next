@@ -19,6 +19,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       } catch (e) {
         return res.status(400).json({ error: 'Invalid Country ID' });
       }
+
       let country: ICountry = await Country.findOne({ _id: country_id }).exec();
       return res.status(200).json({ country });
     }

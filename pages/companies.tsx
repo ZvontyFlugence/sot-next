@@ -99,6 +99,7 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
   const handleCreateComp = () => {
     if (user.gold >= 25 && type !== 0 && name) {
       mutation.mutate({ name, type } as ICreateCompParams);
+      onClose();
     } else {
       showToast(toast, 'error', 'Create Company Failed', 'Insufficient Funds');
     }
@@ -111,7 +112,7 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
       <div className='hidden md:block mt-4 mx-12 bg-night shadow-md rounded text-white'>
         {isLoading && <Spinner color='accent' size='xl' />}
         {(!isLoading && !isError) && (
-          <Table variant='simple' size='md'>
+          <Table variant='unstyled' size='md'>
             <TableCaption>
               <Button
                 variant='outline'
@@ -138,13 +139,13 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
                       <span className='ml-4 text-lg'>{comp._doc.name}</span>
                     </Td>
                     <Td>
-                      <span className='mr-2'>{COMPANY_TYPES[comp._doc.type].text}</span>
                       <i className={COMPANY_TYPES[comp._doc.type].css} />
+                      <span className='ml-2'>{COMPANY_TYPES[comp._doc.type].text}</span>
                     </Td>
                     <Td>
                       <span>{comp.location_info?.region_name}</span>,&nbsp;
                       <span>{comp.location_info?.owner_name}</span>
-                      <span className={`ml-4 flag-icon flag-icon-${comp.location_info?.owner_flag}`}></span>
+                      <span className={`ml-4 flag-icon flag-icon-${comp.location_info?.owner_flag} rounded shadow-md`}></span>
                     </Td>
                   </Tr>
                 ))
@@ -181,7 +182,7 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
                       <p>
                         <span>{comp.location_info?.region_name}</span>,&nbsp;
                         <span>{comp.location_info?.owner_name}</span>
-                        <span className={`ml-4 flag-icon flag-icon-${comp.location_info?.owner_flag}`}></span>
+                        <span className={`ml-4 flag-icon flag-icon-${comp.location_info?.owner_flag} rounded shadow-md`}></span>
                       </p>
                     </div>
                   </div>
@@ -217,6 +218,7 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
               ))}
             </Select>
           </FormControl>
+          <p className='mt-2 text-center'>Cost 25.00 <i className='sot-icon sot-coin' /></p>
         </ModalBody>
         <ModalFooter>
           <Button variant='solid' colorScheme='green' onClick={handleCreateComp}>Create</Button>

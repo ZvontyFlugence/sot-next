@@ -3,10 +3,17 @@ on:
   schedule:
     - cron: '0 0 15 * *'
 jobs:
-  activate:
+  activate-prod:
     runs-on: ubuntu-latest
     steps:
       - run: |
           curl --request POST \
           --url '${{ secrets.APP_URL }}/api/cron/elections/party/activate' \
+          --header 'Authorization: Bearer ${{ secrets.ACTIONS_KEY }}'
+  activate-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --request POST \
+          --url '${{ secrets.APP_DEV_URL }}/api/cron/elections/party/activate' \
           --header 'Authorization: Bearer ${{ secrets.ACTIONS_KEY }}'

@@ -15,6 +15,9 @@ export interface IUser extends Document {
   country: number,
   gold: number,
   strength: number,
+  militaryRank: number,
+  totalDmg: number,
+  patriotDmg: IPatriotDamage,
   location: number,
   residence: number,
   job: number | null,
@@ -33,6 +36,10 @@ export interface IUser extends Document {
   friends: number[],
   ipAddrs: string[],
   banned: boolean,
+}
+
+export interface IPatriotDamage {
+  [countryId: number]: number,
 }
 
 export interface IAlert {
@@ -94,6 +101,9 @@ const UserSchema: Schema = new Schema({
   country: { type: Number, required: true },
   gold: { type: Number, default: 5.00 },
   strength: { type: Number, default: 0 },
+  militaryRank: { type: Number, default: 0 },
+  totalDmg: { type: Number, default: 0},
+  patriotDmg: { type: Object, required: true },
   location: { type: Number, required: true },
   residence: { type: Number, required: true },
   job: { type: Number, default: 0 },

@@ -1,5 +1,7 @@
-import Country, { ICountry, ILawVote } from '@/models/Country';
-import { LawType } from '@/util/apiHelpers';
+import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, IDeclareWar, IEmbargo, ILawVote, IPeaceTreaty, IPrintMoney, ISetMinWage } from '@/models/Country';
+import User, { IAlert } from '@/models/User';
+import War from '@/models/War';
+import { LawType, roundMoney } from '@/util/apiHelpers';
 import { connectToDB } from '@/util/mongo';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -34,13 +36,119 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 return accum;
               }, 0);
 
-              // TODO: Do more checks like meeting quorum, etc.
-              if (score > 0) {
+              let govMembers: number[] = [
+                country.government.president,
+                country.government.vp,
+                ...Object.values(country.government.cabinet),
+                ...country.government.congress,
+              ].filter(mem => mem !== null && mem > 0);
+
+              // At least 50% of government members must vote to reach quorum
+              let quorum: number = Math.ceil(govMembers.length / 2);
+
+              if (score > 0 && pendingLaw.votes.length >= quorum) {
                 pendingLaw.passed = true;
                 // Update Country Policy
                 switch (pendingLaw.type) {
+                  case LawType.ALLIANCE: {
+                    let alliance: IAlly = (pendingLaw.details as IAlly);
+
+                    // Set Alliance Expiration for 30 days from now
+                    let expires: Date = new Date(Date.now());
+                    expires.setUTCDate(expires.getUTCDate() + 30);
+                    alliance.expires = expires;
+
+                    updates['policies.allies'] = [...country.policies.allies, alliance];
+                    break;
+                  }
+                  case LawType.DECLARE_WAR: {
+                    let target: IDeclareWar = (pendingLaw.details as IDeclareWar);
+
+                    let targetCountry: ICountry = await Country.findOne({ _id: target.country });
+
+                    // Create new War record in DB
+                    let newWar = new War({
+                      source: country._id,
+                      target: targetCountry._id,
+                      sourceAllies: [country._id, ...country.policies.allies.map(ally => ally.country)],
+                      targetAllies: [targetCountry._id, ...targetCountry.policies.allies.map(ally => ally.country)],
+                    });
+
+                    newWar.save();
+                    break;
+                  }
+                  case LawType.EMBARGO: {
+                    let embargo: IEmbargo = (pendingLaw.details as IEmbargo);
+
+                    // Set Embargo Expiration for 30 days from now
+                    let expires: Date = new Date(Date.now());
+                    expires.setUTCDate(expires.getUTCDate() + 30);
+                    embargo.expires = expires;
+
+                    updates['policies.embargos'] = [...country.policies.embargos, embargo];
+                    break;
+                  }
+                  case LawType.IMPEACH_CP: {
+                    let replacement: number | null = null;
+                    if (country.government.vp && country.government.vp > 0) {
+                      // Replace CP with VP
+                      replacement = country.government.vp;
+                    }
+
+                    // Remove CP and don't replace him, VP becomes null, but Cabinet stays
+                    updates['government.president'] = replacement;
+                    updates['government.vp'] = null;
+
+                    let alert: IAlert = {
+                      type: 'IMPEACHED',
+                      read: false,
+                      message: 'You\'ve been impeached and removed from your position as Country President',
+                      timestamp: new Date(Date.now()),
+                    };
+
+                    await User.updateOne({ _id: country.government.president }, { $push: { alerts: alert } });
+                    break;
+                  }
                   case LawType.INCOME_TAX: {
-                    updates['policies.taxes.income'] = pendingLaw.details.percentage;
+                    updates['policies.taxes.income'] = (pendingLaw.details as IChangeIncomeTax).percentage;
+                    break;
+                  }
+                  case LawType.IMPORT_TAX: {
+                    let importDetails = pendingLaw.details as IChangeImportTax;
+                    let productId: number = Number.parseInt(Object.keys(importDetails)[0]);
+                    updates[`policies.taxes.import.${productId}`] = importDetails[productId];
+                    break;
+                  }
+                  case LawType.MINIMUM_WAGE: {
+                    updates['policies.minWage'] = (pendingLaw.details as ISetMinWage).wage;
+                    break;
+                  }
+                  case LawType.PEACE_TREATY: {
+                    let target: IPeaceTreaty = (pendingLaw.details as IPeaceTreaty);
+
+                    // TODO: Ensure both countries accept the treaty
+                    // Delete War Record in DB where source === country._id AND target === target.country
+                    await War.deleteOne({ source: country._id, target: target.country });
+                    break;
+                  }
+                  case LawType.PRINT_MONEY: {
+                    // Adds amount of money chosen, removes cost (0.005g per 1 CC) from treasury
+                    let printDetails = pendingLaw.details as IPrintMoney;
+                    let cost: number = roundMoney(printDetails.amount * 0.005);
+
+                    if (!country.treasury['gold'] || country.treasury['gold'] < cost) {
+                      pendingLaw.passed = false;
+                      break;
+                    }
+
+                    updates[`treasury.${country.currency}`] = roundMoney((country.treasury[country.currency] ?? 0) + printDetails.amount);
+                    updates[`treasury.gold`] = roundMoney(country.treasury['gold'] - cost);
+                    break;
+                  }
+                  case LawType.VAT_TAX: {
+                    let vatDetails = pendingLaw.details as IChangeVATTax;
+                    let productId: number = Number.parseInt(Object.keys(vatDetails)[0]);
+                    updates[`policies.taxes.vat.${productId}`] = vatDetails[productId];
                     break;
                   }
                   default:
@@ -56,13 +164,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           country.pendingLaws = country.pendingLaws.filter(law => law.passed === undefined);
 
           return await country.updateOne({
-            $push: {
-              pastLaws: {
-                $each: country.pendingLaws.filter(law => law.passed !== undefined)
-              }
-            },
             $set: {
-              pendingLaws: country.pendingLaws.filter(law => law.passed === undefined),
+              pendingLaws: country.pendingLaws,
+              pastLaws: country.pastLaws,
               ...updates,
             },
           });

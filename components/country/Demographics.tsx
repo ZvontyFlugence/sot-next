@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { useQuery } from "react-query";
 
 interface IDemographics {
-  country: ICountry,
+  country: ICountry;
 }
 
 const Demographics: React.FC<IDemographics> = ({ country }) => {

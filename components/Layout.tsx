@@ -1,9 +1,7 @@
 import { IUser } from "@/models/User";
-import { Avatar } from "@chakra-ui/avatar";
-import { Button, IconButton } from "@chakra-ui/button";
+import { IconButton } from "@chakra-ui/button";
 import { useDisclosure } from "@chakra-ui/hooks";
 import { ChevronLeftIcon } from "@chakra-ui/icons";
-import { Grid, GridItem } from "@chakra-ui/layout";
 import { Drawer, DrawerContent, DrawerOverlay } from "@chakra-ui/modal";
 import Nav from "./Nav";
 import Sidebar from "./Sidebar";
@@ -23,7 +21,7 @@ const Layout: React.FC<ILayout> = ({ user, children }) => {
           <div className='w-1/5 mx-8 my-8'>
             <Sidebar user={user} />
           </div>
-          <div className='w-4/5 mt-8'>
+          <div className='w-4/5 mt-8 md:mt-4'>
             {children}
           </div>
         </div>

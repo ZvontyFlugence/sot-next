@@ -138,6 +138,7 @@ async function post(req) {
     location: region._id,
     residence: region._id,
     wallet: [{ currency: target_country.currency, amount: 25.00 }],
+    patriotDmg: { [country]: 0 },
   });
 
   new_user.save();
@@ -147,8 +148,5 @@ async function post(req) {
 async function isEmailValid(email: string): Promise<boolean> {
   const emailValidator = new EmailValidator();
   let results = await emailValidator.verify(email);
-
-  console.log(results);
-
   return results.wellFormed && results.validDomain && results.validMailbox !== false;
 }

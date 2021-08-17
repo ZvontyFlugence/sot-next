@@ -3,17 +3,31 @@ on:
   schedule:
     - cron: '0 0 26 * *'
 jobs:
-  terminate:
+  terminate-prod:
     runs-on: ubuntu-latest
     steps:
       - run: |
           curl --request POST \
           --url '${{ secrets.APP_URL }}/api/cron/elections/congress/terminate' \
           --header 'Authorization: Bearer ${{ secrets.ACTIONS_KEY }}'
-  create:
+  create-prod:
     runs-on: ubuntu-latest
     steps:
       - run: |
           curl --request POST \
           --url '${{ secrets.APP_URL }}/api/cron/elections/congress/create' \
+          --header 'Authorization: Bearer ${{ secrets.ACTIONS_KEY }}'
+  terminate-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --request POST \
+          --url '${{ secrets.APP_DEV_URL }}/api/cron/elections/congress/terminate' \
+          --header 'Authorization: Bearer ${{ secrets.ACTIONS_KEY }}'
+  create-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --request POST \
+          --url '${{ secrets.APP_DEV_URL }}/api/cron/elections/congress/create' \
           --header 'Authorization: Bearer ${{ secrets.ACTIONS_KEY }}'
