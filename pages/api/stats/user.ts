@@ -64,7 +64,7 @@ async function get(scope: string, stat: string, sort: string = 'desc', limit?: n
     case CitizenStats.XP: {
       if (sort === 'desc') {
         citizens.sort((a, b) => a[stat] - b[stat]);
-      } else {
+      } else if (sort === 'asc') {
         citizens.sort((a, b) => b[stat] - a[stat]);
       }
       break;

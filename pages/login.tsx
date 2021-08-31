@@ -82,13 +82,19 @@ export default function Login(props: ILoginProps) {
                 Login
               </Button>
             </FormControl>
-            <div className='flex justify-center w-full mt-2 text-sm'>
+            <div className='flex flex-col items-center justify-center w-full gap-2 mt-2 text-sm'>
+              <span>
+                Forgot Password?&nbsp;
+                <Link href='/forgot-pass'>
+                  <a className='text-accent'>Reset Password</a>
+                </Link>
+              </span>
               <span>
                 Don't have an account?&nbsp;
                 <Link href='/register'>
                   <a className='text-accent'>Register</a>
                 </Link>
-              </span>
+              </span>            
             </div>
           </Box>
         </Container>

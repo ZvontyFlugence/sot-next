@@ -1,4 +1,4 @@
-import { Button, Center, Grid, GridItem, Image } from '@chakra-ui/react';
+import { Button, Grid, GridItem, Image } from '@chakra-ui/react';
 import { useQuery } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -18,7 +18,7 @@ export default function Index(_props: IIndexProps) {
   const router = useRouter();
 
   const citizenQuery = useQuery('topCits', async () => {
-    return fetch('/api/stats/user?scope=global&stat=xp&limit=5')
+    return fetch('/api/stats/user?scope=global&stat=xp&limit=5&sort=asc')
       .then(res => res.json());
   });
 

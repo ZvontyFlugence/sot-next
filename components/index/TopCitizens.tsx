@@ -1,9 +1,9 @@
 import { List, ListItem } from "@chakra-ui/layout";
-import { Image } from "@chakra-ui/image";
 
 import Card from "../Card";
 import { IUserStats } from '@/models/User';
 import { Spinner } from "@chakra-ui/spinner";
+import { Avatar } from "@chakra-ui/react";
 
 export default function TopCitizens({ citizens }: { citizens: IUserStats[] }) {
   return (
@@ -17,7 +17,7 @@ export default function TopCitizens({ citizens }: { citizens: IUserStats[] }) {
             {citizens && citizens.map((c: IUserStats) => (
               <ListItem key={c.username} className='flex justify-between mt-4 text-white'>
                 <div className='flex justify-start items-center'>
-                  <Image boxSize='50px' src={c.image} alt={c.username} />
+                  <Avatar boxSize='50px' src={c.image} name={c.username} />
                   <span className='ml-4'>{ c.username }</span>
                 </div>
                 <div className='flex justify-end items-center'>

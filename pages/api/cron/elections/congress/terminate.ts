@@ -30,7 +30,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
         return await Promise.all(elections.map(async (election: IElection) => {
           let candidates: ICandidate[] = await Promise.all(election.candidates.map(async (candidate: ICandidate) => {
-            let user: IUser = await User.findById(candidate.id);
+            let user: IUser = await User.findById(candidate.id, undefined, { session });
             return { ...candidate, xp: user.xp } as ICandidate;
           }));
 
@@ -67,23 +67,33 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
               timestamp: new Date(Date.now()),
             };
 
-            await User.updateOne({ _id: winner }, { $inc: { gold: 5 }, $push: { alerts: alert } });
+            let updateRes = await User.updateOne({ _id: winner }, { $inc: { gold: 5 }, $push: { alerts: alert } }, { session });
+            if (!updateRes) {
+              await session.abortTransaction();
+              console.log('ERROR: Winner not updated');
+            }
           }
 
           // Set representatives for Region
-          let updatedRegion = await Region.updateOne({ _id: election.typeId }, { $set: { representatives: election.winner ?? [] } });
-          if (!updatedRegion)
-            throw new Error('Failed to Update Region Representatives');
+          let updatedRegion = await Region.updateOne({ _id: election.typeId }, { $set: { representatives: election.winner ?? [] } }, { session });
+          if (!updatedRegion) {
+            await session.abortTransaction();
+            console.log('ERROR: Failed to Update Region Representatives');
+          }
 
           // Push to country congress list
-          let region = await Region.findOne({ _id: election.typeId }).exec();
-          await Country.updateOne({ _id: region.owner }, { $push: { 'government.congress': { $each: election.winner } } });
+          let region = await Region.findOne({ _id: election.typeId }, undefined, { session });
+          let updatedCountry = await Country.updateOne({ _id: region.owner }, { $push: { 'government.congress': { $each: election.winner } } });
+          if (!updatedCountry) {
+            await session.abortTransaction();
+            console.log('ERROR: Failed to Update Country');
+          }
 
           return await election.save();
         }));
       });
-
-      session.endSession();
+      
+      await session.endSession();
       return res.status(200).json({ success: true });
     }
 
