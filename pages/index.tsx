@@ -18,7 +18,7 @@ export default function Index(_props: IIndexProps) {
   const router = useRouter();
 
   const citizenQuery = useQuery('topCits', async () => {
-    return fetch('/api/stats/user?scope=global&stat=xp&limit=5&sort=asc')
+    return fetch('/api/stats/user?scope=global&stat=xp&limit=5')
       .then(res => res.json());
   });
 

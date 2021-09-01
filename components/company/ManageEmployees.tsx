@@ -52,6 +52,16 @@ const ManageEmployees: React.FC<IManageEmployees> = ({ employees, company_id, ..
     }
   }, [shouldRefetch]);
 
+  useEffect(() => {
+    if (selected) {
+      setTitle(selected.title);
+      setWage(selected.wage);
+    } else {
+      setTitle('');
+      setWage(0);
+    }
+  }, [selected]);
+
   // Employee Mutations
   const editMutation = useMutation(async () => {
     let payload = {
@@ -80,6 +90,7 @@ const ManageEmployees: React.FC<IManageEmployees> = ({ employees, company_id, ..
     onSuccess: (data) => {
       showToast(toast, 'success', data?.message || 'Employee Updated');
       queryClient.invalidateQueries('getEmployeeInfo');
+      queryClient.refetchQueries('getEmployeeInfo');
       refreshData(router);
       handleClose();
     },
@@ -159,7 +170,7 @@ const ManageEmployees: React.FC<IManageEmployees> = ({ employees, company_id, ..
       ) : (
         <>
           <div className='hidden md:block'>
-            <Table>
+            <Table variant='unstyled'>
               <Thead>
                 <Tr>
                   <Th color='white'>Employee</Th>

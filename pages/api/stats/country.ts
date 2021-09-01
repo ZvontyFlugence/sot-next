@@ -45,9 +45,9 @@ async function get(stat?: string, sort?: string, limit?: number) {
         return { _id: c._id, name: c.name, flag_code: c.flag_code, population: citizens.length };
       }));
 
-      if (sort === 'desc') {
+      if (sort === 'asc') {
         countryStats.sort((a, b) => a[stat] - b[stat]);
-      } else {
+      } else if (sort === 'desc') {
         countryStats.sort((a, b) => b[stat] - a[stat]);
       }
     

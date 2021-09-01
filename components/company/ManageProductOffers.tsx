@@ -10,7 +10,7 @@ import { Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/table';
 import { useToast } from '@chakra-ui/toast';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 
 interface IManageProductOffers {
@@ -30,6 +30,19 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
 
   const { isOpen: isEditOpen, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
   const { isOpen: isDeleteOpen, onOpen: onOpenDelete, onClose: onCloseDelete } = useDisclosure();
+
+  useEffect(() => {
+    if (selected >= 0) {
+      let offer = productOffers[selected];
+      setProductId(offer?.product_id);
+      setQuantity(offer?.quantity);
+      setPrice(offer?.price);
+    } else {
+      setProductId(-1);
+      setQuantity(0);
+      setPrice(0.01);
+    }
+  }, [selected]);
 
   const editProductMutation = useMutation(async (productOffer) => {
     let payload = {
@@ -89,7 +102,7 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
 
   const editProductOffer = () => {
     let id = productOffers[selected]?.id;
-    editProductMutation.mutate({ id, product_id: productId, quantity, price });
+    editProductMutation.mutate({ id: id, product_id: productId, quantity, price });
   }
 
   const deleteProductOffer = () => {
@@ -140,7 +153,7 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
         <>
           <p className='text-xl font-semibold text-center h-brand text-accent'>Active Offers</p>
           <div className='hidden md:block'>
-            <Table>
+            <Table variant='unstyled'>
               <Thead>
                 <Tr>
                   <Th color='white'>Item</Th>
@@ -187,11 +200,11 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
         </>
       )}
 
-      {/* TODO: Edit Product Offer Modal */}
+      {/* Edit Product Offer Modal */}
       <Modal isOpen={isEditOpen} onClose={() => handleClose('edit')}>
         <ModalOverlay />
         <ModalContent bgColor='night' color='white'>
-          <ModalHeader className='h-brand text-accent'>Create Product Offer</ModalHeader>
+          <ModalHeader className='h-brand text-accent'>Edit Product Offer</ModalHeader>
           <ModalCloseButton />
           <ModalBody className='flex flex-col gap-2'>
             <FormControl>
@@ -214,7 +227,7 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
       <Modal isOpen={isDeleteOpen} onClose={() => handleClose('delete')}>
         <ModalOverlay />
         <ModalContent bgColor='night' color='white'>
-          <ModalHeader className='h-brand text-accent'>Create Product Offer</ModalHeader>
+          <ModalHeader className='h-brand text-accent'>Delete Product Offer</ModalHeader>
           <ModalCloseButton />
           <ModalBody className='flex flex-col gap-2'>
             <p>Are you sure you want to delete this product offer?</p>

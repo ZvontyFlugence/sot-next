@@ -226,8 +226,8 @@ async function propose_law(data: IProposeLaw): Promise<IGovActionResult> {
   return res;
 }
 
+// TODO: Implement
 async function resign(data: IResign): Promise<IGovActionResult> {
-
   return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
@@ -273,7 +273,7 @@ async function create_new_law(data: IProposeLaw): Promise<IGovActionResult> {
     votes: [],
   };
 
-  let updated = await Country.updateOne({ _id: data.country_id }, { $push: { pendingLaws: newLaw } }).exec()
+  let updated = await Country.updateOne({ _id: data.country_id }, { $addToSet: { pendingLaws: newLaw } }).exec()
   if (updated)
     return { status_code: 200, payload: { success: true, message: 'Law Proposed' } };
 

@@ -109,7 +109,7 @@ const CompanyDetails: React.FC<ICompDetails> = ({ user, company, currency }) => 
               {company.productOffers.length === 0 ? (
                 <p>Company has no product offers</p>
               ) : (
-                <Table>
+                <Table variant='unstyled'>
                   <Thead>
                     <Tr>
                       <Th color='white'>Product</Th>

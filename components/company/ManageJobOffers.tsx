@@ -4,7 +4,7 @@ import { FormControl, FormLabel } from '@chakra-ui/form-control';
 import { useDisclosure } from '@chakra-ui/hooks';
 import { Input, InputGroup, InputLeftAddon } from '@chakra-ui/input';
 import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from '@chakra-ui/modal';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { parseCookies } from 'nookies';
 import { useToast } from '@chakra-ui/toast';
@@ -29,6 +29,14 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
   const [title, setTitle] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [wage, setWage] = useState(1.00);
+
+  useEffect(() => {
+    if (selected >= 0) {
+      setTitle(jobOffers[selected]?.title);
+      setQuantity(jobOffers[selected]?.quantity);
+      setWage(jobOffers[selected]?.wage);
+    }
+  }, [selected]);
 
   const createJobMutation = useMutation(async () => {
     let payload = {
@@ -178,7 +186,7 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
         <>
           <p className='text-xl font-semibold text-center mb-2 md:mb-4 h-brand text-accent'>Active Offers</p>
           <div className='hidden md:block'>
-            <Table>
+            <Table variant='unstyled'>
               <Thead>
                 <Tr>
                   <Th color='white'>Position Title</Th>
@@ -262,17 +270,17 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
             <ModalBody className='flex flex-col gap-2'>
               <FormControl>
                 <FormLabel>Job Title</FormLabel>
-                <Input type='text' defaultValue={jobOffers[selected]?.title} onChange={e => setTitle(e.target.value)} />
+                <Input type='text' value={title} onChange={e => setTitle(e.target.value)} />
               </FormControl>
               <FormControl>
                 <FormLabel>Available Positions</FormLabel>
-                <Input type='number' min={1} defaultValue={jobOffers[selected]?.quantity} onChange={e => setQuantity(e.target.valueAsNumber)} />
+                <Input type='number' min={1} value={quantity} onChange={e => setQuantity(e.target.valueAsNumber)} />
               </FormControl>
               <FormControl>
                 <FormLabel>Position Wage</FormLabel>
                 <InputGroup>
                   <InputLeftAddon bgColor='accent-alt' children={currency} />
-                  <Input type='number' defaultValue={jobOffers[selected]?.wage.toFixed(2)} min={1.00} step={0.01} onChange={e => setWage(e.target.valueAsNumber)} />
+                  <Input type='number' value={wage.toFixed(2)} min={1.00} step={0.01} onChange={e => setWage(e.target.valueAsNumber)} />
                 </InputGroup>
               </FormControl>
             </ModalBody>

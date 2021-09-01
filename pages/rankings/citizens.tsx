@@ -24,9 +24,9 @@ const buildRequestURL = (query: ParsedUrlQuery): string => {
 
   if (scope === 'global' || scope === 'country' && stat) {
     if (scope === 'global' && !country)
-      return `/api/stats/user?scope=${scope}&stat=${stat}`;
+      return `/api/stats/user?scope=${scope}&stat=${stat}&sort=desc`;
     else if (scope === 'country' && country)
-      return `/api/stats/user?scope=${scope}&country=${country}&stat=${stat}`
+      return `/api/stats/user?scope=${scope}&country=${country}&stat=${stat}&sort=desc`
   }
 
   return '/api/stats/user?scope=global&stat=xp';

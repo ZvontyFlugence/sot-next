@@ -2,9 +2,10 @@ import Company, { ICompany, IEmployee, IJobOffer, IProductOffer } from '@/models
 import Region, { IRegion } from '@/models/Region';
 import User, { IUser } from '@/models/User';
 import { CompanyActions } from '@/util/actions';
-import { getDistance, roundMoney } from '@/util/apiHelpers';
+import { getDistance } from '@/util/apiHelpers';
 import { validateToken } from '@/util/auth';
 import { connectToDB } from '@/util/mongo';
+import { UpdateWriteOpResult } from 'mongoose';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 
@@ -75,6 +76,10 @@ interface IRelocateParams extends IBaseParams {
 
 interface IUploadLogoParams extends IBaseParams {
   image: any
+}
+
+interface IMap {
+  [key: string]: any;
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -155,310 +160,624 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
 }
 
-const create_job = async (data: ICreateJobParams): Promise<ICompanyActionResult> => {
-  let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
-  
-  if (!company || company.ceo !== data.user_id) {
-    // invalid company
-    return { status_code: 400, payload: { success: false, error: 'Invalid Company' } };
-  }
+function defaultActionRes(): ICompanyActionResult {
+  return {
+    status_code: 500,
+    payload: {
+      success: false,
+      error: 'Something Went Wrong',
+    },
+  };
+}
 
-  // Create Job Offer
+const create_job = async (data: ICreateJobParams): Promise<ICompanyActionResult> => {
+  let ret: ICompanyActionResult = defaultActionRes();
+
   try {
+    // Validate Company
+    let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+    if (!company || company.ceo !== data.user_id) {
+      ret.status_code = 400;
+      ret.payload.error = 'Invalid Company';
+      throw new Error(ret.payload.error);
+    }
+
+    // Generate Job Offer Id
     const { randomBytes } = await import('crypto');
     let buf = await randomBytes(10);
     data.offer.id = buf.toString('hex');
-    console.log('Created Job ID:', data.offer.id);
-    let updates = { jobOffers: [...company.jobOffers, data.offer] };
 
-    let updated = await company.updateOne({ $set: { ...updates }});
+    // Create Job Offer
+    let updated = await company.updateOne({ $addToSet: { jobOffers: data.offer } }).exec();
+
     if (updated) {
-      return { status_code: 200, payload: { success: true } };
+      ret.status_code = 200;
+      ret.payload = { success: true, message: 'Job Offer Created' };
+    } else {
+      throw new Error(ret.payload.error);
     }
-  } catch (e) {
-    return { status_code: 500, payload: { success: false, error: 'Failed to generate offer id' } };
+  } catch (e: any) {
+    console.error(e);
+  } finally {
+    return ret;
   }
-
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
 const create_product = async (data: IProductParams): Promise<ICompanyActionResult> => {
-  let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+  let ret: ICompanyActionResult = defaultActionRes();
 
-  if (!company || company.ceo !== data.user_id)
-    return { status_code: 400, payload: { success: false, error: 'Invalid Company' } };
-
-  // Check that company has enough quantity then remove
-  let itemIndex = company.inventory.findIndex(item => item.item_id === data.offer.product_id);
-  if (itemIndex < 0 || (company.inventory[itemIndex].quantity < data.offer.quantity)) {
-    return { status_code: 400, payload: { success: false, error: 'Insufficient Quantity In Inventory' } };
-  } else if (company.inventory[itemIndex].quantity === data.offer.quantity) {
-    company.inventory.splice(itemIndex, 1);
-  } else {
-    company.inventory[itemIndex].quantity -= data.offer.quantity;
-  }
-
-  // Create Product Offer
   try {
+    // Validate Company
+    let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+    if (!company || company.ceo !== data.user_id) {
+      ret.status_code = 400;
+      ret.payload.error = 'Invalid Company';
+      throw new Error(ret.payload.error);
+    }
+
+    // Check that company has enough quantity then remove
+    let itemIndex = company.inventory.findIndex(item => item.item_id === data.offer.product_id);
+    if (itemIndex < 0 || (company.inventory[itemIndex].quantity < data.offer.quantity)) {
+      ret.status_code = 400;
+      ret.payload.error = 'Insufficient Quantity In Inventory';
+      throw new Error(ret.payload.error);
+    }
+
+    // Create Product Offer
     const { randomBytes } = await import('crypto');
-    randomBytes(10, (err, buf) => {
-      if (err) throw err;
-      data.offer.id = buf.toString('hex');
-    });
-  } catch (e) {
-    return { status_code: 500, payload: { success: false, error: 'Failed to generate offer id' } };
+    let buf = await randomBytes(10);
+    data.offer.id = buf.toString('hex');
+
+    let updated: UpdateWriteOpResult;
+    if (company.inventory[itemIndex].quantity === data.offer.quantity) {
+      let updates = {
+        $pull: { inventory: { item_id: data.offer.product_id } },
+      };
+
+      updated = await company.updateOne(updates).exec();
+    } else {
+      let query = {
+        _id: company._id,
+        inventory: { $elemMatch: { item_id: data.offer.product_id } },
+      };
+      let updates = {
+        $addToSet: { productOffers: data.offer },
+        $inc: {
+          'inventory.$.quantity': -data.offer.quantity,
+        },
+      };
+
+      updated = await Company.updateOne(query, updates).exec();
+    }
+
+    if (updated) {
+      ret.status_code = 200;
+      ret.payload = { success: true, message: 'Product Offer Created' };
+    } else {
+      throw new Error(ret.payload.error);
+    }
+  } catch (e: any) {
+    // Temp logging of error
+    console.error(e);
+  } finally {
+    return ret;
   }
-
-  let updates = { productOffers: [...company.productOffers, data.offer], inventory: [...company.inventory] };
-
-  let updated = await company.updateOne({ $set: { ...updates } });
-  if (updated) {
-    return { status_code: 200, payload: { success: true } };
-  }
-
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
 const delete_job  = async (data: IDeleteJobParams): Promise<ICompanyActionResult> => {
-  let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
-  if (!company || company.ceo !== data.user_id)
-    return { status_code: 400, payload: { success: false, error: 'Invalid Company' } };
-
-  let jobIndex = company.jobOffers.findIndex(offer => offer.id === data.job_id);
-  if (jobIndex === -1)
-    return { status_code: 404, payload: { success: false, error: 'Job Offer Not Found' } };
+  let ret: ICompanyActionResult = defaultActionRes();
   
-  company.jobOffers.splice(jobIndex, 1);
-  let updates = { jobOffers: [...company.jobOffers] };
-  let updated = await company.updateOne({ $set: { ...updates } });
-  if (updated) {
-    return { status_code: 200, payload: { success: true, message: 'Job Offer Revoked' } };
-  }
+  try {
+    let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+    if (!company || company.ceo !== data.user_id) {
+      ret.status_code = 400;
+      ret.payload.error = 'Invalid Company';
+      throw new Error(ret.payload.error);
+    }
 
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+    let jobIndex = company.jobOffers.findIndex(offer => offer.id === data.job_id);
+    if (jobIndex === -1) {
+      ret.status_code = 404;
+      ret.payload.error = 'Job Offer Not Found';
+      throw new Error(ret.payload.error);
+    }
+
+    let updated = await company.updateOne({ $pull: { jobOffers: { id: data.job_id } } }).exec();
+    if (updated) {
+      ret.status_code = 200;
+      ret.payload = { success: true, message: 'Job Offer Revoked' };
+    } else {
+      throw new Error(ret.payload.error);
+    }
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
+  }
 }
 
 const delete_product = async (data: IProductParams): Promise<ICompanyActionResult> => {
-  let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
-  if (!company || company.ceo !== data.user_id)
-    return { status_code: 400, payload: { success: false, error: 'Invalid Company' } };
+  let ret: ICompanyActionResult = defaultActionRes();
 
-  let productIndex = company.productOffers.findIndex(offer => offer?.id === data.offer?.id);
-  if (productIndex === -1)
-    return { status_code: 404, payload: { success: false, error: 'Product Offer Not Found' } };
+  try {
+      let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+      if (!company || company.ceo !== data.user_id) {
+        ret.status_code = 400;
+        ret.payload.error = 'Invalid Company';
+        throw new Error(ret.payload.error);
+      }
+  
+      let productIndex = company.productOffers.findIndex(offer => offer?.id === data.offer?.id);
+      if (productIndex === -1) {
+        ret.status_code = 404;
+        ret.payload.error = 'Product Offer Not Found';
+        throw new Error(ret.payload.error);
+      }
+  
+      let itemIndex = company.inventory.findIndex(item => item.item_id === data.offer.product_id);
+      let updated: UpdateWriteOpResult;
 
-  let itemIndex = company.inventory.findIndex(item => item.item_id === data.offer.product_id);
-  if (itemIndex === -1) {
-    company.inventory.push({ item_id: data.offer.product_id, quantity: data.offer.quantity });
-  } else {
-    company.inventory[itemIndex].quantity += data.offer.quantity;
+      if (itemIndex === -1) {
+        // Item not in Inventory
+        let updates = {
+          $pull: { productOffers: { id: data.offer?.id } },
+          $addToSet: {
+            inventory: { item_id: data.offer.product_id, quantity: data.offer.quantity },
+          },
+        };
+
+        updated = await company.updateOne(updates).exec();
+      } else {
+        // Item in inventory
+        let query = {
+          _id: company._id,
+          inventory: {
+            $elemMatch: { item_id: data.offer.product_id },
+          },
+        };
+
+        let updates = {
+          $pull: { productOffers: { id: data.offer?.id } },
+          $inc: { 'inventory.$.quantity': data.offer.quantity },
+        };
+
+        updated = await Company.updateOne(query, updates).exec();
+      }
+
+      if (updated) {
+        ret.status_code = 200;
+        ret.payload = { success: true, message: 'Product Offer Revoked' };
+      } else {
+        throw new Error(ret.payload.error);
+      }
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
   }
-
-  company.productOffers.splice(productIndex, 1);
-  let updates = { productOffers: [...company.productOffers], inventory: [...company.inventory] };
-  let updated = await company.updateOne({ $set: { ...updates } });
-  if (updated)
-    return { status_code: 200, payload: { success: true, message: 'Product Offer Revoked' } };
-
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
 const edit_job = async (data: IEditJobParams): Promise<ICompanyActionResult> => {
-  let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
-  if (!company || company.ceo !== data.user_id)
-    return { status_code: 400, payload: { success: false, error: 'Invalid Company' } };
-
-  let jobIndex = company.jobOffers.findIndex(offer => offer.id === data.offer.id);
-  if (jobIndex === -1)
-    return { status_code: 404, payload: { success: false, error: 'Job Offer Not Found' } };
+  let ret: ICompanyActionResult = defaultActionRes();
   
-  company.jobOffers.splice(jobIndex, 1, data.offer);
-  let updates = { jobOffers: [...company.jobOffers] };
-  let updated = await company.updateOne({ $set: { ...updates } });
-  if (updated) {
-    return { status_code: 200, payload: { success: true, message: 'Job Offer Updated' } };
-  }
+  try {
+    // Validate Company
+    let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+    if (!company || company.ceo !== data.user_id) {
+      ret.status_code = 400;
+      ret.payload.error = 'Invalid Company';
+      throw new Error(ret.payload.error);
+    }
 
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+    let jobIndex = company.jobOffers.findIndex(offer => offer.id === data.offer.id);
+    if (jobIndex === -1) {
+      ret.status_code = 404;
+      ret.payload.error = 'Job Offer Not Found';
+      throw new Error(ret.payload.error);
+    }
+    
+    let updated = await Company.updateOne({
+      _id: company._id,
+      jobOffers: { $elemMatch: { id: data.offer.id } },
+    }, {
+      $set: { 'jobOffers.$': data.offer },
+    }).exec();
+
+    if (updated) {
+      ret.status_code = 200;
+      ret.payload = { success: true, message: 'Job Offer Updated' };
+    } else {
+      throw new Error(ret.payload.error);
+    }
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
+  }
 }
 
 const edit_product = async (data: IProductParams): Promise<ICompanyActionResult> => {
-  let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
-  if (!company || company.ceo !== data.user_id)
-    return { status_code: 400, payload: { success: false, error: 'Invalid Company' } };
+  let ret: ICompanyActionResult = defaultActionRes();
 
-  let productIndex = company.productOffers.findIndex(offer => offer.id !== data.offer.id);
-  if (productIndex === -1)
-    return { status_code: 404, payload: { success: false, error: 'Product Offer Not Found' } };
+  try {
+    // Validate Company
+    let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+    if (!company || company.ceo !== data.user_id) {
+      ret.status_code = 400;
+      ret.payload.error = 'Invalid Company';
+      throw new Error(ret.payload.error);
+    }
 
-  company.productOffers.splice(productIndex, 1, data.offer);
-  let updates = { productOffers: [...company.productOffers] };
-  let updated = await company.updateOne({ $set: { ...updates } });
-  if (updated)
-    return { status_code: 200, payload: { success: true, message: 'Product Offer Updated' } };
+    let productIndex = company.productOffers.findIndex(offer => offer.id === data.offer.id);
+    if (productIndex === -1) {
+      ret.status_code = 404;
+      ret.payload.error = 'Product Offer Not Found';
+      throw new Error(ret.payload.error);
+    }
 
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+    let updated: UpdateWriteOpResult;
+    let oldQuantity: number = company.productOffers[productIndex].quantity;
+    if (oldQuantity === data.offer.quantity) {
+      // Quantity Isnt Changing
+      updated = await Company.updateOne({
+        _id: company._id,
+        productOffers: { $elemMatch: { id: data.offer.id } },
+      }, {
+        $set: { 'productOffers.$': data.offer },
+      }).exec();
+    } else if (company.inventory.findIndex(item => item.item_id === data.offer.product_id) >= 0) {
+      // Quantity Needs To Be Updated, Still Have Remaining Product In Inventory
+      updated = await Company.updateOne({
+        _id: company._id,
+        productOffers: { $elemMatch: { id: data.offer.id } },
+        inventory: { $elemMatch: { item_id: data.offer.product_id } },
+      }, {
+        $set: { 'productOffers.$': data.offer },
+        $inc: { 'inventory.$.quantity': oldQuantity - data.offer.quantity },
+      }).exec();
+    } else if (oldQuantity > data.offer.quantity) {
+      // Decreasing Quantity, No Remaining Product In Inventory
+      updated = await Company.updateOne({
+        _id: company._id,
+        productOffers: { $elemMatch: { id: data.offer.id } },
+      }, {
+        $set: { 'productOffers.$': data.offer },
+        $addToSet: { inventory: { item_id: data.offer.product_id, quantity: data.offer.quantity - oldQuantity } },
+      }).exec();
+    } else {
+      // Increasing Quantity, But No Remaining Product In Inventory
+      ret.status_code = 400;
+      ret.payload.error = 'Insufficient Product In Inventory';
+      throw new Error(ret.payload.error);
+    }    
+
+    if (updated) {
+      ret.status_code = 200;
+      ret.payload = { success: true, message: 'Product Offer Updated' };
+    } else {
+      throw new Error(ret.payload.error);
+    }
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
+  }
 }
 
 const deposit_funds = async (data: IHandleFundsParams): Promise<ICompanyActionResult> => {
-  let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
-  if (!company) {
-    return { status_code: 404, payload: { success: false, error: 'Company Not Found' } };
-  }
+  let ret: ICompanyActionResult = defaultActionRes();
+  const session = await Company.startSession();
 
-  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
-  if (!user) {
-    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
-  } else if (user._id !== company.ceo) {
-    return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
-  }
-
-  if (data?.gold && user.gold >= data?.gold) {
-    user.gold = roundMoney(user.gold - data?.gold);
-    company.gold = roundMoney(company.gold + data?.gold);
-  } else if (data?.gold) {
-    return { status_code: 400, payload: { success: false, error: 'Insufficient Gold' } };
-  }
-
-  if (data?.funds) {
-    let userCCIndex = user.wallet.findIndex(cc => cc.currency === data.funds.currency);
-    if (userCCIndex > -1 && user.wallet[userCCIndex].amount >= data.funds.amount) {
-      user.wallet[userCCIndex].amount = roundMoney(user.wallet[userCCIndex].amount - data.funds.amount);
-      let compCCIndex = company.funds.findIndex(cc => cc.currency === data.funds.currency);
-      if (compCCIndex === -1) {
-        company.funds.push(data.funds);
-      } else {
-        company.funds[compCCIndex].amount = roundMoney(company.funds[compCCIndex].amount + data.funds.amount);
+  try {
+    await session.withTransaction(async () => {
+      // Validate Company
+      let company: ICompany = await Company.findOne({ _id: data.company_id }).session(session);
+      if (!company) {
+        ret.status_code = 404;
+        ret.payload.error = 'Company Not Found';
+        throw new Error(ret.payload.error);
       }
-    } else {
-      return { status_code: 400, payload: { success: false, error: 'Insufficient Currency' } };
-    }
-  }
 
-  let compUpdates = { gold: company.gold, funds: [...company.funds] };
-  let userUpdates = { gold: user.gold, wallet: [...user.wallet] };
-  let updatedComp = await company.updateOne({ $set: compUpdates }).exec();
-  if (!updatedComp) {
-    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
-  }
+      // Validate User
+      let user: IUser = await User.findOne({ _id: data.user_id }).session(session);
+      if (!user) {
+        ret.status_code = 404;
+        ret.payload.error = 'User Not Found';
+        throw new Error(ret.payload.error);
+      } else if (user._id !== company.ceo) {
+        ret.status_code = 401;
+        ret.payload.error = 'Unauthorized';
+        throw new Error(ret.payload.error);
+      }
 
-  let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
-  if (updatedUser) {
-    return { status_code: 200, payload: { success: true, message: 'Funds Deposited' } };
-  }
+      if (!data?.gold && !data?.funds) {
+        ret.status_code = 400;
+        ret.payload.error = 'No Funds To Transfer Provided';
+        throw new Error(ret.payload.error);
+      }
 
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+      if (data?.gold && user.gold < data?.gold) {
+        ret.status_code = 400;
+        ret.payload.error = 'Insufficient Gold';
+        throw new Error(ret.payload.error);
+      }
+
+      let userCCIndex: number = -1;
+      let compCCIndex: number = -1;
+      if (data?.funds) {
+        userCCIndex = user.wallet.findIndex(cc => cc.currency === data.funds.currency);
+        compCCIndex = company.funds.findIndex(cc => cc.currency === data.funds.currency);
+        if (userCCIndex === -1 || user.wallet[userCCIndex].amount < data.funds.amount) {
+          ret.status_code = 400;
+          ret.payload.error = 'Insufficient Currency';
+          throw new Error(ret.payload.error);
+        }
+      }
+
+      let userQuery: IMap = { _id: user._id };
+      let userUpdates: IMap = { $inc: {} };
+
+      if (data?.funds && userCCIndex >= 0) {
+        userQuery['wallet'] = { $elemMatch: { currency: data.funds.currency } };
+        userUpdates['$inc']['wallet.$.amount'] = -data.funds.amount;
+      }
+
+      if (data?.gold)
+        userUpdates['$inc']['gold'] = data.gold;
+
+      let updatedUser = await User.updateOne(userQuery, userUpdates).session(session);
+      if (!updatedUser) {
+        ret.status_code = 500;
+        ret.payload.error = 'Failed To Remove Funds From User';
+        await session.abortTransaction();
+        throw new Error(ret.payload.error);
+      }
+
+      let compQuery: IMap = { _id: company._id };
+      let compUpdates: IMap = { $inc: {} };
+
+      if (data?.funds && compCCIndex >= 0) {
+        compQuery['funds'] = { $elemMatch: { currency: data.funds.currency } };
+        compUpdates['$inc']['funds.$.amount'] = data.funds.amount;
+      } else if (data?.funds && compCCIndex === -1) {
+        compUpdates['$addToSet'] = { funds: data.funds };
+      }
+
+      if (data?.gold)
+        compUpdates['$inc']['gold'] = data.gold;
+
+      let updatedComp = await Company.updateOne(compQuery, compUpdates).session(session);
+      if (updatedComp) {
+        ret.status_code = 200;
+        ret.payload = { success: true, message: 'Funds Deposited' };
+      } else {
+        await session.abortTransaction();
+        throw new Error(ret.payload.error);
+      }
+    });
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    await session.endSession();
+    return ret;
+  }
 }
 
 const withdraw_funds = async (data: IHandleFundsParams): Promise<ICompanyActionResult> => {
-  let company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
-  if (!company) {
-    return { status_code: 404, payload: { success: false, error: 'Company Not Found' } };
-  }
+  let ret: ICompanyActionResult = defaultActionRes();
+  const session = await Company.startSession();
 
-  let user: IUser = await User.findOne({ _id: data.user_id }).exec();
-  if (!user) {
-    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
-  } else if (user._id !== company.ceo) {
-    return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
-  }
-
-  if (data?.gold && company.gold >= data?.gold) {
-    user.gold = roundMoney(user.gold + data?.gold);
-    company.gold = roundMoney(company.gold - data?.gold);
-  } else if (data?.gold) {
-    return { status_code: 400, payload: { success: false, error: 'Insufficient Gold' } };
-  }
-
-  if (data?.funds) {
-    let compCCIndex = company.funds.findIndex(cc => cc.currency === data.funds.currency);    
-    if (compCCIndex > -1 && company.funds[compCCIndex].amount >= data.funds.amount) {
-      company.funds[compCCIndex].amount = roundMoney(company.funds[compCCIndex].amount - data.funds.amount);
-      let userCCIndex = user.wallet.findIndex(cc => cc.currency === data.funds.currency);
-      if (userCCIndex === -1) {
-        user.wallet.push(data.funds);
-      } else {
-        user.wallet[userCCIndex].amount = roundMoney(user.wallet[userCCIndex].amount + data.funds.amount);
+  try {
+    await session.withTransaction(async () => {
+      // Validate Company
+      let company: ICompany = await Company.findOne({ _id: data.company_id }).session(session);
+      if (!company) {
+        ret.status_code = 404;
+        ret.payload.error = 'Company Not Found';
+        throw new Error(ret.payload.error);
       }
-    } else {
-      return { status_code: 400, payload: { success: false, error: 'Insufficient Currency' } };
-    }
-  }
 
-  let compUpdates = { gold: company.gold, funds: [...company.funds] };
-  let userUpdates = { gold: user.gold, wallet: [...user.wallet] };
-  let updatedComp = await company.updateOne({ $set: compUpdates }).exec();
-  if (!updatedComp) {
-    return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
-  }
+      // Validate User
+      let user: IUser = await User.findOne({ _id: data.user_id }).session(session);
+      if (!user) {
+        ret.status_code = 404;
+        ret.payload.error = 'User Not Found';
+        throw new Error(ret.payload.error);
+      } else if (user._id !== company.ceo) {
+        ret.status_code = 401;
+        ret.payload.error = 'Unauthorized';
+        throw new Error(ret.payload.error);
+      }
 
-  let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
-  if (updatedUser) {
-    return { status_code: 200, payload: { success: true, message: 'Funds Withdrawn' } };
-  }
+      if (!data?.gold && !data?.funds) {
+        ret.status_code = 400;
+        ret.payload.error = 'No Funds To Transfer Provided';
+        throw new Error(ret.payload.error);
+      }
 
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+      if (data?.gold && company.gold < data.gold) {
+        ret.status_code = 400;
+        ret.payload.error = 'Insufficient Gold';
+        throw new Error(ret.payload.error);
+      }
+
+      let userCCIndex: number = -1;
+      let compCCIndex: number = -1;    
+      if (data?.funds) {
+        compCCIndex = company.funds.findIndex(cc => cc.currency === data.funds.currency);
+        userCCIndex = user.wallet.findIndex(cc => cc.currency === data.funds.currency); 
+        if (compCCIndex === -1 || company.funds[compCCIndex].amount < data.funds.amount) {
+          ret.status_code = 400;
+          ret.payload.error = 'Insufficient Currency';
+          throw new Error(ret.payload.error);
+        }
+      }
+
+      let compQuery: IMap = { _id: company._id };
+      let compUpdates: IMap = { $inc: {} };
+
+      if (data?.funds && compCCIndex >= 0) {
+        compQuery['funds'] = { $elemMatch: { currency: data.funds.currency } };
+        compUpdates['$inc']['funds.$.amount'] = -data.funds.amount;
+      }
+
+      if (data?.gold)
+        compUpdates['$inc']['gold'] = -data.gold;
+
+      let updatedComp = await Company.updateOne(compQuery, compUpdates).session(session);
+      if (!updatedComp) {
+        ret.status_code = 500;
+        ret.payload.error = 'Failed To Remove Funds From User';
+        await session.abortTransaction();
+        throw new Error(ret.payload.error);
+      }
+
+      let userQuery: IMap = { _id: user._id };
+      let userUpdates: IMap = { $inc: {} };
+
+      if (data?.funds && userCCIndex >= 0) {
+        userQuery['wallet'] = { $elemMatch: { currency: data.funds.currency } };
+        userUpdates['$inc']['wallet.$.amount'] = data.funds.amount;
+      } else if (data?.funds && userCCIndex === -1) {
+        userUpdates['$addToSet'] = { funds: data.funds };
+      }
+
+      if (data?.gold)
+        userUpdates['$inc']['gold'] = data.gold;
+
+      let updatedUser = await User.updateOne(userQuery, userUpdates).session(session);
+      if (updatedUser) {
+        ret.status_code = 200;
+        ret.payload = { success: true, message: 'Funds Deposited' };
+      } else {
+        await session.abortTransaction();
+        throw new Error(ret.payload.error);
+      }
+    });
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    await session.endSession();
+    return ret;
+  }
 }
 
 const edit_employee = async (data: IEditEmployeeParams): Promise<ICompanyActionResult> => {
-  const user: IUser = await User.findOne({ _id: data.user_id }).exec();
-  if (!user) {
-    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
+  let ret: ICompanyActionResult = defaultActionRes();
+
+  try {
+    // Validate User
+    const user: IUser = await User.findOne({ _id: data.user_id }).exec();
+    if (!user) {
+      ret.status_code = 404;
+      ret.payload.error = 'User Not Found';
+      throw new Error(ret.payload.error);
+    }
+
+    // Validate Company and Permissions
+    const company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
+    if (!company) {
+      ret.status_code = 404;
+      ret.payload.error = 'Company Not Found';
+      throw new Error(ret.payload.error);
+    } else if (company.ceo !== user._id) {
+      ret.status_code = 401;
+      ret.payload.error = 'Unauthorized';
+      throw new Error(ret.payload.error);
+    }
+
+    let employeeIndex = company.employees.findIndex(emp => emp.user_id === data.employee.user_id);
+    if (employeeIndex === -1) {
+      ret.status_code = 400;
+      ret.payload.error = 'User Is Not An Employee';
+      throw new Error(ret.payload.error);
+    }
+
+    let compQuery = {
+      _id: company._id,
+      employees: { $elemMatch: { user_id: data.employee.user_id } },
+    };
+
+    let compUpdates = {
+      $set: {
+        'employees.$.title': data.employee?.title,
+        'employees.$.wage': data.employee?.wage,
+      },
+    };
+
+    let updatedComp = await Company.updateOne(compQuery, compUpdates).exec();
+    if (updatedComp) {
+      ret.status_code = 200;
+      ret.payload = { success: true, message: 'Employee Updated' };
+    } else {
+      throw new Error(ret.payload.error);
+    }
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
   }
-
-  const company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
-  if (!company) {
-    return { status_code: 404, payload: { success: false, error: 'Company Not Found' } };
-  } else if (company.ceo !== user._id) {
-    return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
-  }
-
-  let employeeIndex = company.employees.findIndex(emp => emp.user_id === data.employee.user_id);
-  if (employeeIndex === -1) {
-    return { status_code: 400, payload: { success: false, error: 'User Is Not An Employee' } };
-  }
-
-  if (data.employee?.title && data.employee.title !== company.employees[employeeIndex].title)
-    company.employees[employeeIndex].title = data.employee.title;
-
-  if (data.employee?.wage && data.employee.wage !== company.employees[employeeIndex].wage)
-    company.employees[employeeIndex].wage = data.employee.wage;
-
-  let compUpdates = { employees: [...company.employees] };
-  let updatedComp = await company.updateOne({ $set: compUpdates }).exec();
-  if (updatedComp) {
-    return { status_code: 200, payload: { success: true, message: 'Employee Updated' } };
-  }
-
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
 const fire_employee = async (data: IFireEmployeeParams): Promise<ICompanyActionResult> => {
-  const user: IUser = await User.findOne({ _id: data.user_id }).exec();
-  if (!user) {
-    return { status_code: 404, payload: { success: false, error: 'User Not Found' } };
-  }
+  let ret: ICompanyActionResult = defaultActionRes();
+  const session = await Company.startSession();
 
-  const company: ICompany = await Company.findOne({ _id: data.company_id }).exec();
-  if (!company) {
-    return { status_code: 404, payload: { success: false, error: 'Company Not Found' } };
-  } else if (company.ceo !== user._id) {
-    return { status_code: 401, payload: { success: false, error: 'Unauthorized' } };
-  }
+  try {
+    await session.withTransaction(async () => {
+      const user: IUser = await User.findOne({ _id: data.user_id }).session(session);
+      if (!user) {
+        ret.status_code = 404;
+        ret.payload.error = 'User Not Found';
+        throw new Error(ret.payload.error);
+      }
 
-  let employeeIndex = company.employees.findIndex(emp => emp.user_id === data.employee_id);
-  if (employeeIndex === -1) {
-    return { status_code: 400, payload: { success: false, error: 'User Is Not An Employee' } };
-  }
+      const company: ICompany = await Company.findOne({ _id: data.company_id }).session(session);
+      if (!company) {
+        ret.status_code = 404;
+        ret.payload.error = 'Company Not Found';
+        throw new Error(ret.payload.error);
+      } else if (company.ceo !== user._id) {
+        ret.status_code = 401;
+        ret.payload.error = 'Unauthorized';
+        throw new Error(ret.payload.error);
+      }
 
-  company.employees.splice(employeeIndex, 1);
-  let compUpdates = { employees: [...company.employees] };
-  let updatedComp = await company.updateOne({ $set: compUpdates }).exec();
-  if (updatedComp) {
-    return { status_code: 200, payload: { success: true, message: 'Employee Fired' } };
-  }
+      let employeeIndex = company.employees.findIndex(emp => emp.user_id === data.employee_id);
+      if (employeeIndex === -1) {
+        ret.status_code = 400;
+        ret.payload.error = 'User Is Not An Employee';
+        throw new Error(ret.payload.error);
+      }
 
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+      let updatedComp = await company.updateOne({ $pull: { employees: { user_id: data.employee_id } } }).session(session);
+      if (!updatedComp) {
+        await session.abortTransaction();
+        throw new Error(ret.payload.error);
+      }
+
+      let updatedUser = await User.updateOne({ _id: data.employee_id }, { $set: { job: 0 } }).session(session);
+      if (updatedUser) {
+        ret.status_code = 200;
+        ret.payload = { success: true, message: 'Employee Fired' };
+      } else {
+        await session.abortTransaction();
+        throw new Error(ret.payload.error);
+      }
+    });
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
+  }
 }
 
 const update_name = async (data: IUpdateNameParams): Promise<ICompanyActionResult> => {
@@ -476,8 +795,7 @@ const update_name = async (data: IUpdateNameParams): Promise<ICompanyActionResul
   if (exists)
     return { status_code: 400, payload: { success: false, error: 'Company Name Already Taken' } };
 
-  let compUpdates = { name: data.name };
-  let updatedComp = await company.updateOne({ $set: compUpdates }).exec();
+  let updatedComp = await company.updateOne({ $set: { name: data.name } }).exec();
   if (updatedComp)
     return { status_code: 200, payload: { success: true, message: 'Comany Name Updated' } };
 
@@ -503,8 +821,8 @@ const relocate = async (data: IRelocateParams): Promise<ICompanyActionResult> =>
   if (company.gold < travel_info.cost)
     return { status_code: 400, payload: { success: false, error: 'Insufficient Gold' } };
   
-  let compUpdates = { gold: roundMoney(company.gold - travel_info.cost), location: data.region_id };
-  let updatedComp = await company.updateOne({ $set: compUpdates }).exec();
+  let compUpdates = { $set: { location: data.region_id }, $inc: { gold: -travel_info.cost } };
+  let updatedComp = await company.updateOne(compUpdates).exec();
   if (updatedComp)
     return { status_code: 200, payload: { success: true, message: 'Company Relocated' } };
   

@@ -82,18 +82,21 @@ const ManageInventory: React.FC<IManageInventory> = ({ inventory, company_id, cu
           <ModalCloseButton />
           <ModalBody className='flex flex-col gap-2'>
             {selected && (
-              <p className='mx-auto'>
-                Creating Offer for {quantity} <i className={'cursor-pointer ' + ITEMS[selected.item_id].image} title={ITEMS[selected.item_id].name} /> at {price.toFixed(2)} {currency} per unit?
-              </p>
+              <>
+                <p className='mx-auto'>
+                  Creating Offer for {quantity} <i className={'cursor-pointer ' + ITEMS[selected.item_id].image} title={ITEMS[selected.item_id].name} /> at {price.toFixed(2)} {currency} per unit?
+                </p>
+                <FormControl>
+                  <FormLabel>Quantity</FormLabel>
+                  <Input type='number' value={quantity} min={1} max={selected?.quantity || 1} onChange={e => setQuantity(e.target.valueAsNumber)} />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Price Per Unit</FormLabel>
+                  <Input type='number' value={price.toFixed(2)} min={0.01} step={0.01} onChange={e => setPrice(e.target.valueAsNumber)} /> 
+                </FormControl>
+              </>
             )}
-            <FormControl>
-              <FormLabel>Quantity</FormLabel>
-              <Input type='number' value={quantity} min={1} max={selected?.quantity || 1} onChange={e => setQuantity(e.target.valueAsNumber)} />
-            </FormControl>
-            <FormControl>
-              <FormLabel>Price Per Unit</FormLabel>
-              <Input type='number' value={price.toFixed(2)} min={0.01} step={0.01} onChange={e => setPrice(e.target.valueAsNumber)} /> 
-            </FormControl>
+            
           </ModalBody>
           <ModalFooter className='flex gap-4'>
             <Button variant='solid' colorScheme='blue' onClick={createProductOffer}>Create Product Offer</Button>
