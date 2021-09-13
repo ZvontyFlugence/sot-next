@@ -2,89 +2,90 @@ import { IItem } from '@/util/apiHelpers';
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IUser extends Document {
-  _id: number,
-  email: string,
-  username: string,
-  password?: string,
-  image: string,
-  createdOn: Date,
-  description: string,
-  level: number,
-  xp: number,
-  health: number,
-  country: number,
-  gold: number,
-  strength: number,
-  militaryRank: number,
-  totalDmg: number,
-  patriotDmg: IPatriotDamage,
-  location: number,
-  residence: number,
-  job: number | null,
-  party: number | null,
-  unit: number | null,
-  newspaper: number | null,
-  canTrain: Date,
-  canWork: Date,
-  canCollectRewards: Date,
-  canHeal: Date,
-  wallet: IWalletItem[],
-  inventory: IItem[],
-  alerts: IAlert[],
-  messages: IThread[],
-  pendingFriends: number[],
-  friends: number[],
-  ipAddrs: string[],
-  banned: boolean,
+  _id: number;
+  email: string;
+  username: string;
+  password?: string;
+  image: string;
+  createdOn: Date;
+  description: string;
+  level: number;
+  xp: number;
+  health: number;
+  country: number;
+  gold: number;
+  strength: number;
+  militaryRank: number;
+  totalDmg: number;
+  patriotDmg: IPatriotDamage;
+  location: number;
+  residence: number;
+  job: number | null;
+  party: number | null;
+  unit: number | null;
+  newspaper: number | null;
+  canTrain: Date;
+  canWork: Date;
+  canCollectRewards: Date;
+  canHeal: Date;
+  wallet: IWalletItem[];
+  inventory: IItem[];
+  alerts: IAlert[];
+  messages: IThread[];
+  pendingFriends: number[];
+  friends: number[];
+  ipAddrs: string[];
+  banned: boolean;
 }
 
 export interface IPatriotDamage {
-  [countryId: number]: number,
+  [countryId: number]: number;
 }
 
 export interface IAlert {
-  read: boolean,
-  type: string,
-  message: string,
-  from?: number,
-  timestamp: Date,
+  id: string;
+  read: boolean;
+  type: string;
+  message: string;
+  from?: number;
+  timestamp: Date;
 }
 
 export interface IThread {
-  id: string,
-  read: boolean,
-  subject: string,
-  participants: number[],
-  messages: IMsg[],
-  timestamp?: Date,
+  id: string;
+  read: boolean;
+  subject: string;
+  participants: number[];
+  messages: IMsg[];
+  timestamp?: Date;
 }
 
 export interface IMsg {
-  from: number,
-  message: string,
-  timestamp: Date,
+  from: number;
+  message: string;
+  timestamp: Date;
 }
 
 export interface IUserStats {
-  _id: number,
-  username: string,
-  image: string,
+  _id: number;
+  username: string;
+  image: string;
   country?: {
-    _id: number,
-    flag_code: string,
-    name: string,
-  },
-  strength?: number,
-  xp?: number,
+    _id: number;
+    flag_code: string;
+    name: string;
+  };
+  strength?: number;
+  xp?: number;
 }
 
 export interface IUserUpdates {
-  [key: string]: any
+  [key: string]: any;
 }
 
 export interface IWalletItem {
-  currency: string,
-  amount: number,
+  currency: string;
+  amount: number;
 }
 
 const UserSchema: Schema = new Schema({

@@ -143,9 +143,9 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
       setOverlays(regions.map(region => {
         let paths: IPath[] | IPath[][] = [];
 
-        if (!region?.type) {
+        if (region.type === 'single') {
           paths = (region.borders as IPath[]).map((path: IPath) => ({ lat: path.lng, lng: path.lat }));
-        } else {
+        } else if (region.type === 'multi') {
           paths = (region.borders as IPath[][]).map((geom: IPath[]) => {
             return geom.map((path: IPath) => ({ lat: path.lng, lng: path.lat }));
           });

@@ -21,7 +21,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       const { stat, sort, limit } = req.query;
       let result: IResult; 
       try {
-      result = await get(typeof stat === 'string' && stat, typeof sort === 'string' && sort, typeof limit === 'string' && Number.parseInt(limit));
+        result = await get(
+          typeof stat === 'string' && stat,
+          typeof sort === 'string' && sort,
+          typeof limit === 'string' && Number.parseInt(limit)
+        );
       } catch (e) {
         result = { status_code: 400, payload: { error: 'Something Went Wrong!' } };
       }

@@ -1,6 +1,6 @@
 import Layout from "@/components/Layout";
 import AlertItem from "@/components/sidebar/AlertItem";
-import { IUser } from "@/models/User";
+import { IAlert, IUser } from "@/models/User";
 import { getCurrentUser } from "@/util/auth";
 import { refreshData, request, showToast } from "@/util/ui";
 import { Button } from "@chakra-ui/button";
@@ -20,8 +20,8 @@ const Alerts: React.FC<IAlerts> = ({ user, ...props }) => {
   const router = useRouter();
 
   const readAllMutation = useMutation(async () => {
-    let values = await Promise.all(user && user.alerts.filter(a => !a.read).map(async (alert, i) => {
-      let payload = { action: 'read_alert', data: { alert_index: i } };
+    let values = await Promise.all(user && user.alerts.filter(a => !a.read).map(async (alert: IAlert) => {
+      let payload = { action: 'read_alert', data: { alert_id: alert.id } };
       return await request({
         url: '/api/me/doAction',
         method: 'POST',
@@ -47,7 +47,7 @@ const Alerts: React.FC<IAlerts> = ({ user, ...props }) => {
 
   const deleteAllMutation = useMutation(async () => {
     let values = await Promise.all(user && user.alerts.map(async (alert) => {
-      let payload = { action: 'delete_alert', data: { alert_index: 0 } };
+      let payload = { action: 'delete_alert', data: { alert_id: alert.id } };
       return await request({
         url: '/api/me/doAction',
         method: 'POST',

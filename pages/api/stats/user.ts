@@ -3,14 +3,7 @@ import Country, { ICountry } from '@/models/Country';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectToDB } from '@/util/mongo';
 import { CitizenStats } from '@/util/constants';
-
-interface IResult {
-  status_code: number,
-  payload: {
-    citizens?: IUserStats[],
-    error?: string,
-  }
-}
+import { ActionResult, defaultActionResult } from '@/util/apiHelpers';
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   switch (req.method) {
@@ -22,11 +15,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         return res.status(400).json({ error: 'Invalid Query Parameters' });
       }
 
-      let result: IResult;
+      let result: ActionResult;
       try {
         result = await get(scope, stat, sort as string, Number.parseInt(limit as string), Number.parseInt(country as string));
       } catch (_e) {
-        result = { status_code: 400, payload: { error: 'Something Went Wrong!' } };
+        result = { status_code: 400, payload: { success: false, error: 'Something Went Wrong!' } };
       }
 
       return res.status(result.status_code).json(result.payload);
@@ -36,63 +29,76 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
 }
 
-async function get(scope: string, stat: string, sort: string = 'desc', limit?: number, country?: number): Promise<IResult> {
+async function get(scope: string, stat: string, sort: string = 'desc', limit?: number, country?: number): Promise<ActionResult> {
+  let ret: ActionResult = defaultActionResult();
   let citizens: IUser[];
 
   // Ensure db connection established
   await connectToDB();
 
-  // Fetch citizens by scope
-  switch (scope) {
-    case 'country': {
-      citizens = await User.find({ country }).exec();
-      break;
-    }
-    case 'global':
-    default: {
-      citizens = await User.find({}).exec();
-      break;
-    }    
-  }
-
-  if (!citizens || citizens?.length === 0)
-    return { status_code: 404, payload: { error: 'No Citizens Found' } };
-
-  // Sort by stat and sort order
-  switch (stat) {
-    case CitizenStats.STRENGTH:
-    case CitizenStats.XP: {
-      if (sort === 'asc') {
-        citizens.sort((a, b) => a[stat] - b[stat]);
-      } else if (sort === 'desc') {
-        citizens.sort((a, b) => b[stat] - a[stat]);
+  try {
+    // Fetch citizens by scope
+    switch (scope) {
+      case 'country': {
+        citizens = await User.find({ country }).exec();
+        break;
       }
-      break;
+      case 'global':
+      default: {
+        citizens = await User.find({}).exec();
+        break;
+      }    
     }
-    default: {
-      let payload = { error: 'Unsupported Citizen Statistic' };
-      return { status_code: 400, payload };
+
+    if (!citizens || citizens?.length === 0) {
+      ret.status_code = 404;
+      ret.payload.error = 'No Citizens Found';
+      throw new Error(ret.payload.error);
     }
+
+    // Sort by stat and sort order
+    switch (stat) {
+      case CitizenStats.STRENGTH:
+      case CitizenStats.XP: {
+        if (sort === 'asc') {
+          citizens.sort((a, b) => a[stat] - b[stat]);
+        } else if (sort === 'desc') {
+          citizens.sort((a, b) => b[stat] - a[stat]);
+        }
+        break;
+      }
+      default: {
+        ret.status_code = 400;
+        ret.payload.error = 'Unsupported Citizen Stat';
+        throw new Error(ret.payload.error);
+      }
+    }
+
+    if (limit) {
+      citizens = citizens.slice(0, limit);
+    }
+
+    let citizenStats: IUserStats[] = await Promise.all(citizens.map(async (u: IUser) => {
+      let country: ICountry = await Country.findOne({ _id: u.country }).exec();
+      return {
+        _id: u._id,
+        username: u.username,
+        image: u.image,
+        country: {
+          _id: country._id,
+          flag_code: country.flag_code,
+          name: country.name,
+        },
+        [stat]: u[stat],
+      };
+    }));
+
+    ret.status_code = 200;
+    ret.payload = { success: true, citizens: citizenStats };
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
   }
-
-  if (limit) {
-    citizens = citizens.slice(0, limit);
-  }
-
-  let citizenStats: IUserStats[] = await Promise.all(citizens.map(async (u: IUser) => {
-    let country: ICountry = await Country.findOne({ _id: u.country }).exec();
-    return {
-      _id: u._id,
-      username: u.username,
-      image: u.image,
-      country: {
-        _id: country._id,
-        flag_code: country.flag_code,
-        name: country.name,
-      },
-      [stat]: u[stat],
-    };
-  }));
-
-  return { status_code: 200, payload: { citizens: citizenStats } };
 }

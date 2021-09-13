@@ -1,7 +1,8 @@
 import { IEmployee, IJobOffer, IProductOffer } from '@/models/Company';
 import { ECVote, IElection } from '@/models/Election';
 import { IRegion } from '@/models/Region';
-import { UserActions } from '@/util/actions';
+import { IMap } from '@/pages/api/companies/doAction';
+import { AlertTypes } from './constants';
 
 /* Interfaces */
 
@@ -88,19 +89,44 @@ export enum LawType {
   WELCOME_MESSAGE = 'welcome_message',
 }
 
+export interface ActionResult {
+  status_code: number;
+  payload: {
+    success: boolean;
+    error?: string;
+    message?: string;
+    [key: string]: any;
+  };
+}
+
 /* Functions */
 
 export function jsonify(data: any) {
   return JSON.parse(JSON.stringify(data));
 }
 
-export function buildLevelUpAlert(level: number) {
+export async function buildLevelUpAlert(level: number) {
+  const { randomBytes } = await import('crypto');
+  let id: string = '';
+
+  try {
+    let buf = await randomBytes(10);
+    id = buf.toString('hex');
+  } catch (e: any) {
+    return;
+  }
+
   return {
+    id,
     read: false,
-    type: UserActions.LEVEL_UP,
+    type: AlertTypes.LEVEL_UP,
     message: `Congrats! You have leveled up to level ${level} and received 5 gold`,
     timestamp: new Date(Date.now()),
   };
+}
+
+export function defaultActionResult(): ActionResult {
+  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
 export function roundMoney(value: number): number {

@@ -70,6 +70,12 @@ export const CitizenStats = {
   XP: 'xp',
 };
 
+// Alert Types
+export const AlertTypes = {
+  LEVEL_UP: 'level_up',
+  SEND_FR: 'send_fr',
+};
+
 // Google Map Style
 export const MAP_STYLE = [
   {

@@ -24,7 +24,7 @@ const AlertItem: React.FC<IAlertItem> = ({ alert, index }) => {
 
   // Mutations
   const readMutation = useMutation(async () => {
-    let payload = { action: 'read_alert', data: { alert_index: index } };
+    let payload = { action: 'read_alert', data: { alert_id: alert.id } };
     let data = await request({
       url: '/api/me/doAction',
       method: 'POST',
@@ -46,7 +46,7 @@ const AlertItem: React.FC<IAlertItem> = ({ alert, index }) => {
   });
 
   const deleteMutation = useMutation(async () => {
-    let payload = { action: 'delete_alert', data: { alert_index: index } };
+    let payload = { action: 'delete_alert', data: { alert_id: alert.id } };
     let data = await request({
       url: '/api/me/doAction',
       method: 'POST',

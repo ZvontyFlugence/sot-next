@@ -1,5 +1,6 @@
 import Newspaper, { IArticle, INewspaper } from "@/models/Newspaper";
 import { validateToken } from "@/util/auth";
+import { connectToDB } from "@/util/mongo";
 import { NextApiRequest, NextApiResponse } from "next";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -9,6 +10,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   switch (req.method) {
     case 'GET': {
+      // Ensure DB Connection
+      await connectToDB();
+
       let newspapers: INewspaper[] = await Newspaper.find({}).exec();
       let articles: IArticle[] = [];
 

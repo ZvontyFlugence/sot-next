@@ -281,6 +281,7 @@ async function create_new_law(data: IProposeLaw): Promise<IGovActionResult> {
 }
 
 async function attack_region(data: IAttackRegion): Promise<IGovActionResult> {
+  let ret: any;
   let war: IWar = await War.findOne({ _id: data.warId }).exec();
   if (!war)
     return { status_code: 404, payload: { success: false, error: 'War Not Found' } };
@@ -321,15 +322,35 @@ async function attack_region(data: IAttackRegion): Promise<IGovActionResult> {
     end: tomorrow,
   });
 
-  let created = await battle.save();
-  if (created) {
-    // Save to War Battles List
-    let updated = await war.updateOne({ $push: { battles: created._id } })
-    if (updated)
-      return { status_code: 200, payload: { success: true, message: 'Battle Started' } };
+  const session = await War.startSession();
+  
+  try {
+    await session.withTransaction(async () => {
+      battle.$session(session);
+      let created = await battle.save();
+      if (created) {
+        // Save to War Battles List
+        let updated = await war.updateOne({ $push: { battles: created._id } }).session(session);
+        if (updated) {
+          ret = { status_code: 200, payload: { success: true, message: 'Battle Started' } };
+        } else {
+          ret = { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+          await session.abortTransaction();
+          throw new Error(ret?.payload?.error ?? 'Unknown Error');
+        }
+      } else {
+        ret = { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+        await session.abortTransaction();
+        throw new Error(ret?.payload?.error ?? 'Unknown Error');
+      }
+    });
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    await session.endSession();
+    return ret;
   }
-
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
 function validate_law(data: IProposeLaw, government: IGovernment): boolean {

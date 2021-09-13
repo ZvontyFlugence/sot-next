@@ -11,7 +11,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   
   switch (req.method) {
     case 'GET': {
+      // Ensure DB Conn
       await connectToDB();
+      
       let regions = await Region.find({}).exec();
       return res.status(200).json({ regions });
     }

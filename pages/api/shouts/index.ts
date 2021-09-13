@@ -1,7 +1,15 @@
 import Shout, { IShout } from '@/models/Shout';
 import User, { IUser } from '@/models/User';
 import { validateToken } from '@/util/auth';
+import { connectToDB } from '@/util/mongo';
 import { NextApiRequest, NextApiResponse } from 'next';
+
+interface IAuthorInfoMap {
+  [authorId: number]: {
+    username: string;
+    image: string;
+  };
+}
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const validation_res = await validateToken(req, res);
@@ -11,6 +19,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   switch (req.method) {
     case 'GET': {
+      // Ensure DB Connection
+      await connectToDB();
+
       let scope: 'global' | 'country' | 'party' | 'unit';
       let scope_id: number;
       let parent_id: number = -1;
@@ -36,7 +47,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         .sort({ timestamp: -1 })
         .limit(parent_id === -1 ? 5 : 10)
         .exec();
-      let authors: { [author_id: number]: { username: string, image: string } } = {};
+      let authors: IAuthorInfoMap = {};
 
       for (let i = 0; i < shouts.length; i++) {
         let author: IUser = await User.findOne({ _id: shouts[i].author }).exec();

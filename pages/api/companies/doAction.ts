@@ -78,7 +78,7 @@ interface IUploadLogoParams extends IBaseParams {
   image: any
 }
 
-interface IMap {
+export interface IMap {
   [key: string]: any;
 }
 

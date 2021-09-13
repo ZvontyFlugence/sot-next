@@ -1,8 +1,32 @@
 import Country, { ICountry } from "@/models/Country";
 import Party, { IParty } from "@/models/Party";
 import User, { IUser } from "@/models/User";
+import { ActionResult } from "@/util/apiHelpers";
 import { validateToken } from "@/util/auth";
-import { NextApiRequest, NextApiResponse } from "next";
+import { connectToDB } from "@/util/mongo";
+import type { NextApiRequest, NextApiResponse } from "next";
+
+interface IGetPartyRequest {
+  withLeadership: boolean,
+  withCountry: boolean,
+  id: number,
+}
+
+export interface ILeadershipInfo {
+  president?: {
+    name: string,
+    image: string,
+  },
+  vp?: {
+    name: string,
+    image: string,
+  },
+}
+
+export interface ICountryInfo {
+  name: string,
+  flag: string,
+}
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   let validation_res = await validateToken(req, res);
@@ -37,49 +61,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         return res.status(400).json({ error: 'Invalid Party ID' });
       }
 
-      let result: IGetPartyResponse = await getParty({ id: partyId, withLeadership, withCountry });
+      // Ensure DB Connection
+      await connectToDB();
+
+      let result: ActionResult = await getParty({ id: partyId, withLeadership, withCountry });
+      return res.status(result.status_code).json(result.payload);
     }
     default:
       return res.status(404).json({ error: 'Unhandled HTTP Method' });
   }
 }
 
-interface IGetPartyRequest {
-  withLeadership: boolean,
-  withCountry: boolean,
-  id: number,
-}
-
-interface IGetPartyResponse {
-  status_code: number,
-  payload: {
-    party?: IParty,
-    leadershipInfo?: ILeadershipInfo,
-    countryInfo?: ICountryInfo,
-    error?: string,
-  },
-}
-
-export interface ILeadershipInfo {
-  president?: {
-    name: string,
-    image: string,
-  },
-  vp?: {
-    name: string,
-    image: string,
-  },
-}
-
-export interface ICountryInfo {
-  name: string,
-  flag: string,
-}
-
-export async function getParty(data: IGetPartyRequest): Promise<IGetPartyResponse> {
+export async function getParty(data: IGetPartyRequest): Promise<ActionResult> {
   let party: IParty = await Party.findOne({ _id: data.id }).exec();
   if (!party)
-    return { status_code: 404, payload: { error: 'Party Not Found' } };
+    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
 
   let leadershipInfo: ILeadershipInfo = {};
   let countryInfo: ICountryInfo | {} = {};
@@ -112,7 +108,7 @@ export async function getParty(data: IGetPartyRequest): Promise<IGetPartyRespons
   if (data.withCountry) {
     let country: ICountry = await Country.findOne({ _id: party.country }).exec();
     if (!country) {
-      return { status_code: 404, payload: { error: 'Country Not Found' } };
+      return { status_code: 404, payload: { success: false, error: 'Country Not Found' } };
     } else {
       countryInfo = {
         name: country.name,
@@ -124,6 +120,7 @@ export async function getParty(data: IGetPartyRequest): Promise<IGetPartyRespons
   return {
     status_code: 200,
     payload: {
+      success: true,
       party,
       leadershipInfo: leadershipInfo === {} ? undefined : leadershipInfo,
       countryInfo: countryInfo === {} ? undefined : countryInfo as ICountryInfo,

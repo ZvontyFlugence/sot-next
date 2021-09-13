@@ -1,6 +1,7 @@
 import Newspaper, { INewspaper } from "@/models/Newspaper";
 import User, { IUser } from "@/models/User";
 import { validateToken } from "@/util/auth";
+import { connectToDB } from "@/util/mongo";
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -10,6 +11,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   switch (req.method) {
     case 'GET': {
+      // Ensure DB Connection
+      await connectToDB();
+      
       let country: number | undefined;
       try {
         if (req.query?.country)

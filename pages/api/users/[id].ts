@@ -1,16 +1,8 @@
 import User, { IUser } from "@/models/User";
+import { ActionResult, defaultActionResult } from "@/util/apiHelpers";
 import { validateToken } from "@/util/auth";
 import { connectToDB } from "@/util/mongo";
 import { NextApiRequest, NextApiResponse } from "next";
-
-interface IResult {
-  status_code: number,
-  payload: {
-    user?: IUser,
-    success?: boolean, // for updates like post/put
-    error?: string,
-  }
-}
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   let validation_res = await validateToken(req, res);
@@ -19,9 +11,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
   switch (req.method) {
     case 'GET': {
+      // Ensure DB Conn
+      await connectToDB();
+
       const { id } = req.query;
       let user_id: number;
-      let result: IResult;
+      let result: ActionResult;
       
       try {
         user_id = Number.parseInt(id as string);
@@ -37,17 +32,27 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
 }
 
-async function getUser(_id: number): Promise<IResult> {
-  await connectToDB();
-
-  let user: IUser = await User.findOne({ _id }).exec();
+async function getUser(_id: number): Promise<ActionResult> {
+  let ret: ActionResult = defaultActionResult();
   
-  if (!user) {
-    let payload = { success: false, error: 'User Not Found' };
-    return { status_code: 404, payload };
+  try {
+    let user: IUser = await User.findOne({ _id }).exec();
+    
+    if (!user) {
+      ret.status_code = 404;
+      ret.payload.error = 'User Not Found';
+      throw new Error(ret.payload.error);
+    }
+
+    // Hide User Password From Payload
+    delete user.password;
+
+    ret.status_code = 200;
+    ret.payload = { success: true, user };
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
   }
-
-  delete user.password;
-
-  return { status_code: 200, payload: { success: true, user } };
 }

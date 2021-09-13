@@ -3,6 +3,7 @@ import User, { IAlert, IUser } from '@/models/User';
 import War, { IWar } from '@/models/War';
 import { buildLevelUpAlert } from '@/util/apiHelpers';
 import { validateToken } from '@/util/auth';
+import { connectToDB } from '@/util/mongo';
 import { neededXP } from '@/util/ui';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -18,6 +19,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   switch (req.method) {
     case 'POST': {
+      // Ensure DB Conn
+      await connectToDB();
+      
       const { user_id } = validation_res;
       const { battleId } = JSON.parse(req.body) as IFightRequest;
 
@@ -55,7 +59,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       if (user.country === battle.attacker || battle.defender) {
         updates['$inc'][`patriotDmg.${user.country}`] = dmg;
         if (user.xp + 1 >= neededXP(user.level)) {
-          let alert = buildLevelUpAlert(user.level + 1);
+          let alert = await buildLevelUpAlert(user.level + 1);
           updates['$inc']['level'] = 1;
           updates['$inc']['gold'] = 5;
           updates['$push'] = { alerts: alert };

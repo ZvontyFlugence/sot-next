@@ -1,5 +1,6 @@
 import War, { IWar } from '@/models/War';
 import { validateToken } from '@/util/auth';
+import { connectToDB } from '@/util/mongo';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -9,6 +10,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   switch (req.method) {
     case 'GET': {
+      // Ensure DB Conn
+      await connectToDB();
+      
       let countryId: number = -1;
       try {
         if (req.query?.countryId)

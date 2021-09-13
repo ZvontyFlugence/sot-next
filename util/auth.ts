@@ -4,11 +4,11 @@ import { parseCookies, destroyCookie } from 'nookies';
 import { NextApiRequest, NextApiResponse } from "next";
 
 interface IDecodedToken {
-  user_id?: number,
+  user_id?: number;
 }
 
 interface IMeResponse extends Response {
-  user?: IUser,
+  user?: IUser;
 }
 
 export async function validateToken(req: NextApiRequest, res: NextApiResponse) {

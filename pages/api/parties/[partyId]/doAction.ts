@@ -2,21 +2,15 @@ import Country, { ICountry } from '@/models/Country';
 import Election, { ElectionType, ICandidate, IElection } from '@/models/Election';
 import Party, { EconomicStance, IParty, SocialStance } from '@/models/Party';
 import { PartyActions } from '@/util/actions';
+import { ActionResult, defaultActionResult } from '@/util/apiHelpers';
 import { validateToken } from '@/util/auth';
+import { connectToDB } from '@/util/mongo';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { IMap } from '../../companies/doAction';
 
 interface IPartyActionRequest {
   action: string,
   data: IUpdateLogo | IUpdateName | IUpdateStance | IEditMember | INominateCandidate | IUpdateColor
-}
-
-interface IPartyActionResponse {
-  status_code: number,
-  payload: {
-    success: boolean,
-    message?: string,
-    error?: string,
-  },
 }
 
 interface IBaseParams {
@@ -64,12 +58,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   switch (req.method) {
     case 'POST': {
+      // Ensure DB Connection
+      await connectToDB();
+
       const { action, data } = JSON.parse(req.body) as IPartyActionRequest;
       const { user_id } = validation_res;
       data.user_id = user_id;
       data.party_id = party_id;
 
-      let result: IPartyActionResponse;
+      let result: ActionResult;
 
       switch (action) {
         case PartyActions.EDIT_MEMBER: {
@@ -115,202 +112,383 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
 }
 
-async function update_econ(data: IUpdateStance): Promise<IPartyActionResponse> {
-  let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
-  if (!party)
-    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
-  else if (party.president !== data?.user_id)
-    return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
-
-  let updatedParty = await party.updateOne({ $set: { economicStance: data.value as EconomicStance } }).exec();
-  if (updatedParty)
-    return { status_code: 200, payload: { success: true, message: 'Party Stance Updated' } };
-
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
-}
-
-async function update_logo(data: IUpdateLogo): Promise<IPartyActionResponse> {
-  let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
-  if (!party)
-    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
-  else if (party.president !== data?.user_id)
-    return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
-  else if (!data.image)
-    return { status_code: 400, payload: { success: false, error: 'Invalid Base64 Image' } };
-
-  let updatedParty = await party.updateOne({ $set: { image: data.image } }).exec();
-  if (updatedParty)
-    return { status_code: 200, payload: { success: true, message: 'Party Logo Updated' } };
-
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
-}
-
-async function update_name(data: IUpdateName): Promise<IPartyActionResponse> {
-  let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
-  if (!party)
-    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
-  else if (party.president !== data?.user_id)
-    return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
-
-  let updatedParty = await party.updateOne({ $set: { name: data.name } }).exec();
-  if (updatedParty)
-    return { status_code: 200, payload: { success: true, message: 'Party Name Updated' } };
-
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
-}
-
-async function update_soc(data: IUpdateStance): Promise<IPartyActionResponse> {
-  let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
-  if (!party)
-    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
-  else if (party.president !== data?.user_id)
-    return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
-
-  let updatedParty = await party.updateOne({ $set: { socialStance: data.value as SocialStance } }).exec();
-  if (updatedParty)
-    return { status_code: 200, payload: { success: true, message: 'Party Stance Updated' } };
-
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
-}
-
-// TODO: Handle Nominating Someone After A Nominee Was Already Selected
-async function nominate_cp(data: INominateCandidate): Promise<IPartyActionResponse> {
-  let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
-  if (!party)
-    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
-  else if (party.president !== data?.user_id)
-    return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
-  else if (party.president !== data.candidateId)
-    return { status_code: 400, payload: { success: false, error: 'Candidate Cannot Be Party President' } };
-  else if (!party.members.includes(data.candidateId))
-    return { status_code: 400, payload: { success: false, error: 'Candidate Must Be A Party Member' } };
-  else if (party.cpCandidates.findIndex(can => can.id === data.candidateId) < 0)
-    return { status_code: 400, payload: { success: false, error: 'Only Candidates May Be Nominated' } };
-
-  let date: Date = new Date(Date.now());
-  let query = {
-    isActive: false,
-    isCompleted: false,
-    type: ElectionType.CountryPresident,
-    typeId: party.country,
-    month: date.getUTCDate() < 5 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1,
-    year: date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear(),
-  };
+async function update_econ(data: IUpdateStance): Promise<ActionResult> {
+  let ret: ActionResult = defaultActionResult();
   
-  let election: IElection = await Election.findOne(query).exec();
-  if (!election)
-    return { status_code: 404, payload: { success: false, error: 'Country President Election Not Found' } };
-  else if (election.candidates.findIndex(can => can.id === data.candidateId) >= 0)
-    return { status_code: 400, payload: { success: false, error: 'Candidate Is Already The Nominee' } };
-
-  let prevCandidateIndex = election.candidates.findIndex(can => can.party === party.id);
-  if (prevCandidateIndex !== -1) {
-    election.candidates.splice(prevCandidateIndex, 1);
-  }
-
-  let candidate: ICandidate = party.cpCandidates.find(can => can.id === data.candidateId);
-  election.candidates.push(candidate);
-  let updatedElection = await election.save();
-  if (updatedElection)
-    return { status_code: 200, payload: { success: true, message: 'Candidate Nominated' } };
-
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
-}
-
-async function edit_member(data: IEditMember): Promise<IPartyActionResponse> {
-  let party: IParty = await Party.findOne({ _id: data.party_id }).exec();
-  if (!party)
-    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
-  else if (party.president !== data.user_id)
-    return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
-  else if (!party.members.includes(data.memberId))
-    return { status_code: 400, payload: { success: false, error: 'User Is Not A Party Member' } };
-
-  if (party.president === data.memberId && data.role !== 'president') {
-    if (data.role === 'vp') {
-      party.president = party.vp;
-      party.vp = data.memberId;
-    } else if (data.role === 'member') {
-      party.president = party.vp;
-      party.vp = -1;
+  try {
+    let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
+    if (!party) {
+      ret.status_code = 404;
+      ret.payload.error = 'Party Not Found';
+      throw new Error(ret.payload.error);
+    } else if (party.president !== data?.user_id) {
+      ret.status_code = 403;
+      ret.payload.error = 'Unauthorized';
+      throw new Error(ret.payload.error);
     }
-  } else if (party.vp === data.memberId && data.role !== 'vp') {
-    if (data.role === 'president') {
-      party.president = party.vp;
-      party.vp = -1;
-    } else if (data.role === 'member') {
-      party.vp = -1;
+
+    let economicStance: EconomicStance = data.value as EconomicStance;
+    if (!economicStance) {
+      ret.status_code = 400;
+      ret.payload.error = 'Invalid Economic Stance';
+      throw new Error(ret.payload.error);
     }
-  } else if (data.role === 'president') {
-    party.president = data.memberId;
-  } else if (data.role === 'vp') {
-    party.vp = data.memberId;
+
+    let updatedParty = await party.updateOne({ $set: { economicStance } }).exec();
+    if (updatedParty)
+      throw new Error(ret.payload.error);
+
+    ret.status_code = 200;
+    ret.payload = { success: true, message: 'Party Stance Updated' };
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
   }
-
-  let updatedParty = await party.save();
-  if (updatedParty)
-    return { status_code: 200, payload: { success: true, message: 'Member Role Updated' } };
-  
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
 }
 
-async function nominate_congress(data: INominateCandidate): Promise<IPartyActionResponse> {
-  let party: IParty = await Party.findOne({ _id: data.party_id }).exec();
-  if (!party)
-    return { status_code: 200, payload: { success: false, message: 'Party Not Found' } };
-  else if (party.president !== data?.user_id)
-    return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
-  else if (party.president === data.candidateId)
-    return { status_code: 400, payload: { success: false, error: 'Candidate Cannot Be Party President' } };
-  else if (!party.members.includes(data.candidateId))
-    return { status_code: 400, payload: { success: false, error: 'Candidate Must Be A Party Member' } };
-  else if (party.congressCandidates.findIndex(can => can.id === data.candidateId) < 0)
-    return { status_code: 400, payload: { success: false, error: 'Only Candidates May Be Nominated' } };
+async function update_logo(data: IUpdateLogo): Promise<ActionResult> {
+  let ret: ActionResult = defaultActionResult();
 
-  let country: ICountry = await Country.findOne({ _id: party.country }).exec();
-  if (!country)
-    return { status_code: 404, payload: { success: false, error: 'Congress Election Not Found' } };
-  else if (country.government.president === data.candidateId)
-    return { status_code: 400, payload: { success: false, error: 'Candidate Cannot Be Country President' } };
-
-  let candidate: ICandidate = party.congressCandidates.find(can => can.id === data?.candidateId);
-  if (!candidate)
-    return { status_code: 404, payload: { success: false, error: 'Candidate Not Found' } };
+  try {
+    let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
+    if (!party) {
+      ret.status_code = 404;
+      ret.payload.error = 'Party Not Found';
+      throw new Error(ret.payload.error);
+    } else if (party.president !== data?.user_id) {
+      ret.status_code = 403;
+      ret.payload.error = 'Unauthorized';
+      throw new Error(ret.payload.error);
+    } else if (!data.image) {
+      ret.status_code = 400;
+      ret.payload.error = 'Invalid Base64 Image';
+      throw new Error(ret.payload.error);
+    }
   
-  let date: Date = new Date(Date.now());
-  let query = {
-    isActive: false,
-    isCompleted: false,
-    type: ElectionType.Congress,
-    typeId: candidate?.location,
-    month: date.getUTCDate() < 25 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1,
-    year: date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear(),
-  };
+    let updatedParty = await party.updateOne({ $set: { image: data.image } }).exec();
+    if (!updatedParty)
+      throw new Error(ret.payload.error);
 
-  let election: IElection = await Election.findOne(query).exec();
-  if (!election)
-    return { status_code: 404, payload: { success: false, error: 'Congress Election Not Found' } };
-  else if (election.candidates.findIndex(can => can.id === data.candidateId) >= 0)
-    return { status_code: 400, payload: { success: false, error: 'Candidate Is Already A Nominee' } };
-
-  election.candidates.push(candidate);
-  let updatedElection = await election.save();
-  if (updatedElection)
-    return { status_code: 200, payload: { success: true, message: 'Candidate Nominated' } };
-
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+    ret.status_code = 200;
+    ret.payload = { success: true, message: 'Party Logo Updated' };
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
+  }
 }
 
-async function update_color(data: IUpdateColor): Promise<IPartyActionResponse> {
-  let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
-  if (!party)
-    return { status_code: 404, payload: { success: false, error: 'Party Not Found' } };
-  else if (party.president !== data?.user_id)
-    return { status_code: 403, payload: { success: false, error: 'Unauthorized' } };
+async function update_name(data: IUpdateName): Promise<ActionResult> {
+  let ret: ActionResult = defaultActionResult();
 
-  let updatedParty = await party.updateOne({ $set: { color: data.color } }).exec();
-  if (updatedParty)
-    return { status_code: 200, payload: { success: true, message: 'Party Color Updated' } };
+  try {
+    let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
+    if (!party) {
+      ret.status_code = 404;
+      ret.payload.error = 'Party Not Found';
+      throw new Error(ret.payload.error);
+    } else if (party.president !== data?.user_id) {
+      ret.status_code = 403;
+      ret.payload.error = 'Unauthorized';
+      throw new Error(ret.payload.error);
+    }
 
-  return { status_code: 500, payload: { success: false, error: 'Something Went Wrong' } };
+    let exists = await Party.find({ country: party.country, name: data.name }).exec();
+    if (exists && exists.length > 0) {
+      ret.status_code = 400;
+      ret.payload.error = 'Party Name Already Taken';
+      throw new Error(ret.payload.error);
+    }
+
+    let updatedParty = await party.updateOne({ $set: { name: data.name } }).exec();
+    if (updatedParty)
+      throw new Error(ret.payload.error);
+
+    ret.status_code = 200;
+    ret.payload = { success: true, message: 'Party Name Updated' };
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
+  }
+}
+
+async function update_soc(data: IUpdateStance): Promise<ActionResult> {
+  let ret: ActionResult = defaultActionResult();
+
+  try {
+    let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
+    if (!party) {
+      ret.status_code = 404;
+      ret.payload.error = 'Party Not Found';
+      throw new Error(ret.payload.error);
+    } else if (party.president !== data?.user_id) {
+      ret.status_code = 403;
+      ret.payload.error = 'Unauthorized';
+      throw new Error(ret.payload.error);
+    }
+    
+    let socialStance: SocialStance = data.value as SocialStance;
+    if (!socialStance) {
+      ret.status_code = 400;
+      ret.payload.error = 'Invalid Social Stance';
+      throw new Error(ret.payload.error);
+    }
+
+    let updatedParty = await party.updateOne({ $set: { socialStance } }).exec();
+    if (updatedParty)
+      throw new Error(ret.payload.error);
+
+    ret.status_code = 200;
+    ret.payload = { success: true, message: 'Party Stance Updated' };
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
+  }
+}
+
+async function nominate_cp(data: INominateCandidate): Promise<ActionResult> {
+  let ret: ActionResult = defaultActionResult();
+
+  try {
+    let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
+    if (!party) {
+      ret.status_code = 404;
+      ret.payload.error = 'Party Not Found';
+      throw new Error(ret.payload.error);
+    } else if (party.president !== data?.user_id) {
+      ret.status_code = 403;
+      ret.payload.error = 'Unauthorized';
+      throw new Error(ret.payload.error);
+    } else if (party.president !== data.candidateId) {
+      ret.status_code = 400;
+      ret.payload.error = 'Candidate Cannot Be Party President';
+      throw new Error(ret.payload.error);
+    } else if (!party.members.includes(data.candidateId)) {
+      ret.status_code = 400;
+      ret.payload.error = 'Candidate Must Be A Party Member';
+      throw new Error(ret.payload.error);
+    }
+    
+    let candidate: ICandidate = party.cpCandidates.find(can => can.id === data.candidateId)
+    if (!candidate) {
+      ret.status_code = 404;
+      ret.payload.error = 'Candidate Not Found';
+      throw new Error(ret.payload.error);
+    }
+
+    let date: Date = new Date(Date.now());
+    let query = {
+      isActive: false,
+      isCompleted: false,
+      type: ElectionType.CountryPresident,
+      typeId: party.country,
+      month: date.getUTCDate() < 5 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1,
+      year: date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear(),
+    };
+    
+    let election: IElection = await Election.findOne(query).exec();
+    if (!election) {
+      ret.status_code = 404;
+      ret.payload.error = 'Country President Election Not Found';
+      throw new Error(ret.payload.error);
+    } else if (election.candidates.findIndex(can => can.id === data.candidateId) >= 0) {
+      ret.status_code = 400;
+      ret.payload.error = 'Candidate Is Already The Nominee';
+      throw new Error(ret.payload.error);
+    }
+
+    let updates: IMap = {};
+
+    let prevCandidateIndex = election.candidates.findIndex(can => can.party === party.id);
+    if (prevCandidateIndex !== -1) {
+      updates['$pull'] = { candidates: { party: party.id } };
+    }
+
+    updates['$addToSet'] = { candidates: candidate };
+    let updatedElection = await election.updateOne(updates).exec();
+    if (!updatedElection)
+      throw new Error(ret.payload.error);
+
+    ret.status_code = 200;
+    ret.payload = { success: true, message: 'CP Candidate Nominated' };
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
+  }
+}
+
+async function edit_member(data: IEditMember): Promise<ActionResult> {
+  let ret: ActionResult = defaultActionResult();
+
+  try {
+    let party: IParty = await Party.findOne({ _id: data.party_id }).exec();
+    if (!party) {
+      ret.status_code = 404;
+      ret.payload.error = 'Party Not Found';
+      throw new Error(ret.payload.error);
+    } else if (party.president !== data.user_id) {
+      ret.status_code = 403;
+      ret.payload.error = 'Unauthorized';
+      throw new Error(ret.payload.error);
+    } else if (!party.members.includes(data.memberId)) {
+      ret.status_code = 400;
+      ret.payload.error = 'User Is Not A Party Member';
+      throw new Error(ret.payload.error);
+    }
+
+    let updates: IMap = {};
+    if (party.president === data.memberId && data.role !== 'president') {
+      if (data.role === 'vp')
+        updates = { $set: { president: party.vp, [data.role]: data.memberId } };
+      else if (data.role === 'member')
+        updates = { $set: { president: party.vp, vp: -1 } };
+    } else if (party.vp === data.memberId && data.role !== 'vp') {
+      if (data.role === 'president')
+        updates = { $set: { [data.role]: party.vp, vp: -1 } };
+      else if (data.role === 'member')
+        updates = { $set: { vp: -1 } };
+    } else if (data.role === 'president' || data.role === 'vp') {
+      updates = { $set: { [data.role]: data.memberId } };
+    }
+
+    if (!updates['$set']) {
+      ret.status_code = 400;
+      ret.payload.error = 'Invalid Role Update';
+      throw new Error(ret.payload.error);
+    }
+
+    let updatedParty = await party.updateOne(updates).exec();
+    if (!updatedParty) {
+      throw new Error(ret.payload.error);
+    }
+
+    ret.status_code = 200;
+    ret.payload = { success: true, message: 'Member Role Updated' };
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
+  }
+}
+
+async function nominate_congress(data: INominateCandidate): Promise<ActionResult> {
+  let ret: ActionResult = defaultActionResult();
+
+  try {
+    let party: IParty = await Party.findOne({ _id: data.party_id }).exec();
+    if (!party) {
+      ret.status_code = 404;
+      ret.payload.error = 'Party Not Found';
+      throw new Error(ret.payload.error);
+    } else if (party.president !== data?.user_id) {
+      ret.status_code = 403;
+      ret.payload.error = 'Unauthorized';
+      throw new Error(ret.payload.error);
+    } else if (party.president === data.candidateId) {
+      ret.status_code = 400;
+      ret.payload.error = 'Candidate Cannot Be Party President';
+      throw new Error(ret.payload.error);
+    } else if (!party.members.includes(data.candidateId)) {
+      ret.status_code = 400;
+      ret.payload.error = 'Candidate Must Be A Party Member';
+      throw new Error(ret.payload.error);
+    }
+    
+    let candidate: ICandidate = party.congressCandidates.find(can => can.id === data?.candidateId);
+    if (!candidate) {
+      ret.status_code = 404;
+      ret.payload.error = 'Candidate Not Found';
+      throw new Error(ret.payload.error);
+    }
+
+    let country: ICountry = await Country.findOne({ _id: party.country }).exec();
+    if (!country) {
+      ret.status_code = 404;
+      ret.payload.error = 'Party Country Not Found';
+      throw new Error(ret.payload.error);
+    } else if (country.government.president === data.candidateId) {
+      ret.status_code = 400;
+      ret.payload.error = 'Candidate Cannot Be Country President';
+      throw new Error(ret.payload.error);
+    }
+
+    let date: Date = new Date(Date.now());
+    let query = {
+      isActive: false,
+      isCompleted: false,
+      type: ElectionType.Congress,
+      typeId: candidate?.location,
+      month: date.getUTCDate() < 25 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1,
+      year: date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear(),
+    };
+
+    let election: IElection = await Election.findOne(query).exec();
+    if (!election) {
+      ret.status_code = 404;
+      ret.payload.error = 'Congress Election Not Found';
+      throw new Error(ret.payload.error);
+    } else if (election.candidates.findIndex(can => can.id === data.candidateId) >= 0) {
+      ret.status_code = 400;
+      ret.payload.error = 'Candidate Is Already A Nominee';
+      throw new Error(ret.payload.error);
+    }
+
+    let updates: IMap = { '$addToSet': { candidates: candidate } };
+    let updatedElection = await election.updateOne(updates).exec();
+    if (!updatedElection)
+      throw new Error(ret.payload.error);
+    
+    ret.status_code = 200;
+    ret.payload = { success: true, message: 'Congress Candidate Nominated' };
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
+  }
+}
+
+async function update_color(data: IUpdateColor): Promise<ActionResult> {
+  let ret: ActionResult = defaultActionResult();
+  
+  try {
+    let party: IParty = await Party.findOne({ _id: data?.party_id }).exec();
+    if (!party) {
+      ret.status_code = 404;
+      ret.payload.error = 'Party Not Found';
+      throw new Error(ret.payload.error);
+    } else if (party.president !== data?.user_id) {
+      ret.status_code = 403;
+      ret.payload.error = 'Unauthorized';
+      throw new Error(ret.payload.error);
+    }
+
+    if (data.color.indexOf('#') !== 0 || data.color.length !== 7) {
+      ret.status_code = 400;
+      ret.payload.error = 'Invalid Hex Color Format';
+      throw new Error(ret.payload.error);
+    }
+  
+    let updatedParty = await party.updateOne({ $set: { color: data.color } }).exec();
+    if (!updatedParty)
+      throw new Error(ret.payload.error);
+
+    ret.status_code = 200;
+    ret.payload = { success: true, message: 'Party Color Updated' };
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
+    return ret;
+  }
 }
