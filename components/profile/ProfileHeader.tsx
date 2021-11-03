@@ -99,10 +99,10 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
             </h3>
             <p className='flex flex-row items-center mt-4'>
               <span className='mr-2'>Location:</span>
-              <span className='cursor-pointer mr-2' onClick={() => router.push(`/region/${profile.location}`)}>
+              <span className='mr-2 link' onClick={() => router.push(`/region/${profile.location}`)}>
                 {locationInfo.region_name},
               </span>
-              <span className='cursor-pointer' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
+              <span className='link' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
                 {locationInfo.owner_name}
                 <i className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
               </span>

@@ -1,3 +1,4 @@
+import { IMap } from "@/pages/api/companies/doAction";
 import { NextRouter } from "next/router";
 
 export function neededXP(level: number) {
@@ -33,6 +34,16 @@ export interface IRankingType {
 
 export interface IRegionSet {
   [regionID: number]: string;
+}
+
+export interface INatFocusTypes {
+  [focusName: string]: INatFocus;
+}
+
+export interface INatFocus {
+  name: string;
+  icon: string;
+  modifiers: IMap;
 }
 
 interface IRequestOpts {

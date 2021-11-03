@@ -133,10 +133,10 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
           {(!locationQuery.isLoading && !locationQuery.isError) && (
             <div className='flex justify-between mt-4'>
               <p>
-                <span className='cursor-pointer' onClick={() => router.push(`/region/${user.location}`)}>
+                <span className='link' onClick={() => router.push(`/region/${user.location}`)}>
                   {locationQuery.data.locationInfo.region_name}
                 </span>,&nbsp;
-                <span className='cursor-pointer' onClick={() => router.push(`/country/${locationQuery.data.locationInfo.owner_id}`)}>
+                <span className='link' onClick={() => router.push(`/country/${locationQuery.data.locationInfo.owner_id}`)}>
                   {locationQuery.data.locationInfo.owner_name}
                 </span>
               </p>

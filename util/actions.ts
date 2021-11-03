@@ -78,7 +78,8 @@ export const PartyActions = {
 export const GovActions = {
   ATTACK: 'attack', // In Progress
   PROPOSE_LAW: 'propose_law', // Implemented
-  RESIGN: 'resign',
-  RETREAT: 'retreat',
+  RESIGN: 'resign', // TODO
+  RETREAT: 'retreat', // TODO
+  SET_NATIONAL_FOCUS: 'set_nat_foc', // In Progress
   VOTE_LAW: 'vote_law', // Implemented
 }

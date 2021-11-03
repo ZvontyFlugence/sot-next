@@ -1,12 +1,14 @@
 import { GovActions } from '@/util/actions';
 import { validateToken } from '@/util/auth';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { LawType } from '@/util/apiHelpers';
+import { ActionResult, defaultActionResult, LawType } from '@/util/apiHelpers';
 import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICountry, IEmbargo, IGovernment, IImpeachCP, ILaw, ILawVote, IPeaceTreaty, IPrintMoney, ISetMinWage } from '@/models/Country';
 import User, { IAlert, IUser } from '@/models/User';
 import War, { IWar } from '@/models/War';
 import Region, { IRegion } from '@/models/Region';
 import Battle, { IBattle } from '@/models/Battle';
+import { AlertTypes } from '@/util/constants';
+import { IMap } from '../../companies/doAction';
 
 interface IGovActionRequest {
   action: string;
@@ -48,6 +50,10 @@ interface IAttackRegion extends IBaseParams {
   targetRegion: number;
 }
 
+interface ISetNatFocus extends IBaseParams {
+  focus_id?: string;
+}
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const validation_res = await validateToken(req, res);
   if (validation_res?.error)
@@ -81,6 +87,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
         case GovActions.RESIGN: {
           let result = await resign(data as IResign);
+          return res.status(result.status_code).json(result.payload);
+        }
+        case GovActions.SET_NATIONAL_FOCUS: {
+          let result = await set_national_focus(data as ISetNatFocus);
           return res.status(result.status_code).json(result.payload);
         }
         case GovActions.VOTE_LAW: {
@@ -138,8 +148,12 @@ async function propose_law(data: IProposeLaw): Promise<IGovActionResult> {
           ...target.congress.map(mem => mem.id),
         ];
 
+        const { randomBytes } = await import('crypto');
+        const buf = await randomBytes(10);
+
         const alert: IAlert = {
-          type: 'LAW_PROPOSED',
+          id: buf.toString('hex'),
+          type: AlertTypes.LAW_PROPOSED,
           read: false,
           message: 'A New Law Has Been Proposed!',
           timestamp: new Date(Date.now()),
@@ -175,8 +189,12 @@ async function propose_law(data: IProposeLaw): Promise<IGovActionResult> {
           ...target.congress.map(mem => mem.id),
         ];
 
+        const { randomBytes } = await import('crypto');
+        const buf = await randomBytes(10);
+
         const alert: IAlert = {
-          type: 'LAW_PROPOSED',
+          id: buf.toString('hex'),
+          type: AlertTypes.LAW_PROPOSED,
           read: false,
           message: 'A New Law Has Been Proposed!',
           timestamp: new Date(Date.now()),
@@ -206,9 +224,13 @@ async function propose_law(data: IProposeLaw): Promise<IGovActionResult> {
           ...Object.values(country.government.cabinet),
           ...government.congress.map(mem => mem.id)
         ];
+
+        const { randomBytes } = await import('crypto');
+        const buf = await randomBytes(10);
     
         const alert: IAlert = {
-          type: 'LAW_PROPOSED',
+          id: buf.toString('hex'),
+          type: AlertTypes.LAW_PROPOSED,
           read: false,
           message: 'A New Law Has Been Proposed!',
           timestamp: new Date(Date.now()),
@@ -349,6 +371,38 @@ async function attack_region(data: IAttackRegion): Promise<IGovActionResult> {
     console.error(e);
   } finally {
     await session.endSession();
+    return ret;
+  }
+}
+
+async function set_national_focus(data: ISetNatFocus): Promise<IGovActionResult> {
+  const ret: ActionResult = defaultActionResult();
+
+  try {
+    const country: ICountry = await Country.findOne({ _id: data.country_id }).exec();
+    if (!country) {
+      ret.status_code = 404;
+      ret.payload.error = 'Country Not Found';
+      throw new Error(ret.payload.error);
+    } else if (country.government.president !== data.user_id) {
+      ret.status_code = 403;
+      ret.payload.error = 'Forbidden';
+      throw new Error(ret.payload.error);
+    }
+
+    let update: IMap = {
+      $set: { 'policy.national_focus': data.focus_id ?? null },
+    };
+    let updated = await country.updateOne(update).exec();
+    if (!updated)
+      throw new Error(ret.payload.error);
+
+    ret.status_code = 200;
+    ret.payload = { success: true, message: 'Country National Focus Updated' };
+  } catch (e: any) {
+    // Temp logging
+    console.error(e);
+  } finally {
     return ret;
   }
 }

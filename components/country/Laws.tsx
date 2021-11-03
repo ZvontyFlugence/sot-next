@@ -32,7 +32,6 @@ import PrintMoneyLawForm from './laws/PrintMoneyLawForm';
 import MinWageLawForm from './laws/MinWageLawForm';
 import EmbargoLawForm from './laws/EmbargoLawForm';
 import AllianceLawForm from './laws/AllianceLawForm';
-import { formatDistanceStrict } from 'date-fns';
 import DoWLawForm from './laws/DoWLawForm';
 import TreatyLawForm from './laws/TreatyLawForm';
 
@@ -242,57 +241,6 @@ const LawsTab: React.FC<ILawsTab> = ({ country, user }) => {
         >
           Propose Law
         </Button>
-      </div>
-      <h4 className='text-lg mt-4 mb-2 text-center'>Current Policies</h4>
-      <div className='flex md:flex-row flex-col items-start justify-center md:gap-24 gap-8'>
-        <div className='flex flex-col align-start gap-2'>
-          <p>Government Type: <span className='capitalize'>{country.policies.governmentType}</span></p>
-          <p>Minimum Wage: {country.policies.minWage.toFixed(2)} <i className={`flag-icon flag-icon-${country.flag_code} rounded shadow-md`} /> {country.currency}</p>
-          <p>Income Tax: {country.policies.taxes.income}%</p>
-          
-        </div>
-        <div className='flex flex-col align-start gap-2'>
-          <div>
-            Import Tax:
-            {getUniqueItems().map((item: IGameItem, i: number) => (
-              <p key={i} className='flex justify-start items-center'>
-                <span className='flex items-center gap-2'>
-                  <i className={`sot-icon ${item?.image}`} title={item?.name} />
-                  {item?.name}
-                </span>
-                <span className='ml-2'>{(country.policies.taxes?.import && country.policies.taxes.import[item?.id]) || 0}%</span>
-              </p>
-            ))}
-          </div>
-        </div>
-        <div className='flex flex-col align-start gap-2'>
-          <div>
-              Value-Added Tax:
-              {getUniqueItems().map((item: IGameItem, i: number) => (
-                <p key={i} className='flex items-center'>
-                  <span className='flex items-center gap-2'>
-                    <i className={`sot-icon ${item?.image}`} title={item?.name} />
-                    {item?.name}
-                  </span>
-                  <span className='ml-2'>{(country.policies.taxes?.vat && country.policies.taxes.vat[item?.id]) || 0}%</span>
-                </p>
-              ))}
-            </div>
-        </div>
-        <div className='flex flex-col align-start gap-2'>
-          <p>Embargoes:</p>
-          <div>
-            {country.policies.embargos.map((embargo: IEmbargo, i: number) => (
-              <div key={i} className='flex justify-between items-center'>
-                <p className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/country/${embargo.country}`)}>
-                  <i className={`flag-icon flag-icon-${countries[embargo.country - 1]?.flag_code} rounded shadow-md`} />
-                  {countries[embargo.country - 1]?.name}
-                </p>
-                <span className='ml-8 text-gray-300 text-sm'>{formatDistanceStrict(new Date(embargo?.expires), new Date(Date.now()))}</span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
       <h4 className='text-lg mt-4 mb-2 text-center'>Pending Laws</h4>
       <div className='flex flex-col justify-center items-center gap-2'>

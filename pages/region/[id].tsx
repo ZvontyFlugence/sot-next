@@ -1,4 +1,5 @@
 import Layout from "@/components/Layout";
+import RegionHead from "@/components/region/RegionHead";
 import Region, { IRegion } from "@/models/Region";
 import { IUser } from "@/models/User";
 import { jsonify } from "@/util/apiHelpers";
@@ -11,10 +12,12 @@ interface IRegionPage {
   region: IRegion,
 }
 
-const RegionPage: React.FC<IRegionPage> = ({ user, region, ...props }) => {
-  return user ? (
-    <Layout user={user}>
-      
+const RegionPage: React.FC<IRegionPage> = (props: IRegionPage) => {
+  return props.user ? (
+    <Layout user={props.user}>
+      <div className='hidden md:block px-24'>
+        <RegionHead {...props} />
+      </div>
     </Layout>
   ) : null;
 }

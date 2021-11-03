@@ -1,7 +1,7 @@
 import Country, { ICountry } from '@/models/Country';
 import Election, { ElectionType, ICandidate, IElection } from '@/models/Election';
 import Region from '@/models/Region';
-import User, { IUser } from '@/models/User';
+import User, { IAlert, IUser } from '@/models/User';
 import { connectToDB } from '@/util/mongo';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -60,7 +60,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           // Update Winners with alert and gold
           for (let winner of election.winner) {
             let { locationName } = election.candidates.find(can => can.id === winner);
-            let alert = {
+            const { randomBytes } = await import('crypto');
+            const buf = await randomBytes(10);
+
+            let alert: IAlert = {
+              id: buf.toString('hex'),
               read: false,
               type: 'ELECTED_CONGRESS',
               message: `You have been elected to Congress as a representative of ${locationName} and awarded 5 gold`,

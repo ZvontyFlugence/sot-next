@@ -2,7 +2,7 @@ import Election, { ElectionType, IElection } from "@/models/Election";
 import Party, { IParty } from "@/models/Party";
 import Region, { IRegion } from "@/models/Region";
 import { connectToDB } from "@/util/mongo";
-import { Types } from 'mongoose';
+import { Types, UpdateWriteOpResult } from 'mongoose';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -15,11 +15,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       await connectToDB();
 
       // Clear all party congress candidates
-      let parties: IParty[] = await Party.find({}).exec();
-
-      for (let party of parties) {
-        party.congressCandidates = [];
-        party.save();
+      let updatedParties: UpdateWriteOpResult = await Party.updateMany({}, { $set: { congressCandidates: [] } }).exec();
+      if (!updatedParties || !updatedParties.ok) {
+        return res.status(500).json({ success: false, error: 'Something Went Wrong' });
       }
 
       // Create new inactive, uncompleted elections for every country

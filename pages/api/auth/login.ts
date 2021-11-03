@@ -4,11 +4,18 @@ import bcrypt from "bcrypt";
 import jwt from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from "next";
 
+interface ILoginRequestBody {
+  email: string;
+  password: string;
+  ip: string;
+}
+
 // TODO: Handle expired tokens to refresh them
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   switch (req.method) {
     case 'POST': {
-      const { email, password, ip } = JSON.parse(req.body);
+      const { email, password, ip } = JSON.parse(req.body) as ILoginRequestBody;
+
       // Connect To DB
       await connectToDB();
 

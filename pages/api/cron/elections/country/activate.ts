@@ -1,5 +1,8 @@
 import Election, { ElectionType } from '@/models/Election';
+import Party from '@/models/Party';
+import { IMap } from '@/pages/api/companies/doAction';
 import { connectToDB } from '@/util/mongo';
+import { UpdateWriteOpResult } from 'mongoose';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -16,7 +19,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       let month: number = date.getUTCDate() <= 5 ? date.getUTCMonth() + 1 : ((date.getUTCMonth() + 1) % 12) + 1;
       let year: number = date.getUTCDate() > 5 && date.getUTCMonth() === 11 ? date.getUTCFullYear() + 1 : date.getUTCFullYear();
 
-      const update = {
+      const update: IMap = {
         query: {
           type: ElectionType.CountryPresident,
           month,
@@ -29,7 +32,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         },
       };
 
-      // TODO: Update all political parties to clear their candidate list (if not already done by now?)
+      let updatedParties: UpdateWriteOpResult = await Party.updateMany({ $set: { cpCandidates: [] } });
+      if (!updatedParties || !updatedParties.ok) {
+        return res.status(500).json({ success: false, error: 'Something Went Wrong' });
+      }
 
       const updated = await Election.updateMany(update.query, update.changes).exec();
       

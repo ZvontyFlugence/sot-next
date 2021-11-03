@@ -127,7 +127,6 @@ export const getServerSideProps = async ctx => {
     owner_flag: owner.flag_code,
   }
 
-  // TODO: Add Job, Party, Army, and Newspaper Info
   let job_info: IActivityInfo = null;
   let party_info: IActivityInfo = null;
   let army_info: IActivityInfo = null;
@@ -182,6 +181,7 @@ export const getServerSideProps = async ctx => {
     };
   }
 
+  // TODO: Implement
   if (profile.unit > 0) {
 
   }

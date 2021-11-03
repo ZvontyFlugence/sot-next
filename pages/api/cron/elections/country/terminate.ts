@@ -1,7 +1,7 @@
 import Country, { ElectionSystem, ICountry } from '@/models/Country';
 import Election, { ECVote, ElectionType, IElection, IVoteObject } from '@/models/Election';
 import Region, { IRegion } from '@/models/Region';
-import User, { IUser } from '@/models/User';
+import User, { IAlert, IUser } from '@/models/User';
 import { getDemographics } from '@/pages/api/countries/[id]/demographics';
 import { roundMoney } from '@/util/apiHelpers';
 import { connectToDB } from '@/util/mongo';
@@ -168,7 +168,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           election.regionTallies = election.system === ElectionSystem.ElectoralCollege ? regionTallies : undefined;
 
           // Update User with alert and gold
-          let alert = {
+          const { randomBytes } = await import('crypto');
+          const buf = await randomBytes(10);
+
+          let alert: IAlert = {
+            id: buf.toString('hex'),
             read: false,
             type: 'ELECTED_CP',
             message: 'You have been elected as Country President and awarded 5 Gold!',

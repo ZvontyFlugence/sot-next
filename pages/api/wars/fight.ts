@@ -11,6 +11,11 @@ interface IFightRequest {
   battleId: string;
 }
 
+export enum BATTLE_SIDE {
+  ATTACKING = 'attackers',
+  DEFENDING = 'defenders',
+}
+
 // TODO: Take into account national buffs and debuffs
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   let validation_res = await validateToken(req, res);
@@ -41,11 +46,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         return res.status(400).json({ error: 'You Must Be Located In Battle Region To Fight' });
 
       // Figure out what side user is fighting on
-      let side: 'attackers' | 'defenders';
+      let side: BATTLE_SIDE;
       if (war.sourceAllies.includes(user.country))
-        side = 'attackers';
+        side = BATTLE_SIDE.ATTACKING;
       else
-        side = 'defenders';
+        side = BATTLE_SIDE.DEFENDING;
 
       // Calculate Damage
       // TODO: Check if opposing country is the natural enemy of your country
@@ -81,7 +86,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         updates['$pull'] = { [`stats.recentHits.${side}`]: { $each: recentsToRemove } };
       }
 
-      if (!battle.stats[side][user._id])
+      if (!battle.stats[side])
+        updates['$set'] = { [`stats.${side}`]: { [user._id]: { country: user.country, damage: dmg } } };
+      else if (!battle.stats[side][user._id])
         updates['$set'] = { [`stats.${side}.${user._id}`]: { country: user.country, damage: dmg } };
       else
         updates['$inc'][`stats.${side}.${user._id}.damage`] = dmg;

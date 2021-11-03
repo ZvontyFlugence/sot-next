@@ -1539,6 +1539,7 @@ async function create_news(data: ICreateNewspaper): Promise<ActionResult> {
   }
 }
 
+// TODO: Not finding newspaper, thus cannot like article
 async function like_article(data: ILikeArticle): Promise<ActionResult> {
   let ret: ActionResult = defaultActionResult();
 
@@ -1567,7 +1568,7 @@ async function like_article(data: ILikeArticle): Promise<ActionResult> {
       updates['$pull'] = { 'articles.$.likes': data.user_id };
 
     let updated = await Newspaper.updateOne(query, updates).exec();
-    if (!updated) {
+    if (!updated || updated.nModified === 0) {
       throw new Error(ret.payload.error);
     }
 

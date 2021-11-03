@@ -97,6 +97,16 @@ h1, h2, h3, h4, h5, .h-brand {
   cursor: pointer;
 }
 
+.link {
+  color: white;
+}
+
+.link:hover {
+  color:hsla(176, 57%, 58%, 1);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .react-contexify__theme--brand {
   background-color: hsla(258, 14%, 20%, 1) !important;
 }

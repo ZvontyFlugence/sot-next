@@ -2,6 +2,7 @@ import Country, { IAlly, IChangeImportTax, IChangeIncomeTax, IChangeVATTax, ICou
 import User, { IAlert } from '@/models/User';
 import War from '@/models/War';
 import { LawType, roundMoney } from '@/util/apiHelpers';
+import { AlertTypes } from '@/util/constants';
 import { connectToDB } from '@/util/mongo';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -19,7 +20,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
       await session.withTransaction(async () => {
         let date: Date = new Date(Date.now());
-        let countries: ICountry[] = await Country.find({ pendingLaws: { $exists: true, $ne: [] }});
+        let countries: ICountry[] = await Country.find({ pendingLaws: { $exists: true, $ne: [] }}).session(session);
         let updates: { [key: string]: any } = {};
 
         return await Promise.all(countries.map(async (country: ICountry) => {
@@ -74,7 +75,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                       targetAllies: [targetCountry._id, ...targetCountry.policies.allies.map(ally => ally.country)],
                     });
 
-                    newWar.save();
+                    await newWar.save({ session });
                     break;
                   }
                   case LawType.EMBARGO: {
@@ -99,14 +100,18 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                     updates['government.president'] = replacement;
                     updates['government.vp'] = null;
 
+                    const { randomBytes } = await import('crypto');
+                    const buf = await randomBytes(10);
+
                     let alert: IAlert = {
-                      type: 'IMPEACHED',
+                      id: buf.toString('hex'),
+                      type: AlertTypes.IMPEACHED,
                       read: false,
                       message: 'You\'ve been impeached and removed from your position as Country President',
                       timestamp: new Date(Date.now()),
                     };
 
-                    await User.updateOne({ _id: country.government.president }, { $push: { alerts: alert } });
+                    await User.updateOne({ _id: country.government.president }, { $push: { alerts: alert } }).session(session);
                     break;
                   }
                   case LawType.INCOME_TAX: {
@@ -128,7 +133,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
                     // TODO: Ensure both countries accept the treaty
                     // Delete War Record in DB where source === country._id AND target === target.country
-                    await War.deleteOne({ source: country._id, target: target.country });
+                    await War.deleteOne({ source: country._id, target: target.country }).session(session);
                     break;
                   }
                   case LawType.PRINT_MONEY: {
@@ -169,11 +174,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
               pastLaws: country.pastLaws,
               ...updates,
             },
-          });
+          }).session(session);
         }));
       });
 
-      session.endSession();
+      await session.endSession();
 
       return res.status(200).json({ success: true });
     }

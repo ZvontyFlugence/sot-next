@@ -1,6 +1,7 @@
 import Election, { ElectionType, IElection } from '@/models/Election';
 import Party from '@/models/Party';
-import User, { IUser } from '@/models/User';
+import User, { IAlert, IUser } from '@/models/User';
+import { IMap } from '@/pages/api/companies/doAction';
 import { connectToDB } from '@/util/mongo';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -17,7 +18,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
       await session.withTransaction(async () => {
         let date: Date = new Date(Date.now());
-        const query = {
+        const query: IMap = {
           month: date.getUTCMonth() + 1,
           year: date.getUTCFullYear(),
           isActive: true,
@@ -62,7 +63,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           // Update user with alert and gold
           if (election.winner !== null) {
             let { partyName } = election.candidates.find(can => can.id === election.winner);
-            let alert = {
+            const { randomBytes } = await import('crypto');
+            const buf = await randomBytes(10);
+
+            let alert: IAlert = {
+              id: buf.toString('hex'),
               read: false,
               type: 'ELECTED_PP',
               message: `You have been elected as Party President of ${partyName} and awarded 5 gold`,

@@ -1,4 +1,5 @@
 import Election, { ElectionType } from "@/models/Election";
+import { IMap } from "@/pages/api/companies/doAction";
 import { connectToDB } from "@/util/mongo";
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -14,7 +15,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       // Update every inactive, uncompleted congress election to be active
       let date: Date = new Date(Date.now());
 
-      const update = {
+      const update: IMap = {
         query: {
           type: ElectionType.Congress,
           month: date.getUTCMonth() + 1,

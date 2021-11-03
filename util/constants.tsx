@@ -1,4 +1,4 @@
-import { IGameItem, IRankingTypeMap } from "./ui";
+import { IGameItem, INatFocusTypes, IRankingTypeMap } from "./ui";
 
 // Different Types of Companies That Can Be Create
 export const COMPANY_TYPES = [
@@ -36,6 +36,26 @@ export const ITEMS: IGameItem[] = [
   { id: 10, name: 'Bread', quality: 5, image: 'sot-icon sot-bread' },
 ];
 
+// National Focus Types
+// TODO: Figure out modifiers for focuses
+export const NATIONAL_FOCUS_TYPES: INatFocusTypes = {
+  'OFFENSIVE': {
+    name: 'Offensive Focus',
+    icon: '',
+    modifiers: {},
+  },
+  'DEFENSIVE': {
+    name: 'Defensive Focus',
+    icon: '',
+    modifiers: {},
+  },
+  'ECONOMIC': {
+    name: 'Economic Focus',
+    icon: '',
+    modifiers: {},
+  }
+}
+
 // Ranking Types
 export const RANKING_TYPES: IRankingTypeMap = {
   'country': {
@@ -72,6 +92,9 @@ export const CitizenStats = {
 
 // Alert Types
 export const AlertTypes = {
+  BATTLE_HERO: 'battle_hero',
+  IMPEACHED: 'impeached',
+  LAW_PROPOSED: 'law_proposed',
   LEVEL_UP: 'level_up',
   SEND_FR: 'send_fr',
 };
