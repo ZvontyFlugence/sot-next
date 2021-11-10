@@ -8,6 +8,7 @@ import War, { IWar } from '@/models/War';
 import { jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
 import { IRegionSet } from '@/util/ui';
+import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie } from 'nookies';
 
@@ -75,7 +76,7 @@ export default function WarPage({ user, war, battles, countries, ...props }: IWa
   ) : null;
 }
 
-export const getServerSideProps = async (ctx) => {
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
   let { req, res, params } = ctx;
   
   let result = await getCurrentUser(req);

@@ -10,6 +10,7 @@ import { UserActions } from "@/util/actions";
 import { refreshData, request, showToast } from "@/util/ui";
 import { useRouter } from "next/router";
 import { useToast } from "@chakra-ui/toast";
+import { GetServerSideProps } from "next";
 
 interface ICreateNewspaperProps {
   user: IUser,
@@ -69,7 +70,7 @@ const CreateNewspaper: React.FC<ICreateNewspaperProps> = ({ user, ...props }) =>
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req } = ctx;
 
   let result = await getCurrentUser(req);

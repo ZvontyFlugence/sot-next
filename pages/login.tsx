@@ -11,6 +11,7 @@ import { useMutation, UseMutationResult } from 'react-query';
 import { setCookie } from 'nookies';
 import { getCurrentUser } from '@/util/auth';
 import { IUser } from "@/models/User";
+import { GetServerSideProps } from "next";
 
 interface ILoginProps {
   user: IUser,
@@ -103,7 +104,7 @@ export default function Login(props: ILoginProps) {
   );
 }
 
-export const getServerSideProps = async (ctx) => {
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const { req } = ctx;
 
   let result = await getCurrentUser(req);

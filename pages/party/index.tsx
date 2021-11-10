@@ -9,6 +9,7 @@ import { FormControl, FormLabel } from "@chakra-ui/form-control";
 import { Input } from "@chakra-ui/input";
 import { Slider, SliderFilledTrack, SliderThumb, SliderTrack } from "@chakra-ui/slider";
 import { useToast } from "@chakra-ui/toast";
+import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { destroyCookie, parseCookies } from "nookies";
 import { useState } from "react";
@@ -126,7 +127,7 @@ const CreateParty: React.FC<ICreatePartyProps> = ({ user, ...props }) => {
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req } = ctx;
 
   let result = await getCurrentUser(req);

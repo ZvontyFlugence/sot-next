@@ -1,4 +1,5 @@
 module.exports = {
+  swcMinify: true,
   env: {
     MONGO_URI: process.env.MONGO_URI,
     DEFAULT_IMG: `${process.env.URI}/default-comp.png`,

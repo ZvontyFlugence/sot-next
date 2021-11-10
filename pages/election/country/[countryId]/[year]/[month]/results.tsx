@@ -9,6 +9,7 @@ import { getCurrentUser } from '@/util/auth';
 import { MAP_STYLE } from '@/util/constants';
 import { pSBC, request } from '@/util/ui';
 import { Table, Thead, Tr, Th, Tbody, Td, Avatar, useToast } from '@chakra-ui/react';
+import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 import { GMap } from 'primereact/gmap';
@@ -137,7 +138,7 @@ const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req, params } = ctx;
   let result = await getCurrentUser(req);
   
@@ -151,9 +152,9 @@ export const getServerSideProps = async ctx => {
     };
   }
 
-  let country: number = Number.parseInt(params.countryId);
-  let year: number = Number.parseInt(params.year);
-  let month: number = Number.parseInt(params.month);
+  let country: number = Number.parseInt(params.countryId as string);
+  let year: number = Number.parseInt(params.year as string);
+  let month: number = Number.parseInt(params.month as string);
 
   let query = {
     isActive: false,
@@ -293,7 +294,7 @@ const ECResults: React.FC<IECResults> = ({ country, election }) => {
       if (data.regions) {
         setOverlays(data.regions.map((region: IRegion) => {
           let paths: IPath[] | IPath[][] = [];
-          if (!region.type)
+          if (!region.type || region.type !== 'multi')
             paths = (region.borders as IPath[]).map((path: IPath) => ({ lat: path.lng, lng: path.lat }));
           else
             paths = (region.borders as IPath[][]).map((geom: IPath[]) => {

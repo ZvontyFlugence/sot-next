@@ -19,6 +19,7 @@ import { useDisclosure } from '@chakra-ui/hooks';
 import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from '@chakra-ui/modal';
 import { FormControl, FormLabel } from '@chakra-ui/form-control';
 import { Input } from '@chakra-ui/input';
+import { GetServerSideProps } from 'next';
 
 interface IGoodsMarket {
   user: IUser,
@@ -194,8 +195,8 @@ const GoodsMarket: React.FC<IGoodsMarket> = ({ user, ...props }) => {
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
-  const { req, res } = ctx;
+export const getServerSideProps: GetServerSideProps = async ctx => {
+  const { req } = ctx;
 
   let result = await getCurrentUser(req);
 

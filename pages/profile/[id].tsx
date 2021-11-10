@@ -11,6 +11,7 @@ import Region, { IRegion } from "@/models/Region";
 import User, { IUser } from "@/models/User";
 import { ILocationInfo, jsonify } from "@/util/apiHelpers";
 import { getCurrentUser } from "@/util/auth";
+import { GetServerSideProps } from "next";
 import { destroyCookie } from "nookies";
 import user from "../api/stats/user";
 
@@ -88,7 +89,7 @@ const Profile: React.FC<IProfile> = ({ profile, ...props }) => {
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   const { req, params } = ctx;
 
   let result = await getCurrentUser(req);
@@ -102,7 +103,7 @@ export const getServerSideProps = async ctx => {
     };
   }
 
-  const profile_id: number = Number.parseInt(params.id);
+  const profile_id: number = Number.parseInt(params.id as string);
 
   // Get Profile
   let profile: IUser = await User.findOne({ _id: profile_id }).exec();

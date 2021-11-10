@@ -11,6 +11,7 @@ import { ICEOInfo, ILocationInfo, jsonify } from "@/util/apiHelpers";
 import { destroyCookie } from 'nookies';
 import { useState } from "react";
 import user from "../api/stats/user";
+import { GetServerSideProps } from "next";
 
 interface ICompanyPageProps {
   user: IUser,
@@ -45,7 +46,7 @@ export default function CompanyPage({ user, company, location_info, ceo_info, ..
   );
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   const { req, params } = ctx;
 
   let result = await getCurrentUser(req);
@@ -59,7 +60,7 @@ export const getServerSideProps = async ctx => {
     };
   }
 
-  const company_id: number = Number.parseInt(params.id);
+  const company_id: number = Number.parseInt(params.id as string);
   // Ensure DB Connection
   let company: ICompany = await Company.findOne({ _id: company_id }).exec();
   if (!company) {

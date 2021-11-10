@@ -9,6 +9,7 @@ import { Button } from "@chakra-ui/button";
 import { FormControl, FormLabel } from "@chakra-ui/form-control";
 import { Input } from "@chakra-ui/input";
 import { useToast } from "@chakra-ui/toast";
+import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { destroyCookie, parseCookies } from "nookies";
 import { useState } from "react";
@@ -143,7 +144,7 @@ const WriteArticlePage: React.FC<IWriteArticlePage> = ({ user, newspaper, ...pro
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req, params } = ctx;
 
   let result = await getCurrentUser(req);
@@ -157,7 +158,7 @@ export const getServerSideProps = async ctx => {
     };
   }
 
-  let newspaper: INewspaper = await Newspaper.findOne({ _id: Number.parseInt(params.id)});
+  let newspaper: INewspaper = await Newspaper.findOne({ _id: Number.parseInt(params.id as string)});
 
   return {
     props: { ...result, newspaper: jsonify(newspaper) },

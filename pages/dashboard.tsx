@@ -7,6 +7,7 @@ import Shouts from '@/components/dashboard/Shouts';
 import News from '@/components/dashboard/News';
 import Layout from '@/components/Layout';
 import ElectionMsg from '@/components/dashboard/ElectionMsg';
+import { GetServerSideProps } from 'next';
 
 interface IDashboardProps {
   user: IUser;
@@ -46,7 +47,7 @@ export default function Dashboard({ user, ...props }: IDashboardProps) {
   ): null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   const { req } = ctx;
 
   let result = await getCurrentUser(req);

@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/util/auth";
 import { refreshData, request, showToast } from "@/util/ui";
 import { Button } from "@chakra-ui/button";
 import { useToast } from "@chakra-ui/toast";
+import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { destroyCookie, parseCookies } from "nookies";
 import { useMutation } from "react-query";
@@ -101,7 +102,7 @@ const Alerts: React.FC<IAlerts> = ({ user, ...props }) => {
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req } = ctx;
 
   let result = await getCurrentUser(req);

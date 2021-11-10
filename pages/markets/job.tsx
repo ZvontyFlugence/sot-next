@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import Select from '@/components/Select';
 import { m } from 'framer-motion';
+import { GetServerSideProps } from 'next';
 
 interface IJobMarket {
   user: IUser,
@@ -146,7 +147,7 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   const { req } = ctx;
 
   let result = await getCurrentUser(req);

@@ -12,6 +12,7 @@ import { request } from "@/util/ui";
 import { Avatar, Button, Table, Tbody, Td, Th, Thead, Tr } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { destroyCookie, parseCookies } from "nookies";
+import { GetServerSideProps } from "next";
 
 interface ICongressResults {
   user?: IUser,
@@ -144,7 +145,7 @@ const CongressResults: React.FC<ICongressResults> = ({ user, election, country, 
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req, params } = ctx;
   let result = await getCurrentUser(req);
 
@@ -158,9 +159,9 @@ export const getServerSideProps = async ctx => {
     };
   }
 
-  let regionId: number = Number.parseInt(params.regionId);
-  let year: number = Number.parseInt(params.year);
-  let month: number = Number.parseInt(params.month);
+  let regionId: number = Number.parseInt(params.regionId as string);
+  let year: number = Number.parseInt(params.year as string);
+  let month: number = Number.parseInt(params.month as string);
 
   let query = {
     type: ElectionType.Congress,

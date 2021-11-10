@@ -9,6 +9,7 @@ import { FormControl, FormLabel } from "@chakra-ui/form-control";
 import { Tag } from "@chakra-ui/tag";
 import { Textarea } from "@chakra-ui/textarea";
 import { useToast } from "@chakra-ui/toast";
+import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { destroyCookie, parseCookies } from "nookies";
 import { useEffect, useState } from "react";
@@ -177,7 +178,7 @@ const MailThread: React.FC<IMailThread> = ({ user, thread, participants, ...prop
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req, params } = ctx;
 
   let result = await getCurrentUser(req);
@@ -192,7 +193,7 @@ export const getServerSideProps = async ctx => {
     };
   }
 
-  let thread: IThread = result.user.messages.find(thrd => thrd.id === params.id);
+  let thread: IThread = result.user.messages.find(thrd => thrd.id === (params.id as string));
   let participants: IParticipant[] = [];
 
   for (let participant of thread.participants) {

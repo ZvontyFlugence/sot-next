@@ -1,3 +1,5 @@
+import { GetServerSideProps } from "next";
+
 export default function MaintenancePage() {
   return (
     <div className='flex flex-col justify-center items-center h-screen w-full bg-night'>
@@ -10,7 +12,7 @@ export default function MaintenancePage() {
   );
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   if (!process.env.MAINTENANCE_MODE) {
     return {
       redirect: {

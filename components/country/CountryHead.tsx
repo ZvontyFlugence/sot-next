@@ -21,7 +21,7 @@ const CountryHead: React.FC<ICountryHead> = ({ country, countries }) => {
           { country.name }
           <i className={`ml-2 flag-icon flag-icon-${country.flag_code} rounded shadow-md`} />
         </h1>
-        <Select className='border border-white border-opacity-25 rounded' onChange={val => goToCountry(val as number)}>
+        <Select className='border border-white border-opacity-25 rounded' selected={country._id} onChange={val => goToCountry(val as number)}>
           {countries.map((c, i) => (
             <Select.Option key={i} value={c._id}>
               <i className={`flag-icon flag-icon-${c.flag_code} rounded shadow-md`} />

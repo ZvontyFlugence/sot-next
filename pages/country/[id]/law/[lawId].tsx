@@ -12,6 +12,7 @@ import { IGameItem, refreshData, request, showToast } from '@/util/ui';
 import { ITEMS } from '@/util/constants';
 import { useState } from 'react';
 import { useEffect } from 'react';
+import { GetServerSideProps } from 'next';
 
 interface ILawPage {
   user: IUser;
@@ -298,7 +299,7 @@ const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
   ) : null;
 }
 
-export const getServerSideProps = async (ctx) => {
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
   let { req, params } = ctx;
 
   let result = await getCurrentUser(req);
@@ -312,8 +313,8 @@ export const getServerSideProps = async (ctx) => {
     };
   }
 
-  let country_id: number = Number.parseInt(params.id);
-  let law_id: string = params.lawId;
+  let country_id: number = Number.parseInt(params.id as string);
+  let law_id: string = params.lawId as string;
   let country: ICountry = await Country.findOne({ _id: country_id }).exec();
   let law: ILaw = [...country.pendingLaws, ...country.pastLaws].find(bill => bill.id === law_id);
 

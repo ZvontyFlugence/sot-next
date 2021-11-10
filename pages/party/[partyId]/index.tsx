@@ -7,6 +7,7 @@ import { IUser } from "@/models/User";
 import { getParty, ICountryInfo, ILeadershipInfo } from "@/pages/api/parties/[partyId]";
 import { jsonify } from "@/util/apiHelpers";
 import { getCurrentUser } from "@/util/auth";
+import { GetServerSideProps } from "next";
 import { destroyCookie } from "nookies";
 import { useState } from "react";
 
@@ -47,7 +48,7 @@ const PartyPage: React.FC<IPartyPageProps> = ({ user, party, ...props }) => {
   ) : null;
 };
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req, params } = ctx;
   let result = await getCurrentUser(req);
   if (!result.isAuthenticated) {

@@ -4,6 +4,7 @@ import { IUser } from '@/models/User';
 import { getCurrentUser } from '@/util/auth';
 import { request } from '@/util/ui';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
+import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie } from 'nookies';
 import { useEffect, useState } from 'react';
@@ -61,7 +62,7 @@ export default function CountryRankings({ user, ...props }: ICountryRankings) {
   ) : null;
 }
 
-export const getServerSideProps = async (ctx) => {
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const { req, res } = ctx;
 
   const result = await getCurrentUser(req);

@@ -5,6 +5,7 @@ import Newspaper, { INewspaper } from "@/models/Newspaper";
 import User, { IUser } from "@/models/User";
 import { ICEOInfo, jsonify } from "@/util/apiHelpers";
 import { getCurrentUser } from "@/util/auth";
+import { GetServerSideProps } from "next";
 import { destroyCookie } from "nookies";
 import { useState } from "react";
 
@@ -37,7 +38,7 @@ const NewspaperPage: React.FC<INewsPage> = ({ user, newspaper, ...props }) => {
   );
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req, params } = ctx;
 
   let result = await getCurrentUser(req);
@@ -53,7 +54,7 @@ export const getServerSideProps = async ctx => {
 
   let newspaper: INewspaper;
   try {
-    newspaper = await Newspaper.findOne({ _id: Number.parseInt(params.id) }).exec();
+    newspaper = await Newspaper.findOne({ _id: Number.parseInt(params.id as string) }).exec();
   } catch (e) {
     return {
       redirect: {

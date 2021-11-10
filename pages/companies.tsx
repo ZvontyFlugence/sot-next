@@ -15,6 +15,7 @@ import { Spinner } from '@chakra-ui/spinner';
 import { Table, TableCaption, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/table';
 import { useToast } from '@chakra-ui/toast';
 import { Document } from 'mongoose';
+import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 import { useState } from 'react';
@@ -230,7 +231,7 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
   );
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req } = ctx;
 
   let result = await getCurrentUser(req);

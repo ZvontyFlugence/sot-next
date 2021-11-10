@@ -19,23 +19,39 @@ interface ISelectOptions {
 
 const Select: React.FC<ISelectComponent> & ISelectOptions = ({ children, ...props }) => {
   const [open, setOpen] = useState(false);
-  const [selectedValue, setSelectedValue] = useState<number | string>(findSelected(props.selected)?.props?.value || children[0]?.props.value);
-  const [selectedText, setSelectedText] = useState<React.ReactNode>(findSelected(props.selected)?.props?.children || children[0]?.props.children);
+  const [selectedValue, setSelectedValue] = useState<number | string>(findSelected()?.props?.value || children[0]?.props.value);
 
-  function findSelected(value: number | string) {
+  function findSelected() {
     return (children as React.ReactElement[]).find((child: React.ReactElement) => {
       return child?.props?.value === props.selected;
     });
   }
 
+  const getSelectedText = () => {
+    if (typeof props.selected === 'number') {
+      let elem = children[props.selected - 1];
+      if (elem?.props.value === props.selected)
+        return elem?.props.children;
+    }
+    
+    if (props.selected)
+      return findSelected()?.props.children;
+    else
+      return children[0]?.props.children;
+  }
+
   const handleSelect = (e, value: number | string, text: React.ReactNode) => {
     e.stopPropagation();
     setSelectedValue(value);
-    setSelectedText(text);
     setOpen(false);
   }
 
-  const windowClickListener = useMemo(() => { return function (this: Window, ev: MouseEvent) { setOpen(false); }; }, [setOpen]);
+  const windowClickListener = useMemo(() => { return function (this: Window, _ev: MouseEvent) { setOpen(false); }; }, [setOpen]);
+
+  useEffect(() => {
+    const child = findSelected();
+    setSelectedValue(child?.props?.value ?? children[0]?.props.value);
+  }, [props.selected]);
 
   useEffect(() => {
     props.onChange(selectedValue);
@@ -53,7 +69,7 @@ const Select: React.FC<ISelectComponent> & ISelectOptions = ({ children, ...prop
     <div className={`relative ${props.className}`}>
       <div className='flex justify-between items-center bg-night text-white rounded py-2 px-4 cursor-pointer' onClick={() => setOpen(prev => !prev)}>
         <div className='flex gap-2'>
-          {selectedText}
+          {getSelectedText()}
         </div>        
         <span className='ml-4'>
           {open ? (

@@ -8,6 +8,7 @@ import Nav from '@/components/Nav';
 import TopCountries from '@/components/index/TopCountries';
 import { getCurrentUser } from '@/util/auth';
 import { IUser } from '@/models/User';
+import { GetServerSideProps } from 'next';
 
 interface IIndexProps {
   user: IUser,
@@ -63,7 +64,7 @@ export default function Index(_props: IIndexProps) {
   );
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   const { req } = ctx;
 
   let result = await getCurrentUser(req);

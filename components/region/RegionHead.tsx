@@ -20,6 +20,7 @@ const RegionHead: React.FC<IRegionHead> = ({ user, region, ...props }) => {
     const cookies = parseCookies();
     const router = useRouter();
 
+    const [selected, setSelected] = useState<number>(region._id);
     const [regions, setRegions] = useState<IRegion[]>([]);
     const [owners, setOwners] = useState<ICountry[]>([]); 
     const [overlays, setOverlays] = useState([]);
@@ -47,6 +48,12 @@ const RegionHead: React.FC<IRegionHead> = ({ user, region, ...props }) => {
 
     useEffect(() => {
         if (region) {
+            setSelected(region._id);
+        }
+    }, [region]);
+
+    useEffect(() => {
+        if (mapRef && selected > 0) {
             let paths: IPath[] | IPath[][] = [];
 
             if (region.type === 'single') {
@@ -76,7 +83,7 @@ const RegionHead: React.FC<IRegionHead> = ({ user, region, ...props }) => {
 
             setOverlays([polygon]);
         }
-    }, [region]);
+    }, [selected, mapRef]);
 
     const onMapReady = (e: any) => {
         setMapRef(e.map as google.maps.Map);
@@ -153,7 +160,7 @@ const RegionHead: React.FC<IRegionHead> = ({ user, region, ...props }) => {
                         Resource: {getResourceInfo()}
                     </span>
                 </div>
-                <Select className='border border-white border-opacity-25 rounded' selected={region._id || 1} onChange={val => goToRegion(val)}>
+                <Select className='border border-white border-opacity-25 rounded' selected={region._id} onChange={val => goToRegion(val)}>
                     {regions.map((r, i) => (
                         <Select.Option key={i} value={r._id}>
                             <i className={`mr-2 flag-icon flag-icon-${owners[r.owner - 1]?.flag_code} rounded shadow-md`} />

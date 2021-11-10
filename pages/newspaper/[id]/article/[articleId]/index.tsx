@@ -10,6 +10,7 @@ import { Image } from "@chakra-ui/image";
 import { Tag } from "@chakra-ui/tag";
 import { useToast } from "@chakra-ui/toast";
 import { format } from "date-fns";
+import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { destroyCookie, parseCookies } from "nookies";
 import { useEffect, useState } from "react";
@@ -248,7 +249,7 @@ const ArticlePage: React.FC<IArticlePage> = ({ user, newspaper, authorInfo, ...p
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req, params } = ctx;
   let result = await getCurrentUser(req);
   
@@ -262,7 +263,7 @@ export const getServerSideProps = async ctx => {
     };
   }
 
-  let newspaper: INewspaper = await Newspaper.findOne({ _id: Number.parseInt(params.id) }).exec();
+  let newspaper: INewspaper = await Newspaper.findOne({ _id: Number.parseInt(params.id as string) }).exec();
   let news_author: IUser = await User.findOne({ _id: newspaper.author }).exec();
   
   return {

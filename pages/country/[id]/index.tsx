@@ -5,6 +5,7 @@ import Country, { ICountry } from "@/models/Country";
 import { IUser } from "@/models/User";
 import { jsonify } from "@/util/apiHelpers";
 import { getCurrentUser } from "@/util/auth";
+import { GetServerSideProps } from "next";
 import { destroyCookie } from "nookies";
 
 interface ICountryPage {
@@ -27,7 +28,7 @@ const CountryPage: React.FC<ICountryPage> = ({ user, country, ...props }) => {
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req, params } = ctx;
 
   let result = await getCurrentUser(req);
@@ -41,7 +42,7 @@ export const getServerSideProps = async ctx => {
     };
   }
 
-  let country_id: number = Number.parseInt(params.id);
+  let country_id: number = Number.parseInt(params.id as string);
   let countries: ICountry[] = await Country.find({}).exec();
   let country: ICountry = countries.find(c => c._id == country_id);
 

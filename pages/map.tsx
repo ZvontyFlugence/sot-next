@@ -14,6 +14,7 @@ import { jsonify } from "@/util/apiHelpers";
 import Nav from "@/components/Nav";
 import MapComponent from "@/components/MapComponent";
 import Battle, { IBattle } from "@/models/Battle";
+import { GetServerSideProps } from "next";
 
 interface IMap {
   user: IUser,
@@ -189,7 +190,7 @@ const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
   );
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   const { req } = ctx;
 
   let result = await getCurrentUser(req);

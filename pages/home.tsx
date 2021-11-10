@@ -14,6 +14,7 @@ import Company, { ICompany } from "@/models/Company";
 import { jsonify } from "@/util/apiHelpers";
 import { Avatar } from "@chakra-ui/avatar";
 import { COMPANY_TYPES } from "@/util/constants";
+import { GetServerSideProps } from "next";
 
 interface IHomeProps {
   user: IUser,
@@ -220,7 +221,7 @@ export default function Home({ user, job, ...props }: IHomeProps) {
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   const { req } = ctx;
 
   let result = await getCurrentUser(req);

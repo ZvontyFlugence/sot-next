@@ -4,6 +4,7 @@ import Region, { IRegion } from "@/models/Region";
 import { IUser } from "@/models/User";
 import { jsonify } from "@/util/apiHelpers";
 import { getCurrentUser } from "@/util/auth";
+import { GetServerSideProps } from "next";
 import { destroyCookie } from "nookies";
 
 interface IRegionPage {
@@ -22,7 +23,7 @@ const RegionPage: React.FC<IRegionPage> = (props: IRegionPage) => {
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req, params } = ctx;
 
   let result = await getCurrentUser(req);
@@ -36,7 +37,7 @@ export const getServerSideProps = async ctx => {
     };
   }
 
-  let region: IRegion = await Region.findOne({ _id: params.id }).exec();
+  let region: IRegion = await Region.findOne({ _id: Number.parseInt(params.id as string) }).exec();
 
   return {
     props: { ...result, region: jsonify(region) },

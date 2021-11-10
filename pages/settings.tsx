@@ -9,6 +9,7 @@ import { FormControl, FormHelperText, FormLabel } from '@chakra-ui/form-control'
 import { Input } from '@chakra-ui/input';
 import { Textarea } from '@chakra-ui/textarea';
 import { useToast } from '@chakra-ui/toast';
+import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 import { FormEvent, useState } from 'react';
@@ -298,7 +299,7 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   const { req, res } = ctx;
 
   let result = await getCurrentUser(req);

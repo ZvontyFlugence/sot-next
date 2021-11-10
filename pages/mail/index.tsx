@@ -8,6 +8,7 @@ import { refreshData, request, showToast } from '@/util/ui';
 import { Button } from '@chakra-ui/button';
 import { useDisclosure } from '@chakra-ui/hooks';
 import { useToast } from '@chakra-ui/toast';
+import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 import { useMutation } from 'react-query';
@@ -108,7 +109,7 @@ const Mail: React.FC<IMail> = ({ user, ...props }) => {
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req } = ctx;
 
   let result = await getCurrentUser(req);

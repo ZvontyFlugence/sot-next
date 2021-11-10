@@ -8,6 +8,7 @@ import War, { IWar } from '@/models/War';
 import { jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
 import { Avatar } from '@chakra-ui/react';
+import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie } from 'nookies';
 
@@ -87,7 +88,7 @@ export default function BattleViewPage({ user, battle, users, ...props }: IBattl
   ) : null;
 }
 
-export const getServerSideProps = async (ctx) => {
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const { req, res, params } = ctx;
 
   const result = await getCurrentUser(req);

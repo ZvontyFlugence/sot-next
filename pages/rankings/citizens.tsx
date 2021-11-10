@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/util/auth';
 import { CitizenStats } from '@/util/constants';
 import { request } from '@/util/ui';
 import { Avatar, Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
+import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { ParsedUrlQuery } from 'node:querystring';
 import { destroyCookie } from 'nookies';
@@ -126,7 +127,7 @@ export default function CitizenRankings({ user, countries, ...props }: ICitizenR
   ) : null;
 }
 
-export const getServerSideProps = async (ctx) => {
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
   let { req, res } = ctx;
 
   const result = await getCurrentUser(req);

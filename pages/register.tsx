@@ -13,6 +13,7 @@ import { IUser } from "@/models/User";
 import { request } from "@/util/ui";
 import Select from "@/components/Select";
 import { ICountry } from "@/models/Country";
+import { GetServerSideProps } from "next";
 
 interface IRegProps {
   user: IUser,
@@ -133,7 +134,7 @@ export default function Register(props: IRegProps) {
   );
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   const { req, res } = ctx;
 
   let result = await getCurrentUser(req);

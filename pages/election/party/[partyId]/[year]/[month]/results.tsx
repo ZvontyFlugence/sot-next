@@ -8,6 +8,7 @@ import { jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
 import { request } from '@/util/ui';
 import { Avatar, Button, flexbox, Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
+import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 import { useEffect, useState } from 'react';
@@ -144,7 +145,7 @@ const PPResults: React.FC<IPPResults> = ({ user, election, country, ...props }) 
   ) : null;
 }
 
-export const getServerSideProps = async ctx => {
+export const getServerSideProps: GetServerSideProps = async ctx => {
   let { req, params } = ctx;
   let result = await getCurrentUser(req);
 
@@ -158,9 +159,9 @@ export const getServerSideProps = async ctx => {
     };
   }
 
-  let partyId: number = Number.parseInt(params.partyId);
-  let year: number = Number.parseInt(params.year);
-  let month: number = Number.parseInt(params.month);
+  let partyId: number = Number.parseInt(params.partyId as string);
+  let year: number = Number.parseInt(params.year as string);
+  let month: number = Number.parseInt(params.month as string);
 
   let query = {
     type: ElectionType.PartyPresident,
