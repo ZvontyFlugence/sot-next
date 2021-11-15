@@ -3,13 +3,14 @@ import { refreshData, request, showToast } from '@/util/ui';
 import { Button } from '@chakra-ui/button';
 import { FormControl, FormLabel } from '@chakra-ui/form-control';
 import { Input } from '@chakra-ui/input';
-import { useQuery } from 'react-query';
 import { useToast } from '@chakra-ui/toast';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
 import { useState } from 'react';
 import Select from '../Select';
 import { CompanyActions } from '@/util/actions';
+import useSWR from 'swr';
+import { getAllRegionsFetcher } from '@/pages/settings';
 
 interface ICompanySettings {
   company: ICompany,
@@ -24,13 +25,7 @@ const CompanySettings: React.FC<ICompanySettings> = ({ company }) => {
   const [region, setRegion] = useState(-1);
   const [file, setFile] = useState(null);
 
-  const regionQuery = useQuery('getAllRegions', () => {
-    return request({
-      url: '/api/regions',
-      method: 'GET',
-      token: cookies.token,
-    });
-  });
+  const regionQuery = useSWR(['/api/regions', cookies.token], getAllRegionsFetcher);
 
   const handleUpdateName = () => {
     let payload = {
@@ -131,7 +126,7 @@ const CompanySettings: React.FC<ICompanySettings> = ({ company }) => {
           <FormLabel className='text-xl'>Travel</FormLabel>
           <Select className='border border-white border-opacity-25 rounded shadow-md' onChange={val => setRegion(val as number)}>
             <Select.Option value={-1} disabled>Select Region</Select.Option>
-            {regionQuery.isSuccess && regionQuery.data?.regions?.map((region, i) => (
+            {regionQuery.data && regionQuery.data?.regions?.map((region, i) => (
               <Select.Option key={i} value={region._id}>{region.name}</Select.Option>
             ))}
           </Select>

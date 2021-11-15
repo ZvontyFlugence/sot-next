@@ -8,7 +8,6 @@ import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
 import { Menu, Item, useContextMenu } from 'react-contexify';
 import { IoCheckmarkOutline, IoCloseOutline } from 'react-icons/io5';
-import { useMutation } from 'react-query';
 
 interface IAlertItem {
   alert: IAlert,
@@ -21,73 +20,6 @@ const AlertItem: React.FC<IAlertItem> = ({ alert, index }) => {
   const router = useRouter();
 
   const { show } = useContextMenu({ id: `alert-${index}` });
-
-  // Mutations
-  const readMutation = useMutation(async () => {
-    let payload = { action: 'read_alert', data: { alert_id: alert.id } };
-    let data = await request({
-      url: '/api/me/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'Alert Marked as Read', data?.message);
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Error', e.message);
-    }
-  });
-
-  const deleteMutation = useMutation(async () => {
-    let payload = { action: 'delete_alert', data: { alert_id: alert.id } };
-    let data = await request({
-      url: '/api/me/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'Alert Deleted', data?.message);
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Error', e.message);
-    }
-  });
-
-  const acceptMutation = useMutation(async () => {
-    let payload = { action: UserActions.ACCEPT_FR, data: { alert_index: index } };
-    let data = await request({
-      url: '/api/me/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'Sent Request', data?.message);
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Request Not Sent', e.message);
-    }
-  });
 
   const getTimestamp = () => (
     <span>{ formatDistance(new Date(alert.timestamp), new Date(Date.now()), { addSuffix: true }) }</span>
@@ -125,17 +57,54 @@ const AlertItem: React.FC<IAlertItem> = ({ alert, index }) => {
   };
 
   const acceptFR = () => {
-    acceptMutation.mutate();
+    request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload: { action: UserActions.ACCEPT_FR, data: { alert_index: index } },
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Sent Request', data?.message);
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Request Not Sent', data?.error);
+      }
+    });
   }
 
+  // TODO: Implement
   const declineFR = () => {}
 
   const readAlert = () => {
-    readMutation.mutate();
+    request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload: { action: 'read_alert', data: { alert_id: alert.id } },
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Alert Marked as Read', data?.message);
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Error', data?.error);
+      }
+    })
   }
 
   const deleteAlert = () => {
-    deleteMutation.mutate();
+    request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload: { action: 'delete_alert', data: { alert_id: alert.id } },
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Alert Deleted', data?.message);
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Error', data?.error);
+      }
+    });
   }
 
   return (

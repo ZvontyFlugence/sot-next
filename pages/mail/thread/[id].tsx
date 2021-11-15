@@ -1,19 +1,18 @@
-import Layout from "@/components/Layout";
-import User, { IThread, IUser } from "@/models/User";
-import { UserActions } from "@/util/actions";
-import { getCurrentUser } from "@/util/auth";
-import { refreshData, request, showToast } from "@/util/ui";
-import { Avatar } from "@chakra-ui/avatar";
-import { Button } from "@chakra-ui/button";
-import { FormControl, FormLabel } from "@chakra-ui/form-control";
-import { Tag } from "@chakra-ui/tag";
-import { Textarea } from "@chakra-ui/textarea";
-import { useToast } from "@chakra-ui/toast";
-import { GetServerSideProps } from "next";
-import { useRouter } from "next/router";
-import { destroyCookie, parseCookies } from "nookies";
-import { useEffect, useState } from "react";
-import { useMutation } from "react-query";
+import Layout from '@/components/Layout';
+import User, { IThread, IUser } from '@/models/User';
+import { UserActions } from '@/util/actions';
+import { getCurrentUser } from '@/util/auth';
+import { refreshData, request, showToast } from '@/util/ui';
+import { Avatar } from '@chakra-ui/avatar';
+import { Button } from '@chakra-ui/button';
+import { FormControl, FormLabel } from '@chakra-ui/form-control';
+import { Tag } from '@chakra-ui/tag';
+import { Textarea } from '@chakra-ui/textarea';
+import { useToast } from '@chakra-ui/toast';
+import { GetServerSideProps } from 'next';
+import { useRouter } from 'next/router';
+import { destroyCookie, parseCookies } from 'nookies';
+import { useEffect, useState } from 'react';
 
 interface IMailThread {
   user: IUser,
@@ -37,31 +36,21 @@ const MailThread: React.FC<IMailThread> = ({ user, thread, participants, ...prop
   useEffect(() => {
     if (user) {
       if (!thread?.read) {
-        readThreadMutation.mutate();
+        request({
+          url: '/api/me/doAction',
+          method: 'POST',
+          payload: { action: UserActions.READ_THREAD, data: { thread_id: thread.id } },
+          token: cookies.token,
+        }).then(data => {
+          if (data.success) {
+            refreshData(router);
+          } else {
+            showToast(toast, 'error', 'Error', data?.error);
+          }
+        });
       }
     }
   }, [thread]);
-
-  const readThreadMutation = useMutation(async () => {
-    let payload = { action: UserActions.READ_THREAD, data: { thread_id: thread.id } };
-    let data = await request({
-      url: '/api/me/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Error', e.message);
-    }
-  });
 
   const handleReply = () => {
     let payload = {

@@ -19,9 +19,9 @@
     "@types/jsonwebtoken": "^8.5.1",
     "@types/mongoose": "^5.10.4",
     "@types/nodemailer": "^6.4.4",
+    "@types/nodemailer-direct-transport": "^1.0.32",
     "@types/nodemailer-smtp-transport": "^2.7.5",
     "@types/quill": "^2.0.6",
-    "@types/react-query": "^1.1.2",
     "autoprefixer": "^10.2.5",
     "bcrypt": "^5.0.1",
     "caniuse-lite": "^1.0.30001279",
@@ -44,8 +44,8 @@
     "react-contexify": "^5.0.0",
     "react-dom": "^17.0.2",
     "react-icons": "^4.2.0",
-    "react-query": "^3.13.0",
     "react-quill": "^1.3.5",
+    "swr": "^1.0.1",
     "tailwindcss": "^2.1.1"
   },
   "devDependencies": {

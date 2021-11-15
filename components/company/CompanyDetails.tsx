@@ -1,20 +1,20 @@
-import { ICompany, IJobOffer, IProductOffer } from "@/models/Company";
-import { IUser } from "@/models/User";
-import { refreshData, request, showToast } from "@/util/ui";
-import { Button } from "@chakra-ui/button";
-import { Grid, GridItem } from "@chakra-ui/layout";
-import { Table, Tbody, Td, Th, Thead, Tr } from "@chakra-ui/table";
-import { useMutation, useQueryClient } from 'react-query';
+import { ICompany, IJobOffer, IProductOffer } from '@/models/Company';
+import { IUser } from '@/models/User';
+import { refreshData, request, showToast } from '@/util/ui';
+import { Button } from '@chakra-ui/button';
+import { Grid, GridItem } from '@chakra-ui/layout';
+import { Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/table';
 import { parseCookies } from 'nookies';
-import Card from "../Card";
-import { useToast } from "@chakra-ui/toast";
-import { useRouter } from "next/router";
-import { ITEMS } from "@/util/constants";
-import { useDisclosure } from "@chakra-ui/hooks";
-import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from "@chakra-ui/modal";
-import React, { useState } from "react";
-import { FormControl, FormLabel } from "@chakra-ui/form-control";
-import { Input } from "@chakra-ui/input";
+import Card from '../Card';
+import { useToast } from '@chakra-ui/toast';
+import { useRouter } from 'next/router';
+import { ITEMS } from '@/util/constants';
+import { useDisclosure } from '@chakra-ui/hooks';
+import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from '@chakra-ui/modal';
+import React, { useState } from 'react';
+import { FormControl, FormLabel } from '@chakra-ui/form-control';
+import { Input } from '@chakra-ui/input';
+import { useSWRConfig } from 'swr';
 
 interface ICompDetails {
   company: ICompany,
@@ -25,40 +25,30 @@ interface ICompDetails {
 const CompanyDetails: React.FC<ICompDetails> = ({ user, company, currency }) => {
   const cookies = parseCookies();
   const router = useRouter();
-  const queryClient = useQueryClient();
   const toast = useToast();
+
+  const { mutate } = useSWRConfig();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   const [selected, setSelected] = useState<IProductOffer>(null);
   const [quantity, setQuantity] = useState(1);
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
   let canApplyForJob: boolean = user.job > 0 && user._id !== company.ceo;
 
-  const hireMutation = useMutation(async ({ job_id }) => {
-    let payload = { action: 'apply_job', data: { company_id: company.id, job_id } };
-
-    let data = await request({
+  const applyForJob = (job_id: string) => {
+    request({
       url: '/api/me/doActions',
       method: 'POST',
-      payload,
+      payload: { action: 'apply_job', data: { company_id: company.id, job_id } },
       token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onMutate: ({ job_id }: { job_id: string }) => {},
-    onSuccess: () => {
-      showToast(toast, 'success', 'Job Application Successful');
-      refreshData(router);
-    },
-    onError: () => {
-      showToast(toast, 'error', 'Failed to Send Application');
-    },
-  });
-
-  const applyForJob = (job_id: string) => {
-    hireMutation.mutate({ job_id });
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Job Application Successful');
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Failed to Send Application');
+      }
+    })
   }
 
   const handleOpen = (offer: IProductOffer) => {
@@ -71,31 +61,21 @@ const CompanyDetails: React.FC<ICompDetails> = ({ user, company, currency }) => 
     setSelected(null);
   }
 
-  const purchaseMutation = useMutation(async () => {
-    let payload = { action: 'buy_item', data: { company_id: company._id, offer_id: selected?.id, quantity } };
-    let data = await request({
+  const handlePurchase = () => {
+    request({
       url: '/api/me/doAction',
       method: 'POST',
-      payload,
+      payload: { action: 'buy_item', data: { company_id: company._id, offer_id: selected?.id, quantity } },
       token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Successful Purchase', data?.message);
+        mutate('/api/me/wallet-info');
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Purchase Failed', data?.error);
+      }
     });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'Successful Purchase', data?.message);
-      queryClient.invalidateQueries('getWalletInfo');
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Purchase Failed', e.message);
-    },
-  });
-
-  const handlePurchase = () => {
-    purchaseMutation.mutate();
   }
 
   return (

@@ -6,8 +6,7 @@ import { Box, Center, Container } from "@chakra-ui/layout";
 import { useToast } from "@chakra-ui/toast";
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useState } from "react";
-import { useQuery, useMutation } from 'react-query';
+import { useEffect, useState } from "react";
 import { getCurrentUser } from "@/util/auth";
 import { IUser } from "@/models/User";
 import { request } from "@/util/ui";
@@ -27,29 +26,34 @@ interface IRegForm {
   country: number,
 }
 
-export default function Register(props: IRegProps) {
+export default function Register(_props: IRegProps) {
   const router = useRouter();
   const toast = useToast();
+
+  const [countries, setCountries] = useState<ICountry[]>([]);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [country, setCountry] = useState(0);
 
-  let {isLoading, isError, data} = useQuery('getCountries', async () => {
-    return fetch('/api/countries')
-    .then(res => res.json());
-  });
+  useEffect(() => {
+    request({
+      url: '/api/countries',
+      method: 'GET',
+    }).then(data => {
+      if (data?.countries) {
+        setCountries(data.countries);
+      }
+    });
+  }, []);
 
-  const mutation = useMutation(formData => {
-    return request({
+  const register = () => {
+    request({
       url: '/api/users',
       method: 'POST',
-      payload: formData,
-    });
-  }, {
-    onMutate: (formData: IRegForm) => {},
-    onSuccess: (data) => {
+      payload: { email, username, password, country },
+    }).then(data => {
       if (data.success) {
         router.push('/login');
       } else {
@@ -62,21 +66,7 @@ export default function Register(props: IRegProps) {
           isClosable: true,
         });
       }
-    },
-    onError: (e) => {
-      toast({
-        position: 'top-right',
-        title: 'Registration Error',
-        description: e,
-        status: 'error',
-        duration: 2500,
-        isClosable: true,
-      });
-    }
-  });
-
-  const register = () => {
-    mutation.mutate({ email, username, password, country });
+    });
   }
 
   return (
@@ -106,7 +96,7 @@ export default function Register(props: IRegProps) {
               <FormLabel>Country</FormLabel>
               <Select className='border border-white border-opacity-25 rounded shadow-md' onChange={value => setCountry(value as number)}>
                 <Select.Option disabled value={0}>Select Country</Select.Option>
-                {(!isLoading && !isError) && data?.countries?.map((c: ICountry, i: number) => (
+                {countries.map((c: ICountry, i: number) => (
                   <Select.Option key={i} value={c._id}>
                     {c.name}
                     <i className={`ml-2 flag-icon flag-icon-${c.flag_code} rounded shadow-md`} title={c.name} />

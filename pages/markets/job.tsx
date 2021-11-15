@@ -14,10 +14,9 @@ import { useToast } from '@chakra-ui/toast';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 import { useEffect, useState } from 'react';
-import { useMutation, useQuery } from 'react-query';
 import Select from '@/components/Select';
-import { m } from 'framer-motion';
 import { GetServerSideProps } from 'next';
+import useSWR from 'swr';
 
 interface IJobMarket {
   user: IUser,
@@ -26,52 +25,36 @@ interface IJobMarket {
   countries: ICountry[],
 }
 
+export const getCountryJobOffersFetcher = (url: string, token: string) => request({ url, method: 'GET', token })
+
 const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
   const [country, setCountry] = useState(props.location_info.owner_id);
 
-  const query = useQuery('getCountryJobOffers', () => {
-    return request({
-      url: `/api/markets/jobs?country_id=${country}`,
-      method: 'GET',
-      token: cookies.token,
-    });
-  });
+  const query = useSWR([`/api/markets/jobs?country_id=${country}`, cookies.token], getCountryJobOffersFetcher);
 
-  useEffect(() => { query.refetch() }, [country]);
-
-  const mutation = useMutation(async ({ company_id, job_id }) => {
-    let payload = { action: 'apply_job', data: { company_id, job_id } };
-
-    let data = await request({
-      url: '/api/me/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onMutate: ({ company_id, job_id }: { company_id: number, job_id: string }) => {},
-    onSuccess: () => {
-      showToast(toast, 'success', 'Job Application Successful');
-      refreshData(router);
-    },
-    onError: () => {
-      showToast(toast, 'error', 'Failed to Send Application');
-    },
-  });
+  useEffect(() => { query.mutate() }, [country]);
 
   const canApplyForJob = (ceo: number): boolean => {
     return (!user.job || user.job === 0) && user._id !== ceo && user.country === props.location_info.owner_id;
   }
 
   const applyForJob = (company_id: number, job_id: string) => {
-    mutation.mutate({ company_id, job_id });
+    request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload: { action: 'apply_job', data: { company_id, job_id } },
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Job Application Successful');
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Failed to Send Application');
+      }
+    });
   }
 
   return user ? (
@@ -91,15 +74,15 @@ const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
       </h1>
       <div className='mx-12 mt-4 p-2 bg-night rounded shadow-md'>
         {/* Job Offer Filters */}
-        {query.isLoading && (
+        {!query.data && !query.error && (
           <div className='w-full'>
             <Spinner className='flex justify-center items-center' colorScheme='red' />
           </div>
         )}
-        {query.isSuccess && query.data?.jobOffers.length === 0 && (
+        {query.data && query.data?.jobOffers.length === 0 && (
           <p className='text-white'>Country has no job offers</p>
         )}
-        {query.isSuccess && query.data?.jobOffers.length > 0 && (
+        {query.data && query.data?.jobOffers.length > 0 && (
           <Table variant='unstyled' bgColor='night' color='white'>
             <Thead>
               <Tr>

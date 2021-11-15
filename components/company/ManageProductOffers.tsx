@@ -11,7 +11,6 @@ import { useToast } from '@chakra-ui/toast';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
 import React, { useEffect, useState } from 'react';
-import { useMutation } from 'react-query';
 
 interface IManageProductOffers {
   productOffers: IProductOffer[],
@@ -44,70 +43,52 @@ const ManageProductOffers: React.FC<IManageProductOffers> = ({ productOffers, co
     }
   }, [selected]);
 
-  const editProductMutation = useMutation(async (productOffer) => {
+  const editProductOffer = () => {
     let payload = {
       action: 'edit_product',
-      data: { company_id, offer: productOffer },
+      data: {
+        company_id,
+        offer: { id: productOffers[selected]?.id, product_id: productId, quantity, price },
+      },
     };
 
-    let data = await request({
+    request({
       url: '/api/companies/doAction',
       method: 'POST',
       payload,
       token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Product Offer Updated');
+        handleClose('edit');
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Update Product Offer Failed')
+      }
     });
-
-    if (!data.success)
-      throw new Error(data?.error || 'Unknown Error');
-    return data;
-  }, {
-    onMutate: async (productOffer: IProductOffer) => {},
-    onSuccess: () => {
-      showToast(toast, 'success', 'Product Offer Updated');
-      handleClose('edit');
-      refreshData(router);
-    },
-    onError: (e) => {
-      showToast(toast, 'error', 'Update Product Offer Failed')
-    }
-  });
-
-  const deleteProductMutation = useMutation(async ({ productOffer }) => {
-    let payload = {
-      action: 'delete_product',
-      data: { company_id, offer: productOffer },
-    };
-
-    let data = await request({
-      url: '/api/companies/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onMutate: async ({ productOffer }: { productOffer: IProductOffer }) => {},
-    onSuccess: () => {
-      showToast(toast, 'success', 'Product Offer Revoked');
-      handleClose('delete');
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Failed to Delete Product Offer', e.message);
-    },
-  });
-
-  const editProductOffer = () => {
-    let id = productOffers[selected]?.id;
-    editProductMutation.mutate({ id: id, product_id: productId, quantity, price });
   }
 
   const deleteProductOffer = () => {
     let offer = productOffers[selected];
-    deleteProductMutation.mutate({ productOffer: offer });
+    let payload = {
+      action: 'delete_product',
+      data: { company_id, offer },
+    };
+
+    request({
+      url: '/api/companies/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Product Offer Revoked');
+        handleClose('delete');
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Failed to Delete Product Offer', data?.error);
+      }
+    });
   }
 
   const handleOpen = (index: number, modal: string) => {

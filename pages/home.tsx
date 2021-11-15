@@ -1,20 +1,21 @@
-import { IUser } from "@/models/User";
+import { IUser } from '@/models/User';
 import { parseCookies, destroyCookie } from 'nookies';
-import Layout from "@/components/Layout";
-import { getCurrentUser } from "@/util/auth";
-import { Grid, GridItem } from "@chakra-ui/layout";
-import Card from "@/components/Card";
-import { Button } from "@chakra-ui/button";
-import { useMutation, useQueryClient } from 'react-query';
-import { useToast } from "@chakra-ui/toast";
-import { refreshData, request, showToast } from "@/util/ui";
-import { useRouter } from "next/router";
-import Inventory from "@/components/shared/Inventory";
-import Company, { ICompany } from "@/models/Company";
-import { jsonify } from "@/util/apiHelpers";
-import { Avatar } from "@chakra-ui/avatar";
-import { COMPANY_TYPES } from "@/util/constants";
-import { GetServerSideProps } from "next";
+import Layout from '@/components/Layout';
+import { getCurrentUser } from '@/util/auth';
+import { Grid, GridItem } from '@chakra-ui/layout';
+import Card from '@/components/Card';
+import { Button } from '@chakra-ui/button';
+import { useToast } from '@chakra-ui/toast';
+import { refreshData, request, showToast } from '@/util/ui';
+import { useRouter } from 'next/router';
+import Inventory from '@/components/shared/Inventory';
+import Company, { ICompany } from '@/models/Company';
+import { jsonify, roundMoney } from '@/util/apiHelpers';
+import { Avatar } from '@chakra-ui/avatar';
+import { COMPANY_TYPES } from '@/util/constants';
+import { GetServerSideProps } from 'next';
+import useSWR, { useSWRConfig } from 'swr';
+import { getWalletInfoFetcher } from '@/components/Sidebar';
 
 interface IHomeProps {
   user: IUser,
@@ -26,59 +27,27 @@ export default function Home({ user, job, ...props }: IHomeProps) {
   const toast = useToast();
   const router = useRouter();
   const cookies = parseCookies();
-  const queryClient = useQueryClient();
+  const { mutate } = useSWRConfig();
+  const { data: walletInfo } = useSWR(['/api/me/wallet-info', cookies.token], getWalletInfoFetcher);
+
   const hasTrained = new Date(user.canTrain) > new Date(Date.now());
   const hasWorked = new Date(user.canWork) > new Date(Date.now());
 
-  const trainMutation = useMutation(async () => {
-    let payload = { action: 'train' };
-    let data = await request({
-      url: '/api/me/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'Training Complete', data.message);
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Training Failed', e.message);
-    },
-  });
-
-  const workMutation = useMutation(async () => {
-    let payload = { action: 'work' };
-    let data = await request({
-      url: '/api/me/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      queryClient.invalidateQueries('getWalletInfo');
-      showToast(toast, 'success', 'Working Complete', data.message);
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Working Failed', e.message);
-    },
-  });
-
-  // TODO: Show Error Toast if already worked
   const handleTrain = () => {
     if (!hasTrained) {
-      trainMutation.mutate();
+      request({
+        url: '/api/me/doAction',
+        method: 'POST',
+        payload: { action: 'train' },
+        token: cookies.token,
+      }).then(data => {
+        if (data.success) {
+          showToast(toast, 'success', 'Training Complete', data?.message);
+          refreshData(router);
+        } else {
+          showToast(toast, 'error', 'Training Failed', data?.error);
+        }
+      })
     } else {
       showToast(toast, 'error', 'Already Trained Today', 'You can only train once per day');
     }
@@ -86,7 +55,35 @@ export default function Home({ user, job, ...props }: IHomeProps) {
 
   const handleWork = () => {
     if (!hasWorked) {
-      workMutation.mutate();
+      // Make Local SWR Cache Update
+      mutate(
+        '/api/me/wallet-info',
+        {
+          ...walletInfo,
+          [user.country]: {
+            ...walletInfo[user.country],
+            amount: roundMoney(walletInfo[user.country].amount + job.employees.find(emp => emp.user_id === user._id).wage),
+          }
+        },
+        false
+      );
+      
+      // Send POST Request
+      request({
+        url: '/api/me/doAction',
+        method: 'POST',
+        payload: { action: 'work' },
+        token: cookies.token,
+      }).then(data => {
+        if (data.success) {
+          showToast(toast, 'success', 'Working Complete', data?.message);
+          refreshData(router);
+          // Revalidate Wallet Info
+          mutate('/api/me/wallet-info');
+        } else {
+          showToast(toast, 'error', 'Working Failed', data?.error);
+        }
+      })
     } else {
       showToast(toast, 'error', 'Already Worked Today', 'You can only work once per day');
     }

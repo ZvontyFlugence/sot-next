@@ -1,19 +1,19 @@
-import { IEmployee } from "@/models/Company";
-import { IEmployeeInfo } from "@/util/apiHelpers";
-import { refreshData, request, showToast } from "@/util/ui";
-import { Avatar } from "@chakra-ui/avatar";
-import { Button } from "@chakra-ui/button";
-import { FormControl, FormLabel } from "@chakra-ui/form-control";
-import { useDisclosure } from "@chakra-ui/hooks";
-import { Input } from "@chakra-ui/input";
-import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from "@chakra-ui/modal";
-import { Spinner } from "@chakra-ui/spinner";
-import { Table, Tbody, Td, Th, Thead, Tr } from "@chakra-ui/table";
-import { useToast } from "@chakra-ui/toast";
-import { useRouter } from "next/router";
-import { parseCookies } from "nookies";
-import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { IEmployee } from '@/models/Company';
+import { IEmployeeInfo } from '@/util/apiHelpers';
+import { refreshData, request, showToast } from '@/util/ui';
+import { Avatar } from '@chakra-ui/avatar';
+import { Button } from '@chakra-ui/button';
+import { FormControl, FormLabel } from '@chakra-ui/form-control';
+import { useDisclosure } from '@chakra-ui/hooks';
+import { Input } from '@chakra-ui/input';
+import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from '@chakra-ui/modal';
+import { Spinner } from '@chakra-ui/spinner';
+import { Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/table';
+import { useToast } from '@chakra-ui/toast';
+import { useRouter } from 'next/router';
+import { parseCookies } from 'nookies';
+import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 
 interface IManageEmployees {
   company_id: number,
@@ -21,11 +21,13 @@ interface IManageEmployees {
   currency: string,
 }
 
+const getEmployeeInfoFetcher = (url: string, token: string, employees: IEmployee[]) => request({ url, method: 'POST', payload: { employees }, token });
+
 const ManageEmployees: React.FC<IManageEmployees> = ({ employees, company_id, ...props }) => {
   const cookies = parseCookies();
-  const queryClient = useQueryClient();
   const router = useRouter();
   const toast = useToast();
+
   const [selected, setSelected] = useState<IEmployee>(null);
   const [title, setTitle] = useState('');
   const [wage, setWage] = useState(0);
@@ -35,19 +37,11 @@ const ManageEmployees: React.FC<IManageEmployees> = ({ employees, company_id, ..
   const { isOpen: isDeleteOpen, onOpen: onOpenDelete, onClose: onCloseDelete } = useDisclosure();
 
   // Get Employee Info Query
-  const { isLoading, isSuccess, data, ...query } = useQuery('getEmployeeInfo', () => {
-    let payload = { employees };
-    return request({
-      url: '/api/companies/employeeInfo',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-  });
+  const { data, error, ...query } = useSWR(['/api/companies/employeeInfo', cookies.token, employees], getEmployeeInfoFetcher);
 
   useEffect(() => {
     if (shouldRefetch) {
-      query.refetch();
+      query.mutate();
       setShouldRefetch(false);
     }
   }, [shouldRefetch]);
@@ -61,67 +55,6 @@ const ManageEmployees: React.FC<IManageEmployees> = ({ employees, company_id, ..
       setWage(0);
     }
   }, [selected]);
-
-  // Employee Mutations
-  const editMutation = useMutation(async () => {
-    let payload = {
-      action: 'edit_employee',
-      data: {
-        company_id,
-        employee: {
-          user_id: selected?.user_id,
-          title: (title !== selected.title) && (title !== '') ? title : undefined,
-          wage: (wage > 0) && (wage !== selected.wage) ? wage : undefined,
-        },
-      },
-    };
-
-    let data = await request({
-      url: '/api/companies/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', data?.message || 'Employee Updated');
-      queryClient.invalidateQueries('getEmployeeInfo');
-      queryClient.refetchQueries('getEmployeeInfo');
-      refreshData(router);
-      handleClose();
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Failed to Edit Employee', e.message);
-    }
-  });
-
-  const fireMutation = useMutation(async () => {
-    let payload = { action: 'fire_employee', data: { company_id, employee_id: selected?.user_id } };
-    let data = await request({
-      url: '/api/companies/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', data?.message || 'Employee Fired');
-      queryClient.invalidateQueries('getEmployeeInfo');
-      refreshData(router);
-      handleClose();
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Failed to Fire Employee', e.message);
-    }
-  });
 
   const handleOpenEdit = (employee: IEmployee) => {
     setSelected(employee);
@@ -143,11 +76,51 @@ const ManageEmployees: React.FC<IManageEmployees> = ({ employees, company_id, ..
   }
 
   const handleEdit = () => {
-    editMutation.mutate();
+    let payload = {
+      action: 'edit_employee',
+      data: {
+        company_id,
+        employee: {
+          user_id: selected?.user_id,
+          title: (title !== selected.title) && (title !== '') ? title : undefined,
+          wage: (wage > 0) && (wage !== selected.wage) ? wage : undefined,
+        },
+      },
+    };
+
+    request({
+      url: '/api/companies/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', data?.message || 'Employee Updated');
+        query.mutate();
+        refreshData(router);
+        handleClose();
+      } else {
+        showToast(toast, 'error', 'Failed to Edit Employee', data?.error);
+      }
+    });
   }
 
   const handleFire = () => {
-    fireMutation.mutate();
+    request({
+      url: '/api/companies/doAction',
+      method: 'POST',
+      payload: { action: 'fire_employee', data: { company_id, employee_id: selected?.user_id } },
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', data?.message || 'Employee Fired');
+        query.mutate();
+        refreshData(router);
+        handleClose();
+      } else {
+        showToast(toast, 'error', 'Failed to Fire Employee', data?.error);
+      }
+    });
   }
 
   const canEdit = () => {
@@ -160,7 +133,7 @@ const ManageEmployees: React.FC<IManageEmployees> = ({ employees, company_id, ..
 
   return (
     <div className='flex'>
-      {isLoading && (
+      {!data && !error && (
         <div className='flex justify-center'>
           <Spinner color='accent' size='xl' />
         </div>
@@ -180,7 +153,7 @@ const ManageEmployees: React.FC<IManageEmployees> = ({ employees, company_id, ..
                 </Tr>
               </Thead>
               <Tbody>
-                {isSuccess && data.employeeInfo && data.employeeInfo.map((employee: IEmployeeInfo, i: number) => (
+                {data && data.employeeInfo && data.employeeInfo.map((employee: IEmployeeInfo, i: number) => (
                   <Tr key={i}>
                     <Td className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/profile/${employee.user_id}`)}>
                       <Avatar src={employee.image} name={employee.name} />
@@ -201,7 +174,7 @@ const ManageEmployees: React.FC<IManageEmployees> = ({ employees, company_id, ..
           </div>
           <div className='flex md:hidden flex-col items-center gap-4 w-full'>
             <h3 className='text-xl font-semibold text-accent h-brand'>Employees</h3>
-            {isSuccess && data?.employeeInfo && data?.employeeInfo.map((employee: IEmployeeInfo, i: number) => (
+            {data && data?.employeeInfo && data?.employeeInfo.map((employee: IEmployeeInfo, i: number) => (
               <div key={i} className='flex items-center gap-2 w-full'>
                 <div onClick={() => router.push(`/profile/${employee.user_id}`)}>
                   <Avatar src={employee.image} name={employee.name} />

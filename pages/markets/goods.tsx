@@ -9,7 +9,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useToast } from '@chakra-ui/toast';
 import { refreshData, request, showToast } from '@/util/ui';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { Spinner } from '@chakra-ui/spinner';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/table';
 import { Avatar } from '@chakra-ui/avatar';
@@ -20,6 +19,7 @@ import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHea
 import { FormControl, FormLabel } from '@chakra-ui/form-control';
 import { Input } from '@chakra-ui/input';
 import { GetServerSideProps } from 'next';
+import useSWR, { useSWRConfig } from 'swr';
 
 interface IGoodsMarket {
   user: IUser,
@@ -27,52 +27,40 @@ interface IGoodsMarket {
   countries: ICountry[],
 }
 
+export const getCountryProductOffersFetcher = (url: string, token: string) => request({ url, method: 'GET', token });
+
 const GoodsMarket: React.FC<IGoodsMarket> = ({ user, ...props }) => {
   const cookies = parseCookies();
-  const queryClient = useQueryClient();
   const router = useRouter();
   const toast = useToast();
+  const { mutate } = useSWRConfig();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [country, setCountry] = useState(user?.country);
   const [selected, setSelected] = useState<IGoodsMarketOffer>(null);
   const [quantity, setQuantity] = useState(1);
 
-  const query = useQuery('getCountryProductOffers', () => {
-    return request({
-      url: `/api/markets/goods?country_id=${country}`,
-      method: 'GET',
-      token: cookies.token,
-    });
-  });
 
-  useEffect(() => { query.refetch() }, [country]);
+  const query = useSWR([`/api/markets/goods?country_id=${country}`, cookies.token], getCountryProductOffersFetcher);
 
-  const purchaseMutation = useMutation(async () => {
-    let payload = { action: 'buy_item', data: { company_id: selected?.company.id, offer_id: selected?.id, quantity } };
-    let data = await request({
-      url: '/api/me/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'Successful Purchase', data?.message);
-      queryClient.invalidateQueries('getWalletInfo');
-      queryClient.invalidateQueries('getCountryProductOffers');
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Purchase Failed', e.message);
-    },
-  });
+  useEffect(() => { query.mutate() }, [country]);
 
   const handlePurchase = () => {
-    purchaseMutation.mutate();
+    request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload: { action: 'buy_item', data: { company_id: selected?.company.id, offer_id: selected?.id, quantity } },
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Successful Purchase', data?.message);
+        // Revalidate data
+        mutate('/api/me/wallet-info');
+        query.mutate();
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Purchase Failed', data?.error);
+      }
+    });
   }
 
   const handleOpen = (offer: IGoodsMarketOffer) => {
@@ -107,15 +95,15 @@ const GoodsMarket: React.FC<IGoodsMarket> = ({ user, ...props }) => {
       </h1>
       <div className='mx-12 mt-4 p-2 bg-night rounded shadow-md'>
         {/* Product Offer Filters */}
-        {query.isLoading && (
+        {!query.data && !query.error && (
           <div className='w-full'>
             <Spinner className='flex justify-center items-center' color='accent' />
           </div>
         )}
-        {query.isSuccess && query.data?.productOffers.length === 0 && (
+        {query.data && query.data?.productOffers.length === 0 && (
           <p className='text-white'>Country has no product offers</p>
         )}
-        {query.isSuccess && query.data?.productOffers.length > 0 && (
+        {query.data && query.data?.productOffers.length > 0 && (
           <Table variant='unstyled' bgColor='night' color='white'>
             <Thead>
               <Tr>

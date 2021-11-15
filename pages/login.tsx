@@ -7,11 +7,11 @@ import { useToast } from "@chakra-ui/toast";
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState } from "react";
-import { useMutation, UseMutationResult } from 'react-query';
 import { setCookie } from 'nookies';
 import { getCurrentUser } from '@/util/auth';
 import { IUser } from "@/models/User";
 import { GetServerSideProps } from "next";
+import { request } from "@/util/ui";
 
 interface ILoginProps {
   user: IUser;
@@ -21,46 +21,35 @@ interface ILoginProps {
 export default function Login(_props: ILoginProps) {
   const router = useRouter();
   const toast = useToast();
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const mutation: UseMutationResult<any, Object> = useMutation(formData => {
-    return fetch('/api/auth/login', { method: 'POST', body: JSON.stringify(formData) })
-      .then(res => res.json());
-  }, {
-    onSuccess: (data) => {
-      if (data.success) {
-        setCookie(null, 'token', data.token, { maxAge: 60 * 60 * 24 * 7, path: '/' });
-        router.push('/dashboard');
-      } else {
-        toast({
-          position: 'top-right',
-          title: 'Login Error',
-          description: data.error,
-          status: 'error',
-          duration: 2500,
-          isClosable: true,
-        });
-      }
-    },
-    onError: (e) => {
-      toast({
-        position: 'top-right',
-        title: 'Login Error',
-        description: e,
-        status: 'error',
-        duration: 2500,
-        isClosable: true,
-      });
-    }
-  });
-
   const login = () => {
-    fetch('https://api.ipify.org/?format=json')
-      .then(res => res.json())
-      .then(data => {
-        mutation.mutate({ email, password, ip: data.ip });
+    request({
+      url: 'https://api.ipify.org/?format=json',
+      method: 'GET',
+    }).then(ipData => {
+      request({
+        url: '/api/auth/login',
+        method: 'POST',
+        payload: { email, password, ip: ipData.ip },
+      }).then(data => {
+        if (data.success) {
+          setCookie(null, 'token', data.token, { maxAge: 60 * 60 * 24 * 7, path: '/' });
+          router.push('/dashboard');
+        } else {
+          toast({
+            position: 'top-right',
+            title: 'Login Error',
+            description: data.error,
+            status: 'error',
+            duration: 2500,
+            isClosable: true,
+          });
+        }
       });
+    });
   }
 
   return (

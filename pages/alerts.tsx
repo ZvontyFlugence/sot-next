@@ -1,14 +1,13 @@
-import Layout from "@/components/Layout";
-import AlertItem from "@/components/sidebar/AlertItem";
-import { IAlert, IUser } from "@/models/User";
-import { getCurrentUser } from "@/util/auth";
-import { refreshData, request, showToast } from "@/util/ui";
-import { Button } from "@chakra-ui/button";
-import { useToast } from "@chakra-ui/toast";
-import { GetServerSideProps } from "next";
-import { useRouter } from "next/router";
-import { destroyCookie, parseCookies } from "nookies";
-import { useMutation } from "react-query";
+import Layout from '@/components/Layout';
+import AlertItem from '@/components/sidebar/AlertItem';
+import { IAlert, IUser } from '@/models/User';
+import { getCurrentUser } from '@/util/auth';
+import { refreshData, request, showToast } from '@/util/ui';
+import { Button } from '@chakra-ui/button';
+import { useToast } from '@chakra-ui/toast';
+import { GetServerSideProps } from 'next';
+import { useRouter } from 'next/router';
+import { destroyCookie, parseCookies } from 'nookies';
 
 interface IAlerts {
   user: IUser,
@@ -20,64 +19,56 @@ const Alerts: React.FC<IAlerts> = ({ user, ...props }) => {
   const toast = useToast();
   const router = useRouter();
 
-  const readAllMutation = useMutation(async () => {
-    let values = await Promise.all(user && user.alerts.filter(a => !a.read).map(async (alert: IAlert) => {
-      let payload = { action: 'read_alert', data: { alert_id: alert.id } };
-      return await request({
-        url: '/api/me/doAction',
-        method: 'POST',
-        payload,
-        token: cookies.token,
-      });
-    }));
-
-    if (!values.every(res => res.success)) {
-      let index = values.findIndex(res => !res.success && res?.error);
-      throw new Error(index >= 0 ? values[index].error : 'Unknown Error');
-    }
-    return values[0];
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'All Alerts Marked as Read', data?.message);
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Error', e.message);
-    }
-  });
-
-  const deleteAllMutation = useMutation(async () => {
-    let values = await Promise.all(user && user.alerts.map(async (alert) => {
-      let payload = { action: 'delete_alert', data: { alert_id: alert.id } };
-      return await request({
-        url: '/api/me/doAction',
-        method: 'POST',
-        payload,
-        token: cookies.token,
-      });
-    }));
-
-    if (!values.every(res => res.success)) {
-      let index = values.findIndex(res => !res.success && res?.error);
-      throw new Error(index >= 0 ? values[index].error : 'Unknown Error');
-    }
-    return values[0];
-  }, {
-    onSuccess: (data)  => {
-      showToast(toast, 'success', 'All Alerts Deleted', data?.message);
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Error', e.message);
-    }
-  });
-
   const handleReadAll = () => {
-    readAllMutation.mutate();
+    (async () => {
+      let values = await Promise.all(user && user.alerts.filter(a => !a.read).map(async (alert: IAlert) => {
+        let payload = { action: 'read_alert', data: { alert_id: alert.id } };
+        return await request({
+          url: '/api/me/doAction',
+          method: 'POST',
+          payload,
+          token: cookies.token,
+        });
+      }));
+
+      try {
+        if (!values.every(res => res.success)) {
+          let index = values.findIndex(res => !res.success && res?.error);
+          throw new Error(index >= 0 ? values[index].error : 'Unknown Error');
+        }
+
+        showToast(toast, 'success', 'All Alerts Marked as Read', values[0]?.message);
+        refreshData(router);
+      } catch (e) {
+        showToast(toast, 'error', 'Error', e.message);
+      }
+    })();
   }
 
   const handleDeleteAll = () => {
-    deleteAllMutation.mutate();
+    (async () => {
+      let values = await Promise.all(user && user.alerts.map(async (alert) => {
+        let payload = { action: 'delete_alert', data: { alert_id: alert.id } };
+        return await request({
+          url: '/api/me/doAction',
+          method: 'POST',
+          payload,
+          token: cookies.token,
+        });
+      }));
+  
+      try {
+        if (!values.every(res => res.success)) {
+          let index = values.findIndex(res => !res.success && res?.error);
+          throw new Error(index >= 0 ? values[index].error : 'Unknown Error');
+        }
+
+        showToast(toast, 'success', 'All Alerts Deleted', values[0]?.message);
+        refreshData(router);
+      } catch (e) {
+        showToast(toast, 'error', 'Error', e.message);
+      }
+    })();
   }
 
   return user ? (

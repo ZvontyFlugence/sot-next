@@ -1,13 +1,13 @@
-import { IArticle } from "@/models/Newspaper";
-import { IUser } from "@/models/User";
-import { request } from "@/util/ui";
-import { Stat, StatLabel, StatNumber } from "@chakra-ui/stat";
-import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/tabs";
-import { format } from "date-fns";
-import { useRouter } from "next/router";
-import { parseCookies } from "nookies";
-import { useQuery } from "react-query";
-import Card from "../Card";
+import { IArticle } from '@/models/Newspaper';
+import { IUser } from '@/models/User';
+import { request } from '@/util/ui';
+import { Stat, StatLabel, StatNumber } from '@chakra-ui/stat';
+import { Tab, TabList, TabPanel, TabPanels, Tabs } from '@chakra-ui/tabs';
+import { format } from 'date-fns';
+import { useRouter } from 'next/router';
+import { parseCookies } from 'nookies';
+import Card from '../Card';
+import useSWR from 'swr';
 
 interface INews {
   user: IUser,
@@ -17,24 +17,14 @@ interface IArticleLink {
   article: IArticle,
 }
 
+export const getGlobalNewsFetcher = (url: string, token: string) => request({ url, method: 'GET', token });
+export const getCountryNewsFetcher = (url: string, token: string) => request({ url, method: 'GET', token });
+
 const News: React.FC<INews> = ({ user }) => {
   const cookies = parseCookies();
 
-  const globalNewsQuery = useQuery('getGlobalNews', () => {
-    return request({
-      url: '/api/newspapers/articles',
-      method: 'GET',
-      token: cookies.token,
-    });
-  });
-
-  const { isLoading, data, error } = useQuery('getCountryNews', () => {
-    return request({
-      url: `/api/countries/${user.country}/articles`,
-      method: 'GET',
-      token: cookies.token,
-    });
-  });
+  const globalNewsQuery = useSWR(['/api/newspapers/articles', cookies.token], getGlobalNewsFetcher);
+  const { data, error } = useSWR([`/api/countries/${user.country}/articles`, cookies.token], getCountryNewsFetcher);
 
   return (
     <div className='mt-4 px-8 md:mt-8'>
@@ -48,8 +38,8 @@ const News: React.FC<INews> = ({ user }) => {
             </TabList>
             <TabPanels>
               <TabPanel>
-                {!globalNewsQuery.isLoading && !globalNewsQuery.error && (
-                  <div className="flex flex-col gap-2 w-full">
+                {globalNewsQuery.data && !globalNewsQuery.error && (
+                  <div className='flex flex-col gap-2 w-full'>
                     {globalNewsQuery.data?.articles.map((article: IArticle, i: number) => (
                       <ArticleLink key={i} article={article} />
                     ))}
@@ -57,7 +47,7 @@ const News: React.FC<INews> = ({ user }) => {
                 )}
               </TabPanel>
               <TabPanel>
-                {!isLoading && !error && (
+                {data && !error && (
                   <div className='flex flex-col gap-2 w-full'>
                     {data?.articles.map((article: IArticle, i: number) => (
                       <ArticleLink key={i} article={article} />

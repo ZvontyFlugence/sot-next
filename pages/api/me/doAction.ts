@@ -524,7 +524,7 @@ async function work(user_id: number): Promise<ActionResult> {
       }
 
       // Update Company
-      let updatedComp = await job.updateOne({ $set: compUpdates }).exec();
+      let updatedComp = await Company.updateOne(compQuery, compUpdates).exec();
       if (!updatedComp) {
         await session.abortTransaction();
         throw new Error(ret.payload.error);
@@ -556,8 +556,13 @@ async function work(user_id: number): Promise<ActionResult> {
         };
       }
 
+      const userQuery = {
+        _id: user._id,
+        wallet: { $elemMatch: { currency: compCountry.currency } }
+      }
+
       // Update User
-      let updatedUser = await user.updateOne({ $set: userUpdates }).exec();
+      let updatedUser = await User.updateOne(userQuery, userUpdates).exec();
       if (updatedUser) {
         ret.status_code = 200;
         ret.payload = { success: true, message: 'Received +1 XP and salary' };
@@ -592,6 +597,7 @@ async function collect_rewards(user_id: number): Promise<ActionResult> {
   };
 
   if ((user.xp + 1) >= neededXP(user.level)) {
+    updates['$inc']['level'] = 1;
     updates['$inc']['xp'] = 1;
     updates['$inc']['gold'] = 5;
     updates['$addToSet'] = {

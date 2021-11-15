@@ -1,16 +1,14 @@
 import { IParty } from "@/models/Party";
-import { IUser } from "@/models/User";
-import { request } from "@/util/ui";
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/tabs";
 import { parseCookies } from "nookies";
 import { useState } from "react";
-import { useQuery } from "react-query";
 import Select from "../Select";
 import ManageCongressCandidates from "./management/ManageCongressCandidates";
 import ManageCPCandidates from "./management/ManageCPCandidates";
 import ManagePartyMembers from "./management/ManagePartyMembers";
 import PartySettings from "./management/PartySettings";
-import { IMemberInfo } from './PartyMembers';
+import { getPartyMembersFetcher } from './PartyMembers';
+import useSWR from 'swr';
 
 interface IManagePartyProps {
   user_id: number,
@@ -25,33 +23,7 @@ const ManageParty: React.FC<IManagePartyProps> = ({ user_id, party }) => {
   const cookies = parseCookies();
   const [tab, setTab] = useState<string>('Members');
 
-  const { isLoading, data, error } = useQuery('getPartyMembers', async () => {
-    let members: IMemberInfo[] = [];
-
-    for (let memberId of party.members) {
-      const { user: member }: { user: IUser } = await request({
-        url: `/api/users/${memberId}`,
-        method: 'GET',
-        token: cookies.token,
-      });
-
-      let role: string = 'Member';
-
-      if (party.president === member._id)
-        role = 'Party President';
-      else if (party.vp === member._id)
-        role = 'Vice Party President';
-
-      members.push({
-        id: member._id,
-        name: member.username,
-        image: member.image,
-        role,
-      } as IMemberInfo);
-    }
-
-    return { members };
-  });
+  const { data, error } = useSWR(['getPartyMembers', cookies.token, party], getPartyMembersFetcher);
 
   const TABS: ITabs = {
     'Members': <ManagePartyMembers user_id={user_id} party_id={party._id} members={data?.members} />,
@@ -73,7 +45,7 @@ const ManageParty: React.FC<IManagePartyProps> = ({ user_id, party }) => {
           </TabList>
           <TabPanels>
             <TabPanel>
-              {!isLoading && !error && (
+              {data && !error && (
                 <ManagePartyMembers user_id={user_id} party_id={party._id} members={data?.members} />
               )}
             </TabPanel>

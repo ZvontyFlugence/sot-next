@@ -13,7 +13,7 @@ import { useToast } from '@chakra-ui/toast';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
 import { SyntheticEvent, useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
+import useSWR from 'swr';
 
 interface IComposeMsg {
   user: IUser,
@@ -38,9 +38,7 @@ const ComposeModal: React.FC<IComposeMsg> = ({ user, ...props }) => {
       setUsers(curr => [...curr, props.profile]);
   }, [props.profile]);
 
-  const query = useQuery('searchUser', () => {
-
-  });
+  // TODO: Implement Search User Query w/ SWR
 
   const removeUser = (userID: number) => {
     let idx = users.findIndex(u => u._id === userID);

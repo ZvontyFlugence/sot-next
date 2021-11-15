@@ -5,20 +5,22 @@ import { UserActions } from '@/util/actions';
 import { getCurrentUser } from '@/util/auth';
 import { refreshData, request, showToast } from '@/util/ui';
 import { Button } from '@chakra-ui/button';
-import { FormControl, FormHelperText, FormLabel } from '@chakra-ui/form-control';
+import { FormControl, FormLabel } from '@chakra-ui/form-control';
 import { Input } from '@chakra-ui/input';
 import { Textarea } from '@chakra-ui/textarea';
 import { useToast } from '@chakra-ui/toast';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
-import { FormEvent, useState } from 'react';
-import { useQuery } from 'react-query';
+import { useState } from 'react';
+import useSWR from 'swr';
 
 interface ISettings {
   user: IUser,
   isAuthenticated: boolean,
 }
+
+export const getAllRegionsFetcher = (url: string, token: string) => request({ url, method: 'GET', token });
 
 const Settings: React.FC<ISettings> = ({ user, ...props }) => {
   const cookies = parseCookies();
@@ -31,13 +33,7 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
   const [file, setFile] = useState(null);
   const [desc, setDesc] = useState('');
 
-  const regionQuery = useQuery('getAllRegions', () => {
-    return request({
-      url: '/api/regions',
-      method: 'GET',
-      token: cookies.token,
-    });
-  });
+  const regionQuery = useSWR(['/api/regions', cookies.token], getAllRegionsFetcher);
 
   const handleUpdateUsername = () => {
     let payload = {
@@ -261,7 +257,7 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
             <FormLabel className='text-xl'>Travel</FormLabel>
             <Select className='border border-white border-opacity-25 rounded shadow-md' onChange={val => setSelectedRegion(val as number)}>
               <Select.Option value={-1} disabled>Select Region</Select.Option>
-              {regionQuery.isSuccess && regionQuery.data?.regions?.map((region, i) => (
+              {regionQuery.data && regionQuery.data?.regions?.map((region, i) => (
                 <Select.Option key={i} value={region._id}>{region.name}</Select.Option>
               ))}
             </Select>
@@ -279,7 +275,7 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
             <FormLabel className='text-xl'>Move Residence</FormLabel>
             <Select className='border border-white border-opacity-25 rounded shadow-md' onChange={val => setSelectedRegion(val as number)}>
               <Select.Option value={-1} disabled>Select Region</Select.Option>
-              {regionQuery.isSuccess && regionQuery.data?.regions?.filter(reg => reg.owner === user.country).map((region, i) => (
+              {regionQuery.data && regionQuery.data?.regions?.filter(reg => reg.owner === user.country).map((region, i) => (
                 <Select.Option key={i} value={region._id}>{region.name}</Select.Option>
               ))}
             </Select>

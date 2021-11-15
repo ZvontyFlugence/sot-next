@@ -11,7 +11,6 @@ import { useToast } from '@chakra-ui/toast';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
-import { useMutation } from 'react-query';
 
 interface IMail {
   user: IUser,
@@ -25,64 +24,56 @@ const Mail: React.FC<IMail> = ({ user, ...props }) => {
   
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const readAllMutation = useMutation(async () => {
-    let values = await Promise.all(user && user.messages.filter(thrd => !thrd.read).map(async (thread, i) => {
-      let payload = { action: UserActions.READ_THREAD, data: { thread_id: thread.id} };
-      return await request({
-        url: '/api/me/doAction',
-        method: 'POST',
-        payload,
-        token: cookies.token,
-      });
-    }));
-
-    if (!values.every(res => res.success)) {
-      let index = values.findIndex(res => !res.success && res?.error);
-      throw new Error(index >= 0 ? values[index].error : 'Unknown Error');
-    }
-    return values[0];
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'All Threads Marked as Read');
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Error', e.message);
-    }
-  });
-
-  const deleteAllMutation = useMutation(async () => {
-    let values = await Promise.all(user && user.messages.map(async (thread, i) => {
-      let payload = { action: UserActions.DELETE_THREAD, data: { thread_id: thread.id} };
-      return await request({
-        url: '/api/me/doAction',
-        method: 'POST',
-        payload,
-        token: cookies.token,
-      });
-    }));
-
-    if (!values.every(res => res.success)) {
-      let index = values.findIndex(res => !res.success && res?.error);
-      throw new Error(index >= 0 ? values[index].error : 'Unknown Error');
-    }
-    return values[0];
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'All Threads Deleted');
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Error', e.message);
-    }
-  });
-
   const readAll = () => {
-    readAllMutation.mutate();
+    (async () => {
+      let values = await Promise.all(user && user.messages.filter(thrd => !thrd.read).map(async (thread, i) => {
+        let payload = { action: UserActions.READ_THREAD, data: { thread_id: thread.id} };
+        return await request({
+          url: '/api/me/doAction',
+          method: 'POST',
+          payload,
+          token: cookies.token,
+        });
+      }));
+  
+      try {
+        if (!values.every(res => res.success)) {
+          let index = values.findIndex(res => !res.success && res?.error);
+          throw new Error(index >= 0 ? values[index].error : 'Unknown Error');
+        }
+
+        showToast(toast, 'success', 'All Threads Marked as Read');
+        refreshData(router);
+      } catch (e) {
+        showToast(toast, 'error', 'Error', e.message);
+      }
+    })();
   }
 
   const deleteAll = () => {
-    deleteAllMutation.mutate();
+    (async () => {
+      let values = await Promise.all(user && user.messages.map(async (thread, i) => {
+        let payload = { action: UserActions.DELETE_THREAD, data: { thread_id: thread.id} };
+        return await request({
+          url: '/api/me/doAction',
+          method: 'POST',
+          payload,
+          token: cookies.token,
+        });
+      }));
+  
+      try {
+        if (!values.every(res => res.success)) {
+          let index = values.findIndex(res => !res.success && res?.error);
+          throw new Error(index >= 0 ? values[index].error : 'Unknown Error');
+        }
+
+        showToast(toast, 'success', 'All Threads Deleted');
+        refreshData(router);
+      } catch (e) {
+        showToast(toast, 'error', 'Error', e.message);
+      }
+    })();
   }
 
   return user ? (

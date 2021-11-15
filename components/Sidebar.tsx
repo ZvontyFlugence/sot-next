@@ -4,17 +4,27 @@ import { BellIcon, EmailIcon } from '@chakra-ui/icons';
 import { useRouter } from "next/router";
 import Card from "./Card";
 import { Progress } from "@chakra-ui/progress";
-import { neededXP, refreshData } from "@/util/ui";
+import { neededXP, refreshData, request } from "@/util/ui";
 import { GiHeartPlus } from 'react-icons/gi';
 import { List, ListItem } from "@chakra-ui/layout";
 import { Avatar } from "@chakra-ui/avatar";
 import { Tag } from "@chakra-ui/tag";
-import { useQuery, useMutation } from 'react-query';
 import { parseCookies } from 'nookies';
 import { useToast } from "@chakra-ui/toast";
+import useSWR from 'swr';
 
 interface ISidebar {
   user: IUser,
+}
+
+export const getWalletInfoFetcher = (url: string, token: string) => {
+  return fetch(url, { headers: { authorization: `Bearer ${token}` } })
+    .then(res => res.json());
+}
+
+export const getLocationInfoFetcher = (url: string, token: string) => {
+  return fetch(url, { headers: { authorization: `Bearer ${token}` } })
+    .then(res => res.json());
 }
 
 const Sidebar: React.FC<ISidebar> = ({ user }) => {
@@ -24,55 +34,33 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
 
   const hasHealed = new Date(user.canHeal) > new Date(Date.now());
 
-  const walletQuery = useQuery('getWalletInfo', () => {
-    return fetch('/api/me/wallet-info', { headers: { authorization: `Bearer ${cookies.token}` } })
-      .then(res => res.json());
-  });
-
-  const locationQuery = useQuery('getLocationInfo', () => {
-    return fetch('/api/me/location-info', { headers: { authorization: `Bearer ${cookies.token}` } })
-      .then(res => res.json());
-  });
-
-  const healMutation = useMutation(() => {
-    let payload = { action: 'heal' };
-    return fetch('/api/me/doAction', {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${cookies.token}`,
-      },
-      body: JSON.stringify(payload),
-    }).then(res => res.json());
-  }, {
-    onSuccess: (data) => {
-      if (data.success) {
-        refreshData(router);
-      } else {
-        toast({
-          position: 'top-right',
-          title: 'Error Occurred',
-          description: data.error,
-          status: 'error',
-          duration: 2500,
-          isClosable: true,
-        });
-      }
-    },
-    onError: (e) => {
-      toast({
-        position: 'top-right',
-        title: 'Error Occurred',
-        description: e,
-        status: 'error',
-        duration: 2500,
-        isClosable: true,
-      });
-    },
-  });
+  const walletQuery = useSWR(['/api/me/wallet-info', cookies.token], getWalletInfoFetcher);
+  const locationQuery = useSWR(['/api/me/location-info', cookies.token], getLocationInfoFetcher);
 
   const handleHeal = () => {
     if (user.health < 100 && !hasHealed) {
-      healMutation.mutate();
+      // TODO: Update local swr cache (health, xp, str)
+      request({
+        url: '/api/me/doAction',
+        method: 'POST',
+        payload: { action: 'heal' },
+        token: cookies.token,
+      }).then(data => {
+        if (data.success) {
+          refreshData(router);
+        } else {
+          toast({
+            position: 'top-right',
+            title: 'Error Occurred',
+            description: data.error,
+            status: 'error',
+            duration: 2500,
+            isClosable: true,
+          });
+        }
+
+        // Revalidate local swr cache
+      });
     }
   }
 
@@ -130,7 +118,7 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
               Heal
             </Button>
           </div>
-          {(!locationQuery.isLoading && !locationQuery.isError) && (
+          {(locationQuery.data && !locationQuery.error) && (
             <div className='flex justify-between mt-4'>
               <p>
                 <span className='link' onClick={() => router.push(`/region/${user.location}`)}>
@@ -155,7 +143,7 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
                   <i className='sot-icon sot-coin' />
                 </p>
               </ListItem>
-              {(!walletQuery.isLoading && !walletQuery.isError) && (
+              {(walletQuery.data && !walletQuery.error) && (
                 <ListItem className='flex justify-between'>
                   <span>{walletQuery.data.walletInfo[user.country].currency}</span>
                   <span>

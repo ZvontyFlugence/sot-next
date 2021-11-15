@@ -1,15 +1,14 @@
-import { IThread, IUser } from "@/models/User";
-import { UserActions } from "@/util/actions";
-import { refreshData, request, showToast } from "@/util/ui";
-import { Avatar } from "@chakra-ui/avatar";
-import { Tag, TagLabel } from "@chakra-ui/tag";
-import { useToast } from "@chakra-ui/toast";
-import { formatDistance } from "date-fns";
-import { useRouter } from "next/router";
-import { parseCookies } from "nookies";
-import { useEffect, useState } from "react";
-import { Item, Menu, useContextMenu } from "react-contexify";
-import { useMutation } from "react-query";
+import { IThread, IUser } from '@/models/User';
+import { UserActions } from '@/util/actions';
+import { refreshData, request, showToast } from '@/util/ui';
+import { Avatar } from '@chakra-ui/avatar';
+import { Tag, TagLabel } from '@chakra-ui/tag';
+import { useToast } from '@chakra-ui/toast';
+import { formatDistance } from 'date-fns';
+import { useRouter } from 'next/router';
+import { parseCookies } from 'nookies';
+import { useEffect, useState } from 'react';
+import { Item, Menu, useContextMenu } from 'react-contexify';
 
 interface IMailItem {
   thread: IThread,
@@ -40,49 +39,6 @@ const MailItem: React.FC<IMailItem> = ({ thread, index, userId }) => {
     }
   }, [thread, thread.participants, participants.length]);
 
-  const readThreadMutation = useMutation(async () => {
-    let payload = { action: UserActions.READ_THREAD, data: { thread_id: thread.id } };
-    let data = await request({
-      url: '/api/me/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Error', e.message);
-    }
-  });
-
-  const deleteThreadMutation = useMutation(async () => {
-    let payload = { action: UserActions.DELETE_THREAD, data: { thread_id: thread.id } };
-    let data = await request({
-      url: '/api/me/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', data?.message);
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', e.message);
-    }
-  })
-
   const getTimestamp = (): React.ReactNode => (
     <span>
       {formatDistance(new Date(thread.timestamp), new Date(Date.now()), { addSuffix: true })}
@@ -94,11 +50,34 @@ const MailItem: React.FC<IMailItem> = ({ thread, index, userId }) => {
   }
 
   const handleRead = () => {
-    readThreadMutation.mutate();
+    request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload: { action: UserActions.READ_THREAD, data: { thread_id: thread.id } },
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Error', data?.error);
+      }
+    });
   }
 
   const handleDelete = () => {
-    deleteThreadMutation.mutate();
+    request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload: { action: UserActions.DELETE_THREAD, data: { thread_id: thread.id } },
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', data?.message);
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', data?.error);
+      }
+    });
   }
 
   return (

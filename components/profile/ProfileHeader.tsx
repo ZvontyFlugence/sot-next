@@ -1,20 +1,19 @@
-import { IUser } from "@/models/User";
-import { UserActions } from "@/util/actions";
-import { ILocationInfo } from "@/util/apiHelpers";
-import { refreshData, request, showToast } from "@/util/ui";
-import { IconButton } from "@chakra-ui/button";
-import { useDisclosure } from "@chakra-ui/hooks";
-import { SettingsIcon } from "@chakra-ui/icons";
-import { Image } from "@chakra-ui/image";
-import { VStack } from "@chakra-ui/layout";
-import { useToast } from "@chakra-ui/toast";
-import { useRouter } from "next/router";
-import { parseCookies } from "nookies";
+import { IUser } from '@/models/User';
+import { UserActions } from '@/util/actions';
+import { ILocationInfo } from '@/util/apiHelpers';
+import { refreshData, request, showToast } from '@/util/ui';
+import { IconButton } from '@chakra-ui/button';
+import { useDisclosure } from '@chakra-ui/hooks';
+import { SettingsIcon } from '@chakra-ui/icons';
+import { Image } from '@chakra-ui/image';
+import { VStack } from '@chakra-ui/layout';
+import { useToast } from '@chakra-ui/toast';
+import { useRouter } from 'next/router';
+import { parseCookies } from 'nookies';
 import { AiOutlineDollar, AiOutlineUsergroupAdd, AiOutlineUsergroupDelete } from 'react-icons/ai';
 import { IoGiftOutline, IoMailOutline } from 'react-icons/io5';
-import { useMutation } from "react-query";
-import DonateModal from "./DonateModal";
-import GiftModal from "./GiftModal";
+import DonateModal from './DonateModal';
+import GiftModal from './GiftModal';
 
 interface IProfileHeader {
   user: IUser,
@@ -27,71 +26,52 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
   const router = useRouter();
   const toast = useToast();
 
-  const { isOpen: isSendMsgOpen, onOpen: onOpenSendMsg, onClose: onCloseSendMsg } = useDisclosure();
+  const { onOpen: onOpenSendMsg } = useDisclosure();
   const { isOpen: isDonateOpen, onOpen: onOpenDonate, onClose: onCloseDonate } = useDisclosure();
   const { isOpen: isGiftOpen, onOpen: onOpenGift, onClose: onCloseGift } = useDisclosure();
 
-  const addMutation = useMutation(async () => {
-    let payload = { action: UserActions.SEND_FR, data: { profile_id: profile._id } };
-    let data = await request({
+  const addFriend = () => {
+    request({
       url: '/api/me/doAction',
       method: 'POST',
-      payload,
+      payload: { action: UserActions.SEND_FR, data: { profile_id: profile._id } },
       token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Friend Request Sent', data?.message);
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Failed to Send', data?.error);
+      }
     });
+  }
 
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'Friend Request Sent', data?.message);
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Failed to Send', e.message);
-    }
-  });
-
-  const removeMutation = useMutation(async () => {
+  const removeFriend = () => {
     let payload = {
       action: UserActions.REMOVE_FRIEND,
       data: { profile_id: profile._id },
     };
 
-    let data = await request({
+    request({
       url: '/api/me/doAction',
       method: 'POST',
       payload,
       token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Friend Removed', data?.message);
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Failed Remove Friend', data?.error);
+      }
     });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'Friend Removed', data?.message);
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Failed Remove Friend', e.message);
-    },
-  });
-
-  const addFriend = () => {
-    addMutation.mutate();
-  }
-
-  const removeFriend = () => {
-    removeMutation.mutate();
   }
 
   return (
     <div className='mt-4'>
       <div className='hidden md:block bg-night text-white p-4 shadow-md rounded'>
         <div className='flex flex-row items-stretch gap-4'>
-          <Image boxSize='12.0rem' borderRadius="full" src={profile.image} alt={profile.username} />
+          <Image boxSize='12.0rem' borderRadius='full' src={profile.image} alt={profile.username} />
           <div className='flex flex-col w-full items-top'>
             <h3 className='flex gap-4 text-2xl text-accent font-semibold'>
               {profile.username}

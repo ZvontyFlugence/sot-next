@@ -1,17 +1,16 @@
-import { IItem } from "@/util/apiHelpers";
-import { ITEMS } from "@/util/constants";
-import { refreshData, request, showToast } from "@/util/ui";
-import { Button } from "@chakra-ui/button";
-import { FormControl, FormLabel } from "@chakra-ui/form-control";
-import { useDisclosure } from "@chakra-ui/hooks";
-import { Input } from "@chakra-ui/input";
-import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from "@chakra-ui/modal";
-import { useToast } from "@chakra-ui/toast";
-import { useRouter } from "next/router";
-import { parseCookies } from "nookies";
-import React, { useState } from "react";
-import { useMutation } from "react-query";
-import Inventory from "../shared/Inventory";
+import { IItem } from '@/util/apiHelpers';
+import { ITEMS } from '@/util/constants';
+import { refreshData, request, showToast } from '@/util/ui';
+import { Button } from '@chakra-ui/button';
+import { FormControl, FormLabel } from '@chakra-ui/form-control';
+import { useDisclosure } from '@chakra-ui/hooks';
+import { Input } from '@chakra-ui/input';
+import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from '@chakra-ui/modal';
+import { useToast } from '@chakra-ui/toast';
+import { useRouter } from 'next/router';
+import { parseCookies } from 'nookies';
+import React, { useState } from 'react';
+import Inventory from '../shared/Inventory';
 
 interface IManageInventory {
   inventory: IItem[],
@@ -28,7 +27,7 @@ const ManageInventory: React.FC<IManageInventory> = ({ inventory, company_id, cu
   const [price, setPrice] = useState(0.01);
   const { isOpen: isCreateOpen, onOpen: onOpenCreate, onClose: onCloseCreate } = useDisclosure();
 
-  const createProductMutation = useMutation(async () => {
+  const createProductOffer = () => {
     let payload = {
       action: 'create_product',
       data: {
@@ -37,29 +36,20 @@ const ManageInventory: React.FC<IManageInventory> = ({ inventory, company_id, cu
       }
     };
 
-    let data = await request({
+    request({
       url: '/api/companies/doAction',
       method: 'POST',
       payload,
       token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Product Offer Created');
+        onCloseCreate();
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Create Product Offer Failed', data?.error);
+      }
     });
-
-    if (!data.success)
-      throw new Error(data?.error || 'Unknown Error');
-    return data;
-  }, {
-    onSuccess: () => {
-      showToast(toast, 'success', 'Product Offer Created');
-      onCloseCreate();
-      refreshData(router);
-    },
-    onError: (e) => {
-      showToast(toast, 'error', 'Create Product Offer Failed', e as string);
-    },
-  });
-
-  const createProductOffer = () => {
-    createProductMutation.mutate();
   }
 
   const handleCloseCreate = () => {

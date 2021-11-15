@@ -1,19 +1,19 @@
-import { IFunds } from "@/models/Company";
-import { IUser, IWalletItem } from "@/models/User";
-import { ILocationInfo } from "@/util/apiHelpers";
-import { refreshData, request, showToast } from "@/util/ui";
-import { Button } from "@chakra-ui/button";
-import { FormControl, FormLabel } from "@chakra-ui/form-control";
-import { useDisclosure } from "@chakra-ui/hooks";
-import { Input } from "@chakra-ui/input";
-import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from "@chakra-ui/modal";
-import { Stat, StatGroup, StatLabel, StatNumber } from "@chakra-ui/stat";
-import { useToast } from "@chakra-ui/toast";
-import { useRouter } from "next/router";
-import { parseCookies } from "nookies";
-import { useState } from "react";
-import { useMutation, useQueryClient } from "react-query";
-import Select from "../Select";
+import { IFunds } from '@/models/Company';
+import { IUser, IWalletItem } from '@/models/User';
+import { ILocationInfo } from '@/util/apiHelpers';
+import { refreshData, request, showToast } from '@/util/ui';
+import { Button } from '@chakra-ui/button';
+import { FormControl, FormLabel } from '@chakra-ui/form-control';
+import { useDisclosure } from '@chakra-ui/hooks';
+import { Input } from '@chakra-ui/input';
+import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from '@chakra-ui/modal';
+import { Stat, StatGroup, StatLabel, StatNumber } from '@chakra-ui/stat';
+import { useToast } from '@chakra-ui/toast';
+import { useRouter } from 'next/router';
+import { parseCookies } from 'nookies';
+import { useState } from 'react';
+import Select from '../Select';
+import { useSWRConfig } from 'swr';
 
 interface IManageTreasury {
   company_id: number,
@@ -26,18 +26,20 @@ interface IManageTreasury {
 
 const ManageTreasury: React.FC<IManageTreasury> = ({ funds, gold, user, ...props }) => {
   const cookies = parseCookies();
-  const queryClient = useQueryClient();
   const router = useRouter();
   const toast = useToast();
-  const defaultCC = funds.findIndex(cc => cc.currency === props.currency);
+  const { mutate } = useSWRConfig();
+
   const [transGold, setTransGold] = useState(0.00);
   const [currency, setCurrency] = useState(-1);
   const [amount, setAmount] = useState(0.00);
 
+  const defaultCC = funds.findIndex(cc => cc.currency === props.currency);
+
   const { isOpen: isDepositOpen, onOpen: onOpenDeposit, onClose: onCloseDeposit } = useDisclosure();
   const { isOpen: isWithdrawOpen, onOpen: onOpenWithdraw, onClose: onCloseWithdraw } = useDisclosure();
 
-  const depositMutation = useMutation(async () => {
+  const handleDeposit = () => {
     let payload = {
       action: 'deposit_funds',
       data: {
@@ -47,28 +49,28 @@ const ManageTreasury: React.FC<IManageTreasury> = ({ funds, gold, user, ...props
       },
     };
 
-    let data = await request({
+    request({
       url: '/api/companies/doAction',
       method: 'POST',
       payload,
       token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Transaction Successful', data?.message);
+        mutate('/api/me/wallet-info');
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Transaction Failed', data?.error);
+      }
     });
 
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'Transaction Successful', data?.message);
-      queryClient.invalidateQueries('getWalletInfo');
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Transaction Failed', e.message);
-    }
-  });
+    setCurrency(-1);
+    setAmount(0);
+    setTransGold(0);
+    onCloseDeposit();
+  }
 
-  const withdrawMutation = useMutation(async () => {
+  const handleWithdraw = () => {
     let payload = {
       action: 'withdraw_funds',
       data: {
@@ -78,37 +80,21 @@ const ManageTreasury: React.FC<IManageTreasury> = ({ funds, gold, user, ...props
       },
     };
 
-    let data = await request({
+    request({
       url: '/api/companies/doAction',
       method: 'POST',
       payload,
       token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Transaction Successful', data?.message);
+        mutate('/api/me/wallet-info');
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Transaction Failed', data?.error);
+      }
     });
 
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'Transaction Successful', data?.message);
-      queryClient.invalidateQueries('getWalletInfo');
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Transaction Failed', e.message);
-    }
-  });
-
-  const handleDeposit = () => {
-    depositMutation.mutate();
-    setCurrency(-1);
-    setAmount(0);
-    setTransGold(0);
-    onCloseDeposit();
-  }
-
-  const handleWithdraw = () => {
-    withdrawMutation.mutate();
     setCurrency(-1);
     setAmount(0);
     setTransGold(0);

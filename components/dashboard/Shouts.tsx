@@ -1,18 +1,17 @@
-import { IShout } from "@/models/Shout";
-import { IUser } from "@/models/User";
-import { refreshData, request, showToast } from "@/util/ui";
-import { Avatar } from "@chakra-ui/avatar";
-import { Button } from "@chakra-ui/button";
-import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/tabs";
-import { Textarea } from "@chakra-ui/textarea";
-import { useToast } from "@chakra-ui/toast";
-import { addMinutes, format } from "date-fns";
-import { useRouter } from "next/router";
-import { parseCookies } from "nookies";
-import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { IShout } from '@/models/Shout';
+import { IUser } from '@/models/User';
+import { refreshData, request, showToast } from '@/util/ui';
+import { Avatar } from '@chakra-ui/avatar';
+import { Button } from '@chakra-ui/button';
+import { Tab, TabList, TabPanel, TabPanels, Tabs } from '@chakra-ui/tabs';
+import { Textarea } from '@chakra-ui/textarea';
+import { useToast } from '@chakra-ui/toast';
+import { addMinutes, format } from 'date-fns';
+import { useRouter } from 'next/router';
+import { parseCookies } from 'nookies';
+import { useEffect, useState } from 'react';
 import { BsHeart, BsHeartFill } from 'react-icons/bs';
-import { Spinner } from "@chakra-ui/spinner";
+import useSWR, { useSWRConfig } from 'swr';
 
 interface IShouts {
   user: IUser,
@@ -28,9 +27,10 @@ interface IShoutTab {
 
 const Shouts: React.FC<IShouts> = ({ user }) => {
   const cookies = parseCookies();
-  const queryClient = useQueryClient();
   const router = useRouter();
   const toast = useToast();
+  const { mutate } = useSWRConfig();
+
   const [tab, setTab] = useState<'global' | 'country' | 'party' | 'unit'>('global');
   const [parent, setParent] = useState<IShout>(null);
   const [parentAuthor, setParentAuthor] = useState('');
@@ -73,7 +73,7 @@ const Shouts: React.FC<IShouts> = ({ user }) => {
       if (data.success) {
         showToast(toast, 'success', 'Shout Successful', data?.message);
         setMessage('');
-        queryClient.invalidateQueries('getShouts');
+        mutate(`/api/shouts?scope=${tab}&scope_id=${getScopeID()}`);
         refreshData(router);
       } else {
         showToast(toast, 'error', 'Shout Failed', data?.error);
@@ -129,11 +129,13 @@ const Shouts: React.FC<IShouts> = ({ user }) => {
   )
 }
 
+export const getShoutsFetcher = (url: string, token: string) => request({ url, method: 'GET', token });
+
 const ShoutTabContent: React.FC<IShoutTab> = ({ scope, scope_id, user, setParent, setAuthor }) => {
   const cookies = parseCookies();
-  const queryClient = useQueryClient();
   const router = useRouter();
   const toast = useToast();
+
   const [selected, setSelected] = useState(0);
   const [replies, setReplies] = useState<IShout[]>([]);
   const [replyAuthors, setReplyAuthors] = useState([]);
@@ -149,69 +151,50 @@ const ShoutTabContent: React.FC<IShoutTab> = ({ scope, scope_id, user, setParent
     });
   }, [selected]);
 
-  const query = useQuery('getShouts', () => {
-    return request({
-      url: `/api/shouts?scope=${scope}&scope_id=${scope_id}`,
-      method: 'GET',
-      token: cookies.token,
-    });
-  });
 
-  const likeMutation = useMutation(async ({ shout_id }) => {
-    let payload = { action: 'like_shout', data: { shout_id } };
-    let data = await request({
-      url: '/api/me/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onMutate: async ({ shout_id }: { shout_id: number }) => {},
-    onSuccess: (data) => {
-      showToast(toast, 'success', data?.message || 'Shout Liked');
-      queryClient.invalidateQueries('getShouts');
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Failed to Like Shout', e.message);
-    }
-  });
-
-  const unlikeMutation = useMutation(async ({ shout_id }) => {
-    let payload = { action: 'unlike_shout', data: { shout_id } };
-    let data = await request({
-      url: '/api/me/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onMutate: async ({ shout_id }: { shout_id: number }) => {},
-    onSuccess: (data) => {
-      showToast(toast, 'success', data?.message || 'Shout Unliked');
-      queryClient.invalidateQueries('getShouts');
-      refreshData(router);
-    },
-    onError: (e: Error) => {
-      showToast(toast, 'error', 'Failed to Unlike Shout', e.message);
-    }
-  });
+  const query = useSWR([`/api/shouts?scope=${scope}&scope_id=${scope_id}`, cookies.token], getShoutsFetcher);
 
   const handleLike = (shout: IShout) => {
     let shout_id: number = shout._id;
     if (shout.likes.includes(user._id)) {
-      unlikeMutation.mutate({ shout_id });
+      unlike(shout_id);
     } else {
-      likeMutation.mutate({ shout_id });
+      like(shout_id);
     }
+  }
+
+  const like = (shout_id: number) => {
+    request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload: { action: 'like_shout', data: { shout_id } },
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', data?.message || 'Shout Liked');
+        query.mutate();
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Failed to Like Shout', data?.error);
+      }
+    });
+  }
+
+  const unlike = (shout_id: number) => {
+    request({
+      url: '/api/me/doAction',
+      method: 'POST',
+      payload: { action: 'unlike_shout', data: { shout_id } },
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', data?.message || 'Shout Unliked');
+        query.mutate();
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Failed to Unlike Shout', data?.error);
+      }
+    });
   }
 
   const handleSelect = (shout: IShout) => {
@@ -241,10 +224,10 @@ const ShoutTabContent: React.FC<IShoutTab> = ({ scope, scope_id, user, setParent
 
   return (
     <>
-      {query.isSuccess && query.data?.shouts.length === 0 && (
+      {query.data && query.data?.shouts.length === 0 && (
         <p>No Recent Shouts</p>
       )}
-      {query.isSuccess && query.data?.shouts.length > 0 && (
+      {query.data && query.data?.shouts.length > 0 && (
         <div className='flex flex-col gap-4'>
           {query.data?.shouts.map((shout, i) => (
             <div key={i} className='flex flex-col gap-1'>

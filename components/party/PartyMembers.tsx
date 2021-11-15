@@ -4,7 +4,7 @@ import { request } from '@/util/ui';
 import { Avatar, Badge } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
-import { useQuery } from 'react-query';
+import useSWR from 'swr';
 
 interface IPartyMembers {
   party: IParty,
@@ -17,41 +17,43 @@ export interface IMemberInfo {
   role: string,
 }
 
+export const getPartyMembersFetcher = async (_key: string, token: string, party: IParty) => {
+  let members: IMemberInfo[] = [];
+
+  for (let memberId of party.members) {
+    const { user: member }: { user: IUser } = await request({
+      url: `/api/users/${memberId}`,
+      method: 'GET',
+      token: token,
+    });
+
+    let role: string = 'Member';
+
+    if (party.president === member._id)
+      role = 'Party President';
+    else if (party.vp === member._id)
+      role = 'Vice Party President';
+
+    members.push({
+      id: member._id,
+      name: member.username,
+      image: member.image,
+      role,
+    } as IMemberInfo);
+  }
+
+  return { members };
+}
+
 const PartyMembers: React.FC<IPartyMembers> = ({ party }) => {
   const cookies = parseCookies();
 
-  const { isLoading, data, error } = useQuery('getPartyMembers', async () => {
-    let members: IMemberInfo[] = [];
-
-    for (let memberId of party.members) {
-      const { user: member }: { user: IUser } = await request({
-        url: `/api/users/${memberId}`,
-        method: 'GET',
-        token: cookies.token,
-      });
-
-      let role: string = 'Member';
-
-      if (party.president === member._id)
-        role = 'Party President';
-      else if (party.vp === member._id)
-        role = 'Vice Party President';
-
-      members.push({
-        id: member._id,
-        name: member.username,
-        image: member.image,
-        role,
-      } as IMemberInfo);
-    }
-
-    return { members };
-  });
+  const { data, error } = useSWR(['getPartyMembers', cookies.token, party], getPartyMembersFetcher);
 
   return (
     <>
       <div className='hidden md:block bg-night shadow-md rounded px-4 py-2'>
-        {!isLoading && !error && (
+        {data && !error && (
           <div className='flex flex-col gap-4'>
             <h3 className='text-xl text-accent font-semibold mb-4'>Members:</h3>
             {data?.members.map((member: IMemberInfo, i: number) => (
@@ -62,7 +64,7 @@ const PartyMembers: React.FC<IPartyMembers> = ({ party }) => {
       </div>
       <div className='block md:hidden bg-night shadow-md rounded px-4 py-2'>
         <h3 className='text-xl text-accent font-semibold mb-4'>Members:</h3>
-        {!isLoading && !error && (
+        {data && !error && (
           <div className='flex flex-col gap-4'>
             {data?.members.map((member: IMemberInfo, i: number) => (
               <PartyMember key={i} member={member} />

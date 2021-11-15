@@ -1,32 +1,27 @@
-import { ICountry } from "@/models/Country";
-import { RESOURCES } from "@/util/constants";
-import { request } from "@/util/ui";
-import { Badge, List, ListItem } from "@chakra-ui/layout";
-import { useRouter } from "next/router";
-import { parseCookies } from "nookies";
-import { useEffect } from "react";
-import { useQuery } from "react-query";
+import { RESOURCES } from '@/util/constants';
+import { request } from '@/util/ui';
+import { Badge, List, ListItem } from '@chakra-ui/layout';
+import { useRouter } from 'next/router';
+import { parseCookies } from 'nookies';
+import { useEffect } from 'react';
+import useSWR from 'swr';
 
 interface ICountryRegions {
   country_id: number,
   capital: number,
 }
 
+export const getCountryRegionsFetcher = (url: string, token: string) => request({ url, method: 'GET', token });
+
 const Regions: React.FC<ICountryRegions> = ({ country_id, capital }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const { id } = router.query;
 
-  const query = useQuery('getCountryRegions', () => {
-    return request({
-      url: `/api/countries/${country_id}/regions`,
-      method: 'GET',
-      token: cookies.token,
-    });
-  });
+  const query = useSWR([`/api/countries/${country_id}/regions`, cookies.token], getCountryRegionsFetcher);
 
   useEffect(() => {
-    query.refetch();
+    query.mutate();
   }, [id]);
 
   const getResourceColor = (resource_id: number) => {
@@ -50,7 +45,7 @@ const Regions: React.FC<ICountryRegions> = ({ country_id, capital }) => {
   return (
     <div>
       <h2 className='text-xl text-accent'>Regions</h2>
-      {query.isSuccess && query.data && (
+      {!query.error && query.data && (
         <List className='mt-4 px-8 w-full'>
           {query.data?.regions.sort((a, b) => {
             if (a.name < b.name)

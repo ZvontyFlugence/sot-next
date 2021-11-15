@@ -4,7 +4,7 @@ import { ICompany } from '@/models/Company';
 import { IUser } from '@/models/User';
 import { getCurrentUser } from '@/util/auth';
 import { COMPANY_TYPES } from '@/util/constants';
-import { showToast } from '@/util/ui';
+import { request, showToast } from '@/util/ui';
 import { Button } from '@chakra-ui/button';
 import { FormControl, FormLabel } from '@chakra-ui/form-control';
 import { useDisclosure } from '@chakra-ui/hooks';
@@ -14,12 +14,11 @@ import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHea
 import { Spinner } from '@chakra-ui/spinner';
 import { Table, TableCaption, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/table';
 import { useToast } from '@chakra-ui/toast';
-import { Document } from 'mongoose';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
+import useSWR, { useSWRConfig } from 'swr';
 
 interface IMyCompaniesProps {
   user: IUser,
@@ -36,71 +35,37 @@ interface ICreateCompParams {
   type: number,
 }
 
+export const getUserCompaniesFetcher = (url: string, token: string) => request({ url, method: 'GET', token });
+
 export default function Companies({ user, ...props }: IMyCompaniesProps) {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
-  const queryClient = useQueryClient();
+  const { mutate } = useSWRConfig();
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [name, setName] = useState('');
   const [type, setType] = useState(0);
 
-  const { isLoading, isError, data } = useQuery('getUserCompanies', () => {
-    return fetch('/api/me/companies', {
-      headers: {
-        authorization: `Bearer ${cookies.token}`,
-      }
-    }).then(res => res.json());
-  });
-
-  const mutation = useMutation<any, unknown, ICreateCompParams>('createCompany', formData => {
-    return fetch('/api/companies', {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${cookies.token}`,
-      },
-      body: JSON.stringify(formData),
-    }).then(res => res.json());
-  }, {
-    onSuccess: (data) => {
-      if (data.success) {
-        toast({
-          position: 'top-right',
-          title: 'Company Created',
-          status: 'success',
-          duration: 2500,
-          isClosable: true,
-        });
-        queryClient.invalidateQueries('getUserCompanies');
-        router.push(`/company/${data.company_id}`);
-      } else {
-        toast({
-          position: 'top-right',
-          title: 'Company Creation Error',
-          description: data.error,
-          status: 'error',
-          duration: 2500,
-          isClosable: true,
-        });
-      }
-    },
-    onError: (e) => {
-      toast({
-        position: 'top-right',
-        title: 'Company Creation Error',
-        description: e,
-        status: 'error',
-        duration: 2500,
-        isClosable: true,
-      });
-    },
-  });
+  const { data, error } = useSWR(['/api/me/companies', cookies.token], getUserCompaniesFetcher);
 
   const handleCreateComp = () => {
     if (user.gold >= 25 && type !== 0 && name) {
-      mutation.mutate({ name, type } as ICreateCompParams);
-      onClose();
+      request({
+        url: '/api/companies',
+        method: 'POST',
+        payload: { name, type },
+        token: cookies.token,
+      }).then(data => {
+        if (data.success) {
+          showToast(toast, 'success', 'Company Created');
+          onClose();
+          mutate('/api/me/companies');
+          router.push(`/company/${data.company_id}`);
+        } else {
+          showToast(toast, 'error', 'Company Creation Error', data?.error);
+        }
+      });
     } else {
       showToast(toast, 'error', 'Create Company Failed', 'Insufficient Funds');
     }
@@ -111,8 +76,8 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
     <Layout user={user}>
       <h1 className='text-2xl font-semibold pl-4 text-accent'>My Companies</h1>
       <div className='hidden md:block mt-4 mx-12 bg-night shadow-md rounded text-white'>
-        {isLoading && <Spinner color='accent' size='xl' />}
-        {(!isLoading && !isError) && (
+        {!data && !error && <Spinner color='accent' size='xl' />}
+        {(data && !error) && (
           <Table variant='unstyled' size='md'>
             <TableCaption>
               <Button
@@ -156,8 +121,8 @@ export default function Companies({ user, ...props }: IMyCompaniesProps) {
         )}
       </div>
       <div className='flex md:hidden flex-col justify-center items-stretch mt-4 mx-2'>
-        {isLoading && <Spinner color='accent' size='xl' />}
-        {(!isLoading && !isError) && (
+        {!data && !error && <Spinner color='accent' size='xl' />}
+        {(data && !error) && (
           <>
             <Button
               variant='outline'

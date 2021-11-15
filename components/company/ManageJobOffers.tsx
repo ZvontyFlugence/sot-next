@@ -5,7 +5,6 @@ import { useDisclosure } from '@chakra-ui/hooks';
 import { Input, InputGroup, InputLeftAddon } from '@chakra-ui/input';
 import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from '@chakra-ui/modal';
 import React, { useEffect, useState } from 'react';
-import { useMutation } from 'react-query';
 import { parseCookies } from 'nookies';
 import { useToast } from '@chakra-ui/toast';
 import { refreshData, request, showToast } from '@/util/ui';
@@ -22,13 +21,15 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
-  const { isOpen: isCreateOpen, onOpen: onOpenCreate, onClose: onCloseCreate } = useDisclosure();
-  const { isOpen: isEditOpen, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
-  const { isOpen: isDeleteOpen, onOpen: onOpenDelete, onClose: onCloseDelete } = useDisclosure();
+
   const [selected, setSelected] = useState(-1);
   const [title, setTitle] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [wage, setWage] = useState(1.00);
+
+  const { isOpen: isCreateOpen, onOpen: onOpenCreate, onClose: onCloseCreate } = useDisclosure();
+  const { isOpen: isEditOpen, onOpen: onOpenEdit, onClose: onCloseEdit } = useDisclosure();
+  const { isOpen: isDeleteOpen, onOpen: onOpenDelete, onClose: onCloseDelete } = useDisclosure();
 
   useEffect(() => {
     if (selected >= 0) {
@@ -38,7 +39,7 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
     }
   }, [selected]);
 
-  const createJobMutation = useMutation(async () => {
+  const createJobOffer = () => {
     let payload = {
       action: 'create_job',
       data: {
@@ -47,92 +48,62 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
       }
     };
 
-    let data = await request({
+    request({
       url: '/api/companies/doAction',
       method: 'POST',
       payload,
       token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Job Offer Created');
+        onCloseCreate();
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Create Job Offer Failed', data?.error);
+      }
     });
-
-    if (!data.success)
-      throw new Error(data?.error || 'Unknown Error');
-    return data;
-  }, {
-    onSuccess: () => {
-      showToast(toast, 'success', 'Job Offer Created');
-      onCloseCreate();
-      refreshData(router);
-    },
-    onError: (e) => {
-      showToast(toast, 'error', 'Create Job Offer Failed', e as string);
-    }
-  });
-
-  const editJobMutation = useMutation(async (jobOffer) => {
-    let payload = {
-      action: 'edit_job',
-      data: { company_id, offer: jobOffer },
-    };
-
-    let data = await request({
-      url: '/api/companies/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error || 'Unknown Error');
-    return data;
-  }, {
-    onMutate: async (jobOffer: IJobOffer) => {},
-    onSuccess: () => {
-      showToast(toast, 'success', 'Job Offer Updated');
-      handleClose('edit');
-      refreshData(router);
-    },
-    onError: (e) => {
-      showToast(toast, 'error', 'Update Job Offer Failed', e as string);
-    }
-  });
-
-  const deleteJobMutation = useMutation(async ({ job_id }) => {
-    let payload = { action: 'delete_job', data: { company_id, job_id } };
-    
-    let data = await request({
-      url: '/api/companies/doAction',
-      method: 'POST',
-      payload,
-      token: cookies.token,
-    });
-
-    if (!data.success)
-      throw new Error(data?.error);
-    return data;
-  }, {
-    onMutate: async ({ job_id }: { job_id: string }) => {},
-    onSuccess: (data) => {
-      showToast(toast, 'success', 'Job Offer Revoked');
-      handleClose('delete');
-      refreshData(router);
-    },
-    onError: () => {
-      showToast(toast, 'error', 'Delete Job Offer Failed');
-    },
-  });
-
-  const createJobOffer = () => {
-    createJobMutation.mutate();
   }
 
   const editJobOffer = () => {
     let id = jobOffers[selected]?.id;
-    editJobMutation.mutate({ id, title, quantity, wage });
+    let payload = {
+      action: 'edit_job',
+      data: { company_id, offer: { id, title, quantity, wage } },
+    };
+
+    request({
+      url: '/api/companies/doAction',
+      method: 'POST',
+      payload,
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Job Offer Updated');
+        handleClose('edit');
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Update Job Offer Failed', data?.error);
+      }
+    });
   }
 
   const deleteJobOffer = () => {
     let id = jobOffers[selected]?.id;
-    deleteJobMutation.mutate({ job_id: id });
+
+    request({
+      url: '/api/companies/doAction',
+      method: 'POST',
+      payload: { action: 'delete_job', data: { company_id, job_id: id } },
+      token: cookies.token,
+    }).then(data => {
+      if (data.success) {
+        showToast(toast, 'success', 'Job Offer Revoked');
+        handleClose('delete');
+        refreshData(router);
+      } else {
+        showToast(toast, 'error', 'Delete Job Offer Failed');
+      }
+    });
   }
 
   const handleOpen = (index: number, modal: string) => {
@@ -169,8 +140,6 @@ const ManageJobOffers: React.FC<IManageJobOffers> = ({ jobOffers, company_id, cu
       }
     }
   }
-
-
 
   return (
     <div className='flex flex-col'>
