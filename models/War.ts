@@ -10,7 +10,7 @@ export interface IWar extends Document {
 }
 
 const WarSchema = new Schema({
-  _id: { type: mongoose.Types.ObjectId, default: new mongoose.Types.ObjectId() },
+  _id: { type: mongoose.Types.ObjectId, required: true },
   source: { type: Number, required: true },
   target: { type: Number, required: true },
   sourceAllies: { type: Array, default: [] },

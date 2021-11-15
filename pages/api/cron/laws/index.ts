@@ -4,6 +4,7 @@ import War from '@/models/War';
 import { LawType, roundMoney } from '@/util/apiHelpers';
 import { AlertTypes } from '@/util/constants';
 import { connectToDB } from '@/util/mongo';
+import mongoose from 'mongoose';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -69,6 +70,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
                     // Create new War record in DB
                     let newWar = new War({
+                      _id: new mongoose.Types.ObjectId(),
                       source: country._id,
                       target: targetCountry._id,
                       sourceAllies: [country._id, ...country.policies.allies.map(ally => ally.country)],
