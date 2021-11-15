@@ -67,18 +67,18 @@ export default function CitizenRankings({ user, countries, ...props }: ICitizenR
       <h1 className='flex justify-between pl-4 pr-20'>
         <span className='text-2xl font-semibold text-accent'>Citizen Rankings</span>
         <div className='flex justify-end items-center gap-4'>
-          {countries.length > 0 && (
-            <Select selected={(router.query?.country as string) ?? 'global'} onChange={updateCountry}>
-              <Select.Option value='global'>Global</Select.Option>
-              {countries.map((country: ICountry, i: number) => (
-                <Select.Option key={i} value={`${country._id}`}>
-                  {country.name}
-                  <i className={`ml-2 flag-icon flag-icon-${country.flag_code} rounded shadow-md`} />
-                </Select.Option>
-              ))}
-            </Select>
-          )}
-
+          <Select selected={(router.query?.country as string) ?? 'global'} onChange={updateCountry}>
+            {([null] as any[]).concat(countries).map((c, i) => (
+              <Select.Option key={i} value={c ? `${c._id}` : 'global'}>
+                {c ? (
+                  <>
+                    {c.name}
+                    <i className={`ml-2 flag-icon flag-icon-${c.flag_code} rounded shadow-md`} />
+                  </>
+                ) : <>Global</>}
+              </Select.Option>
+            ))}
+          </Select>
           <Select selected={(router.query?.stat as string) ?? 'xp'} onChange={updateStat}>
             {Object.values(CitizenStats).map((stat: string, i: number) => (
               <Select.Option key={i} value={stat}>

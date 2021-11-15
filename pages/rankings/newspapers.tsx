@@ -47,11 +47,14 @@ export default function NewsRankings({ user, countries, ...props }: INewsRanking
         <div>
           {countries.length > 0 && (
             <Select selected={(router.query?.country as string) ?? 'global'} onChange={goToRankings}>
-              <Select.Option value='global'>Global</Select.Option>
-              {countries.map((country: ICountry, i: number) => (
-                <Select.Option key={i} value={`${country._id}`}>
-                  {country.name}
-                  <i className={`ml-2 flag-icon flag-icon-${country.flag_code} rounded shadow-md`} />
+              {([null] as any[]).concat(countries).map((c, i) => (
+                <Select.Option key={i} value={c ? `${c._id}` : 'global'}>
+                  {c ? (
+                    <>
+                      {c.name}
+                      <i className={`ml-2 flag-icon flag-icon-${c.flag_code} rounded shadow-md`} />
+                    </>
+                  ) : <>Global</>}
                 </Select.Option>
               ))}
             </Select>

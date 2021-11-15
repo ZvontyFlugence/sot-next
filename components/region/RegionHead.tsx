@@ -1,9 +1,11 @@
 /*global google*/
+import { useSelectTab } from '@/context/RegionPageContext';
 import { ICountry } from '@/models/Country';
 import { IPath, IRegion } from '@/models/Region';
 import { IUser } from '@/models/User';
 import { RESOURCES } from '@/util/constants';
 import { request } from '@/util/ui';
+import { Button, ButtonGroup } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
 import React, { useEffect, useState } from 'react';
@@ -14,11 +16,13 @@ interface IRegionHead {
     user: IUser;
     isAuthenticated: boolean;
     region: IRegion;
+    population: number;
 }
 
-const RegionHead: React.FC<IRegionHead> = ({ user, region, ...props }) => {
+const RegionHead: React.FC<IRegionHead> = ({ user, region, population, ...props }) => {
     const cookies = parseCookies();
     const router = useRouter();
+    const selectTab = useSelectTab();
 
     const [selected, setSelected] = useState<number>(region._id);
     const [regions, setRegions] = useState<IRegion[]>([]);
@@ -159,6 +163,14 @@ const RegionHead: React.FC<IRegionHead> = ({ user, region, ...props }) => {
                     <span>
                         Resource: {getResourceInfo()}
                     </span>
+                    <div className='flex mt-8 gap-4'>
+                        <ButtonGroup variant='outline' spacing='6'>
+                            <Button colorScheme='cyan' onClick={() => selectTab(0)}>Region Info</Button>
+                            <Button colorScheme='green' onClick={() => selectTab(1)}>Economics</Button>
+                            <Button colorScheme='yellow' onClick={() => selectTab(2)}>Politics</Button>
+                            <Button colorScheme='red' onClick={() => selectTab(3)}>Military</Button>
+                        </ButtonGroup>
+                    </div>
                 </div>
                 <Select className='border border-white border-opacity-25 rounded' selected={region._id} onChange={val => goToRegion(val)}>
                     {regions.map((r, i) => (

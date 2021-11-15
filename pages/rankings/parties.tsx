@@ -17,27 +17,29 @@ interface IPartyRankings {
   user: IUser;
   isAuthenticated: boolean;
   countries: ICountry[];
+  scope: string;
 }
 
 // URL => `/rankings/parties` || `/rankings/parties?country=[countryId]`
 // TODO: Add pagination
-export default function PartyRankings({ user, countries, ...props }: IPartyRankings) {
+export default function PartyRankings({ user, countries, scope, ...props }: IPartyRankings) {
   const cookies = parseCookies();
   const router = useRouter();
   const [parties, setParties] = useState<IParty[]>([]);
 
   useEffect(() => {
-    const countryId = (router.query?.country as string) ?? 'global';
     request({
-      url: `/api/parties${countryId !== 'global' ? `?country=${countryId}` : ''}`,
+      url: `/api/parties${scope !== 'global' ? `?country=${scope}` : ''}`,
       method: 'GET',
       token: cookies.token,
     })
-      .then(data => setParties(data.parties ?? []));
-  }, [router.query]);
+      .then(data => setParties(data.payload.parties ?? []));
+  }, [scope]);
 
   const goToRankings = (val: number | string) => {
-    router.push(`/rankings/parties${val !== 'global' ? `?country=${val}` : ''}`);
+    if (val && val !== scope) {
+      router.push(`/rankings/parties${val !== 'global' ? `?country=${val}` : ''}`);
+    }
   }
 
   return user ? (
@@ -45,17 +47,18 @@ export default function PartyRankings({ user, countries, ...props }: IPartyRanki
       <h1 className='flex justify-between pl-4 pr-20'>
         <span className='text-2xl font-semibold text-accent'>Party Rankings</span>
         <div>
-          {countries.length > 0 && (
-            <Select selected={(router.query?.country as string) ?? 'global'} onChange={goToRankings}>
-              <Select.Option value='global'>Global</Select.Option>
-              {countries.map((country: ICountry, i: number) => (
-                <Select.Option key={i} value={`${country._id}`}>
-                  {country.name}
-                  <i className={`ml-2 flag-icon flag-icon-${country.flag_code} rounded shadow-md`} />
+            <Select selected={scope} onChange={val => goToRankings(val)}>
+              {([null] as any[]).concat(countries).map((c, i) => (
+                <Select.Option key={i} value={c ? `${c._id}` : 'global'}>
+                  {c ? (
+                    <>
+                      {c.name}
+                      <i className={`ml-2 flag-icon flag-icon-${c.flag_code} rounded shadow-md`} />
+                    </>
+                  ) : <>Global</>}
                 </Select.Option>
               ))}
             </Select>
-          )}
         </div>
       </h1>
       <div className='mx-12 mt-4 p-2 bg-night rounded shadow-md'>
@@ -67,7 +70,7 @@ export default function PartyRankings({ user, countries, ...props }: IPartyRanki
               <Tr>
                 <Th color='white'>Rank</Th>
                 <Th color='white'>Party</Th>
-                {!router.query?.country && (
+                {scope === 'global' && (
                   <Th color='white'>Country</Th>
                 )}
                 <Th color='white'>Members</Th>
@@ -83,11 +86,9 @@ export default function PartyRankings({ user, countries, ...props }: IPartyRanki
                       {party.name}
                     </div>
                   </Td>
-                  {!router.query?.country && (
-                    <Td>
-                      <div className='flex items-center cursor-pointer text-4xl' onClick={() => router.push(`/country/${party.country}`)}>
-                        <i className={`flag-icon flag-icon-${countries[party.country - 1].flag_code} rounded shadow-md`} title={countries[party.country - 1].name} />
-                      </div>
+                  {scope === 'global' && (
+                    <Td className='text-xl font-semi items-center cursor-pointer' onClick={() => router.push(`/country/${party.country}`)}>
+                      <i className={`flag-icon flag-icon-${countries[party.country - 1]?.flag_code}`} />
                     </Td>
                   )}
                   <Td className='text-xl font-semibold'>{party.members.length}</Td>
@@ -102,7 +103,7 @@ export default function PartyRankings({ user, countries, ...props }: IPartyRanki
 }
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const { req, res } = ctx;
+  const { req, res, query } = ctx;
 
   const result = await getCurrentUser(req);
   if (!result.isAuthenticated) {
@@ -116,11 +117,17 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   }
 
   let countries: ICountry[] = await Country.find({}).exec();
+  
+  let scope: string = 'global';
+  if (query?.country) {
+    scope = query.country as string;
+  }
 
   return {
     props: {
       ...result,
       countries: jsonify(countries),
+      scope,
     },
   };
 }

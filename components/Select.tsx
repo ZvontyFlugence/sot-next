@@ -43,6 +43,7 @@ const Select: React.FC<ISelectComponent> & ISelectOptions = ({ children, ...prop
   const handleSelect = (e, value: number | string, text: React.ReactNode) => {
     e.stopPropagation();
     setSelectedValue(value);
+    props.onChange(value);
     setOpen(false);
   }
 
@@ -52,10 +53,6 @@ const Select: React.FC<ISelectComponent> & ISelectOptions = ({ children, ...prop
     const child = findSelected();
     setSelectedValue(child?.props?.value ?? children[0]?.props.value);
   }, [props.selected]);
-
-  useEffect(() => {
-    props.onChange(selectedValue);
-  }, [selectedValue]);
 
   useEffect(() => {
     if (open) {
