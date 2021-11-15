@@ -9,11 +9,10 @@ import 'react-quill/dist/quill.snow.css';
 
 import '../styles/globals.css';
 import MaintenancePage from './maintenance';
+import { GetStaticProps } from 'next';
 
 const queryClient = new QueryClient();
 const theme = extendTheme({ colors });
-
-const { NEXT_PUBLIC_MAINTENANCE_MODE: MAINTENANCE_MODE } = process.env;
 
 function MyApp({ Component, pageProps }) {
   return (
@@ -28,7 +27,7 @@ function MyApp({ Component, pageProps }) {
             <script id='googleMaps' src={`/api/gmap/maps/api/js?key=${process.env.NEXT_PUBLIC_GMAP_KEY}`} defer></script>
           )}
         </Head>
-        {(typeof MAINTENANCE_MODE === 'boolean' && MAINTENANCE_MODE === true) || MAINTENANCE_MODE === 'true' ? (
+        {(typeof pageProps.MAINTENANCE_MODE === 'boolean' && pageProps.MAINTENANCE_MODE === true) || pageProps.MAINTENANCE_MODE === 'true' ? (
           <MaintenancePage />
         ) : (
           <Component {...pageProps} />
@@ -36,6 +35,14 @@ function MyApp({ Component, pageProps }) {
       </ChakraProvider>
     </QueryClientProvider>
   );
+}
+
+export const getStaticProps: GetStaticProps = async () => {
+  return {
+    props: {
+      MAINTENANCE_MODE: process.env.NEXT_PUBLIC_MAINTENANCE_MODE,
+    },
+  };
 }
 
 export default MyApp;

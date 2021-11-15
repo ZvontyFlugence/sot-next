@@ -7,6 +7,7 @@ module.exports = {
     NEXT_PUBLIC_LOGO: `${process.env.URI}/logo_transparent.png`,
     URI: process.env.URI,
     NEXT_PUBLIC_GMAP_KEY: process.env.GMAP_KEY,
+    NEXT_PUBLIC_MAINTENANCE_MODE: process.env.NEXT_PUBLIC_MAINTENANCE_MODE,
     JWT_SECRET: process.env.JWT_SECRET,
   },
   async rewrites() {

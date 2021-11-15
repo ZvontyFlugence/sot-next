@@ -5,7 +5,7 @@
       "dom",
       "dom.iterable",
       "esnext",
-      "ES2020",
+      "ES2020"
     ],
     "allowJs": true,
     "skipLibCheck": true,
@@ -20,14 +20,19 @@
     "jsx": "preserve",
     "baseUrl": "./",
     "paths": {
-      "@/*": ["*"],
-      "@/api/*": ["pages/api/*"]
-    }
+      "@/*": [
+        "*"
+      ],
+      "@/api/*": [
+        "pages/api/*"
+      ]
+    },
+    "incremental": true
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx",
+    "**/*.tsx"
   ],
   "exclude": [
     "node_modules",

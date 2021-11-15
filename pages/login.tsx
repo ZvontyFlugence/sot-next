@@ -14,11 +14,11 @@ import { IUser } from "@/models/User";
 import { GetServerSideProps } from "next";
 
 interface ILoginProps {
-  user: IUser,
-  isAuthenticated: boolean
+  user: IUser;
+  isAuthenticated: boolean;
 }
 
-export default function Login(props: ILoginProps) {
+export default function Login(_props: ILoginProps) {
   const router = useRouter();
   const toast = useToast();
   const [email, setEmail] = useState('');
