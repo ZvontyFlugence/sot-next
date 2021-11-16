@@ -1,5 +1,6 @@
 import Layout from '@/components/Layout';
 import Select from '@/components/Select';
+import { useUser } from '@/context/UserContext';
 import { IUser } from '@/models/User';
 import { UserActions } from '@/util/actions';
 import { getCurrentUser } from '@/util/auth';
@@ -13,26 +14,25 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 import { useState } from 'react';
-import useSWR from 'swr';
-
-interface ISettings {
-  user: IUser,
-  isAuthenticated: boolean,
-}
+import useSWR, { useSWRConfig } from 'swr';
 
 export const getAllRegionsFetcher = (url: string, token: string) => request({ url, method: 'GET', token });
 
-const Settings: React.FC<ISettings> = ({ user, ...props }) => {
+const Settings: React.FC = () => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
+
   const [selectedRegion, setSelectedRegion] = useState(-1);
+  const [selectedResidence, setSelectedResidence] = useState(-1);
   const [username, setUsername] = useState('');
   const [newPw, setNewPw] = useState('');
   const [currPw, setCurrPw] = useState('');
   const [file, setFile] = useState(null);
   const [desc, setDesc] = useState('');
 
+  const { mutate } = useSWRConfig();
   const regionQuery = useSWR(['/api/regions', cookies.token], getAllRegionsFetcher);
 
   const handleUpdateUsername = () => {
@@ -95,6 +95,7 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
       if (data.success) {
         showToast(toast, 'success', data?.message);
         setSelectedRegion(-1);
+        mutate('/api/me/location-info');
         refreshData(router);
       } else {
         showToast(toast, 'error', 'Relocation Failed', data?.error);
@@ -105,7 +106,7 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
   const handleMoveResidence = () => {
     let payload = {
       action: UserActions.MOVE_RESIDENCE,
-      data: { region_id: selectedRegion },
+      data: { region_id: selectedResidence },
     };
 
     request({
@@ -117,6 +118,7 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
       if (data.success) {
         showToast(toast, 'success', data?.message);
         setSelectedRegion(-1);
+        mutate('/api/me');
         refreshData(router);
       } else {
         showToast(toast, 'error', 'Residence Relocation Failed', data?.error);
@@ -184,7 +186,7 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
   return user ? (
     <Layout user={user}>
       <h1 className='text-2xl text-accent pl-4 font-semibold'>Settings</h1>
-      <div className='flex md:flex-row flex-col justify-center items-center w-full'>
+      <div className='flex md:flex-row flex-col justify-center items-center w-full pb-24'>
         <div className='flex flex-col gap-6 bg-night rounded shadow-md py-4 px-8 text-white'>
           <div className='flex md:flex-row flex-col gap-8'>
             <FormControl>
@@ -255,12 +257,13 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
           </FormControl>
           <FormControl>
             <FormLabel className='text-xl'>Travel</FormLabel>
-            <Select className='border border-white border-opacity-25 rounded shadow-md' onChange={val => setSelectedRegion(val as number)}>
-              <Select.Option value={-1} disabled>Select Region</Select.Option>
-              {regionQuery.data && regionQuery.data?.regions?.map((region, i) => (
-                <Select.Option key={i} value={region._id}>{region.name}</Select.Option>
-              ))}
-            </Select>
+            {regionQuery.data && (
+              <Select className='border border-white border-opacity-25 rounded shadow-md' selected={selectedRegion} onChange={val => setSelectedRegion(val as number)}>
+                {[null].concat(regionQuery.data?.regions as any[])?.map((region, i) => (
+                  <Select.Option key={i} value={region ? region._id : -1} disabled={!region}>{region ? region.name : 'Select Region'}</Select.Option>
+                ))}
+              </Select>
+            )}
             <Button
               className='mt-2'
               variant='outline'
@@ -273,12 +276,13 @@ const Settings: React.FC<ISettings> = ({ user, ...props }) => {
           </FormControl>
           <FormControl>
             <FormLabel className='text-xl'>Move Residence</FormLabel>
-            <Select className='border border-white border-opacity-25 rounded shadow-md' onChange={val => setSelectedRegion(val as number)}>
-              <Select.Option value={-1} disabled>Select Region</Select.Option>
-              {regionQuery.data && regionQuery.data?.regions?.filter(reg => reg.owner === user.country).map((region, i) => (
-                <Select.Option key={i} value={region._id}>{region.name}</Select.Option>
-              ))}
-            </Select>
+            {regionQuery.data && (
+              <Select className='border border-white border-opacity-25 rounded shadow-md' selected={selectedResidence} onChange={val => setSelectedResidence(val as number)}>
+                {[null].concat(regionQuery.data?.regions as any[])?.map((region, i) => (
+                  <Select.Option key={i} value={region ? region._id : -1} disabled={!region}>{region ? region.name : 'Select Region'}</Select.Option>
+                ))}
+              </Select>
+            )}
             <Button
               className='mt-2'
               variant='outline'
@@ -311,7 +315,7 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   }
 
   return {
-    props: { ...result },
+    props: {},
   };
 }
 

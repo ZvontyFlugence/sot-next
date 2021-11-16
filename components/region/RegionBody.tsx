@@ -1,16 +1,12 @@
-import { useSelectedTab } from "@/context/RegionPageContext";
-import { IRegion } from "@/models/Region";
-import { IUser } from "@/models/User";
-import RegionEconomicsTab from "./tabs/EconomicsTab";
-import RegionMilitaryTab from "./tabs/MilitaryTab";
-import RegionPoliticsTab from "./tabs/PoliticalTab";
-import RegionInfoTab from "./tabs/RegionInfoTab";
+import { useSelectedTab } from '@/context/RegionPageContext';
+import { IRegion } from '@/models/Region';
+import RegionEconomicsTab from './tabs/EconomicsTab';
+import RegionMilitaryTab from './tabs/MilitaryTab';
+import RegionPoliticsTab from './tabs/PoliticalTab';
+import RegionInfoTab from './tabs/RegionInfoTab';
 
 interface IRegionBody {
-    user: IUser;
-    isAuthenticated: boolean;
     region: IRegion;
-    population: number;
 }
 
 const RegionBody: React.FC<IRegionBody> = (props: IRegionBody) => {

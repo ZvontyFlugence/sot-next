@@ -22,7 +22,7 @@ const Select: React.FC<ISelectComponent> & ISelectOptions = ({ children, ...prop
   const [selectedValue, setSelectedValue] = useState<number | string>(findSelected()?.props?.value || children[0]?.props.value);
 
   function findSelected() {
-    return (children as React.ReactElement[]).find((child: React.ReactElement) => {
+    return (children as React.ReactElement[])?.find((child: React.ReactElement) => {
       return child?.props?.value === props.selected;
     });
   }

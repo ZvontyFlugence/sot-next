@@ -1,9 +1,9 @@
 import BattleLink from '@/components/battles/BattleLink';
 import Layout from '@/components/Layout';
+import { useUser } from '@/context/UserContext';
 import Battle, { IBattle } from '@/models/Battle';
 import Country, { ICountry } from '@/models/Country';
 import Region, { IRegion } from '@/models/Region';
-import { IUser } from '@/models/User';
 import War, { IWar } from '@/models/War';
 import { jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
@@ -13,8 +13,6 @@ import { useRouter } from 'next/router';
 import { destroyCookie } from 'nookies';
 
 interface IWarPage {
-  user: IUser;
-  isAuthenticated: boolean;
   war: IWar;
   battles: IBattle[];
   countries: ICountry[];
@@ -22,8 +20,9 @@ interface IWarPage {
 }
 
 // TODO: Potentially use setInterval to poll remaining time in battle w/o page refresh?
-export default function WarPage({ user, war, battles, countries, ...props }: IWarPage) {
+export default function WarPage({ war, battles, countries, ...props }: IWarPage) {
   const router = useRouter();
+  const user = useUser();
 
   const source: ICountry = countries[war.source - 1];
   const target: ICountry = countries[war.target - 1];
@@ -118,7 +117,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   return {
     props: {
-      ...result,
       countries: jsonify(countries),
       war: jsonify(war),
       battles: jsonify(battles),

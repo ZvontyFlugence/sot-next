@@ -13,19 +13,19 @@ import { ITEMS } from '@/util/constants';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { GetServerSideProps } from 'next';
+import { useUser } from '@/context/UserContext';
 
 interface ILawPage {
-  user: IUser;
-  isAuthenticated: boolean;
   country: ICountry;
   law: ILaw;
   govMembersInfo: { [memberId: number]: { name: string, image: string } };
 }
 
-const LawPage: React.FC<ILawPage> = ({ user, country, law, ...props }) => {
+const LawPage: React.FC<ILawPage> = ({ country, law, ...props }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
 
   const [countries, setCountries] = useState<ICountry[]>([]);
 

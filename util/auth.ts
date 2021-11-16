@@ -2,6 +2,7 @@ import { IUser } from '@/models/User';
 import jwt from 'jsonwebtoken';
 import { parseCookies, destroyCookie } from 'nookies';
 import { NextApiRequest, NextApiResponse } from "next";
+import { IncomingMessage } from 'http';
 
 interface IDecodedToken {
   user_id?: number;
@@ -26,7 +27,7 @@ export async function validateToken(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export async function getCurrentUser(req: NextApiRequest) {
+export async function getCurrentUser(req: IncomingMessage) {
   let user: IUser;
   const cookies = parseCookies({ req });
   if (cookies.token) {

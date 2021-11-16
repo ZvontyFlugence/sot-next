@@ -1,7 +1,7 @@
 import Layout from '@/components/Layout';
 import Select from '@/components/Select';
+import { useUser } from '@/context/UserContext';
 import { ICompany } from '@/models/Company';
-import { IUser } from '@/models/User';
 import { getCurrentUser } from '@/util/auth';
 import { COMPANY_TYPES } from '@/util/constants';
 import { request, showToast } from '@/util/ui';
@@ -20,11 +20,6 @@ import { destroyCookie, parseCookies } from 'nookies';
 import { useState } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 
-interface IMyCompaniesProps {
-  user: IUser,
-  isAuthenticated: boolean
-}
-
 interface IMyCompsResponse {
   companies?: ICompany[],
   error?: string,
@@ -37,10 +32,11 @@ interface ICreateCompParams {
 
 export const getUserCompaniesFetcher = (url: string, token: string) => request({ url, method: 'GET', token });
 
-export default function Companies({ user, ...props }: IMyCompaniesProps) {
+export default function Companies() {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
   const { mutate } = useSWRConfig();
 
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -212,6 +208,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   }
 
   return {
-    props: { ...result },
+    props: {},
   };
 }

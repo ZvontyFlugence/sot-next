@@ -11,16 +11,14 @@ import { refreshData, request, showToast } from "@/util/ui";
 import { useRouter } from "next/router";
 import { useToast } from "@chakra-ui/toast";
 import { GetServerSideProps } from "next";
+import { useUser } from "@/context/UserContext";
 
-interface ICreateNewspaperProps {
-  user: IUser,
-  isAuthenticated: boolean,
-}
-
-const CreateNewspaper: React.FC<ICreateNewspaperProps> = ({ user, ...props }) => {
+const CreateNewspaper: React.FC = () => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
+  
   const [name, setName] = useState('');
   const hasSufficientFunds = (user && user.gold > 5.0) || false;
 
@@ -85,7 +83,7 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   }
 
   return {
-    props: { ...result },
+    props: {},
   };
 }
 

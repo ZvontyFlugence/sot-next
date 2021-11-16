@@ -1,9 +1,9 @@
 import Layout from '@/components/Layout';
 import Select from '@/components/Select';
+import { useUser } from '@/context/UserContext';
 import { ICountry } from '@/models/Country';
 import Election, { ElectionType, ICandidate, IElection } from '@/models/Election';
 import Region, { IRegion } from '@/models/Region';
-import { IUser } from '@/models/User';
 import { UserActions } from '@/util/actions';
 import { findVote, jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
@@ -15,16 +15,15 @@ import { destroyCookie, parseCookies } from 'nookies';
 import { useEffect, useState } from 'react';
 
 interface ICongressElection {
-  user?: IUser,
-  isAuthenticated: boolean,
   election: IElection,
   country: number,
 }
 
-const CongressElection: React.FC<ICongressElection> = ({ user, election, country: countryId, ...props }) => {
+const CongressElection: React.FC<ICongressElection> = ({ election, country: countryId }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
 
   const [country, setCountry] = useState<number>(countryId);
   const [selectedRegion, setSelectedRegion] = useState<number>(election.typeId);
@@ -223,7 +222,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
 
   return {
     props: {
-      ...result,
       election: jsonify(election),
       country: jsonify(region.owner),
     },

@@ -1,5 +1,4 @@
 /*global google*/
-import { IUser } from "@/models/User";
 import { getCurrentUser } from "@/util/auth";
 import { destroyCookie } from "nookies";
 import { useEffect, useState } from "react";
@@ -15,18 +14,18 @@ import Nav from "@/components/Nav";
 import MapComponent from "@/components/MapComponent";
 import Battle, { IBattle } from "@/models/Battle";
 import { GetServerSideProps } from "next";
+import { useUser } from "@/context/UserContext";
 
 interface IMap {
-  user: IUser,
-  isAuthenticated: boolean,
   regions: IRegion[],
   owners: ICountry[],
   regionBattles: number[],
 }
 
-const Map: React.FC<IMap> = ({ user, regions, owners, ...props }) => {
+const Map: React.FC<IMap> = ({ regions, owners, ...props }) => {
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
   const [mode, setMode] = useState('political');
   const [overlays, setOverlays] = useState([]);
 
@@ -213,7 +212,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
 
   return {
     props: {
-      ...result,
       regions: jsonify(regions),
       owners: jsonify(owners),
       regionBattles: jsonify(regionBattles),

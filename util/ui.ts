@@ -1,5 +1,5 @@
 import { IMap } from "@/pages/api/companies/doAction";
-import { NextRouter } from "next/router";
+import type { NextRouter } from "next/router";
 
 export function neededXP(level: number) {
   return Math.round(0.08 * (level**3) + 0.8 * (level ** 2) + 2 * level);

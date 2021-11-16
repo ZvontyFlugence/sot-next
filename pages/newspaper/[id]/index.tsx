@@ -1,22 +1,23 @@
-import Layout from "@/components/Layout";
-import NewsBody from "@/components/newspaper/NewsBody";
-import NewsHeader from "@/components/newspaper/NewsHeader";
-import Newspaper, { INewspaper } from "@/models/Newspaper";
-import User, { IUser } from "@/models/User";
-import { ICEOInfo, jsonify } from "@/util/apiHelpers";
-import { getCurrentUser } from "@/util/auth";
-import { GetServerSideProps } from "next";
-import { destroyCookie } from "nookies";
-import { useState } from "react";
+import Layout from '@/components/Layout';
+import NewsBody from '@/components/newspaper/NewsBody';
+import NewsHeader from '@/components/newspaper/NewsHeader';
+import { useUser } from '@/context/UserContext';
+import Newspaper, { INewspaper } from '@/models/Newspaper';
+import User, { IUser } from '@/models/User';
+import { ICEOInfo, jsonify } from '@/util/apiHelpers';
+import { getCurrentUser } from '@/util/auth';
+import { GetServerSideProps } from 'next';
+import { destroyCookie } from 'nookies';
+import { useState } from 'react';
 
 interface INewsPage {
-  user: IUser,
-  isAuthenticated: boolean,
   newspaper: INewspaper,
   author_info: ICEOInfo,
 }
 
-const NewspaperPage: React.FC<INewsPage> = ({ user, newspaper, ...props }) => {
+const NewspaperPage: React.FC<INewsPage> = ({ newspaper, ...props }) => {
+  const user = useUser();
+
   const [isManageMode, setManageMode] = useState(false);
 
   const handleChangeMode = () => {
@@ -72,7 +73,7 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   };
 
   return {
-    props: { ...result, newspaper: jsonify(newspaper), author_info: jsonify(author_info) },
+    props: { newspaper: jsonify(newspaper), author_info: jsonify(author_info) },
   };
 }
 

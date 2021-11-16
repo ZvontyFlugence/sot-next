@@ -1,5 +1,4 @@
 import Layout from '@/components/Layout';
-import { IUser } from '@/models/User';
 import Country, { ICountry } from '@/models/Country';
 import { destroyCookie, parseCookies } from 'nookies';
 import { getCurrentUser } from '@/util/auth';
@@ -20,29 +19,63 @@ import { FormControl, FormLabel } from '@chakra-ui/form-control';
 import { Input } from '@chakra-ui/input';
 import { GetServerSideProps } from 'next';
 import useSWR, { useSWRConfig } from 'swr';
+import { useUser } from '@/context/UserContext';
 
 interface IGoodsMarket {
-  user: IUser,
-  isAuthenticated: boolean,
-  countries: ICountry[],
+  countries: ICountry[];
 }
 
 export const getCountryProductOffersFetcher = (url: string, token: string) => request({ url, method: 'GET', token });
 
-const GoodsMarket: React.FC<IGoodsMarket> = ({ user, ...props }) => {
+const GoodsMarket: React.FC<IGoodsMarket> = (props) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
   const { mutate } = useSWRConfig();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [country, setCountry] = useState(user?.country);
+  const [country, setCountry] = useState(user?.country || 1);
+  const [productFilter, setProductFilter] = useState('-1');
+  const [qualityFilter, setQualityFilter] = useState(-1);
+  const [filteredGoods, setFilteredGoods] = useState<IGoodsMarketOffer[]>([]);
   const [selected, setSelected] = useState<IGoodsMarketOffer>(null);
   const [quantity, setQuantity] = useState(1);
 
 
   const query = useSWR([`/api/markets/goods?country_id=${country}`, cookies.token], getCountryProductOffersFetcher);
 
-  useEffect(() => { query.mutate() }, [country]);
+  useEffect(() => { query.mutate(); }, [country]);
+
+  useEffect(() => {
+    if (productFilter !== '-1') {
+      // Filter offers based on product filter
+      setFilteredGoods(query.data?.productOffers.filter((offer: IGoodsMarketOffer) => {
+        let target = Number.parseInt(productFilter);
+        return offer.product_id <= 5 ? offer.product_id === target : ((Math.floor((offer.product_id - 1) / 5) * 5) + 1) === target;
+      }));
+    } else {
+      // Reset filtered offers
+      setFilteredGoods([]);
+    }
+
+    // Reset quality filter
+    setQualityFilter(-1);
+  }, [productFilter, query.data?.productOffers]);
+
+  useEffect(() => {
+    if (qualityFilter !== -1) {
+      setFilteredGoods(query.data?.productOffers.filter((offer: IGoodsMarketOffer) => {
+        let target = Number.parseInt(productFilter);
+        return (offer.product_id <= 5 ? offer.product_id === target : ((Math.floor((offer.product_id - 1) / 5) * 5) + 1) === target)
+          && (ITEMS[offer.product_id]?.quality === qualityFilter);
+      }));
+    } else {
+      setFilteredGoods(query.data?.productOffers.filter((offer: IGoodsMarketOffer) => {
+        let target = Number.parseInt(productFilter);
+        return offer.product_id <= 5 ? offer.product_id === target : ((Math.floor((offer.product_id - 1) / 5) * 5) + 1) === target;
+      }));
+    }
+  }, [qualityFilter]);
 
   const handlePurchase = () => {
     request({
@@ -80,10 +113,10 @@ const GoodsMarket: React.FC<IGoodsMarket> = ({ user, ...props }) => {
 
   return user ? (
     <Layout user={user}>
-      <h1 className='flex justify-between pl-4 pr-8'>
+      <h1 className='flex justify-between pl-4 pr-24'>
         <span className='text-2xl font-semibold text-accent'>Goods Market</span>
-        <div>
-          <Select onChange={(val) => setCountry(val as number)}>
+        <div className='flex items-center gap-4'>
+          <Select selected={country} onChange={(val) => setCountry(val as number)}>
             {props.countries.map((country, i) => (
               <Select.Option key={i} value={country._id}>
                 {country.name}
@@ -91,6 +124,28 @@ const GoodsMarket: React.FC<IGoodsMarket> = ({ user, ...props }) => {
               </Select.Option>
             ))}
           </Select>
+          <Select selected={productFilter} onChange={(val) => setProductFilter(val as string)}>
+            {([null].concat(COMPANY_TYPES) as any[]).map((type, i) => (
+              <Select.Option key={i} value={type ? `${type.item}` : '-1'}>
+                {type ? (
+                  <>
+                    <i className={type.css} />
+                    <span className='ml-2'>{type.text}</span>
+                  </>
+                ) : (<span>Any Product</span>)}
+              </Select.Option>
+            ))}
+          </Select>
+          {productFilter !== '-1' && ITEMS[Number.parseInt(productFilter)]?.quality != 0 && (
+            <Select selected={qualityFilter} onChange={(val) => setQualityFilter(val as number)}>
+              <Select.Option value={-1}>Any Quality</Select.Option>
+              <Select.Option value={1}>Q1</Select.Option>
+              <Select.Option value={2}>Q2</Select.Option>
+              <Select.Option value={3}>Q3</Select.Option>
+              <Select.Option value={4}>Q4</Select.Option>
+              <Select.Option value={5}>Q5</Select.Option>
+            </Select>
+          )}
         </div>
       </h1>
       <div className='mx-12 mt-4 p-2 bg-night rounded shadow-md'>
@@ -100,10 +155,7 @@ const GoodsMarket: React.FC<IGoodsMarket> = ({ user, ...props }) => {
             <Spinner className='flex justify-center items-center' color='accent' />
           </div>
         )}
-        {query.data && query.data?.productOffers.length === 0 && (
-          <p className='text-white'>Country has no product offers</p>
-        )}
-        {query.data && query.data?.productOffers.length > 0 && (
+        {query.data && (productFilter !== '-1' ? filteredGoods : query.data?.productOffers).length > 0 ? (
           <Table variant='unstyled' bgColor='night' color='white'>
             <Thead>
               <Tr>
@@ -115,7 +167,7 @@ const GoodsMarket: React.FC<IGoodsMarket> = ({ user, ...props }) => {
               </Tr>
             </Thead>
             <Tbody>
-              {query.data?.productOffers.map((offer: IGoodsMarketOffer, i: number) => (
+              {(productFilter !== '-1' ? filteredGoods : query.data?.productOffers).map((offer: IGoodsMarketOffer, i: number) => (
                 <Tr key={i}>
                   <Td className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/company/${offer.company.id}`)}>
                     <Avatar src={offer.company.image} name={offer.company.name} />
@@ -142,6 +194,8 @@ const GoodsMarket: React.FC<IGoodsMarket> = ({ user, ...props }) => {
               ))}
             </Tbody>
           </Table>
+        ) : (
+          <p className='text-white'>Country has no product offers</p>
         )}
       </div>
       {selected && (
@@ -203,7 +257,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
 
   return {
     props: {
-      ...result,
       countries: jsonify(countries),
     },
   };

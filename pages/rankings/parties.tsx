@@ -1,8 +1,8 @@
 import Layout from '@/components/Layout';
 import Select from '@/components/Select';
+import { useUser } from '@/context/UserContext';
 import Country, { ICountry } from '@/models/Country';
 import { IParty } from '@/models/Party';
-import { IUser } from '@/models/User';
 import { jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
 import { request } from '@/util/ui';
@@ -14,17 +14,17 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 
 interface IPartyRankings {
-  user: IUser;
-  isAuthenticated: boolean;
   countries: ICountry[];
   scope: string;
 }
 
 // URL => `/rankings/parties` || `/rankings/parties?country=[countryId]`
 // TODO: Add pagination
-export default function PartyRankings({ user, countries, scope, ...props }: IPartyRankings) {
+export default function PartyRankings({ countries, scope }: IPartyRankings) {
   const cookies = parseCookies();
   const router = useRouter();
+  const user = useUser();
+
   const [parties, setParties] = useState<IParty[]>([]);
 
   useEffect(() => {
@@ -125,7 +125,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   return {
     props: {
-      ...result,
       countries: jsonify(countries),
       scope,
     },

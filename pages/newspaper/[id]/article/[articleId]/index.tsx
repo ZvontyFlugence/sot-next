@@ -1,4 +1,5 @@
 import Layout from "@/components/Layout";
+import { useUser } from "@/context/UserContext";
 import Newspaper, { IArticle, INewspaper } from "@/models/Newspaper";
 import User, { IUser } from "@/models/User";
 import { UserActions } from "@/util/actions";
@@ -18,17 +19,17 @@ import { AiOutlineLike } from "react-icons/ai";
 import { FiRss } from 'react-icons/fi';
 
 interface IArticlePage {
-  user: IUser,
-  isAuthenticated: boolean,
-  newspaper: INewspaper,
-  authorInfo: IUser,
-  articleId: string,
+  newspaper: INewspaper;
+  authorInfo: IUser;
+  articleId: string;
 }
 
-const ArticlePage: React.FC<IArticlePage> = ({ user, newspaper, authorInfo, ...props }) => {
+const ArticlePage: React.FC<IArticlePage> = ({ newspaper, authorInfo, ...props }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
+
   const [article, setArticle] = useState<IArticle | null>(null);
 
   const ReactQuill = typeof window === 'object' ? require('react-quill') : () => false;
@@ -268,7 +269,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   
   return {
     props: {
-      ...result,
       newspaper: jsonify(newspaper),
       authorInfo: jsonify(news_author),
       articleId: params.articleId as string,

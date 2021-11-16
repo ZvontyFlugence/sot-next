@@ -7,15 +7,9 @@ import { useToast } from '@chakra-ui/toast';
 import { useState } from 'react';
 import { getCurrentUser } from '@/util/auth';
 import { GetServerSideProps } from 'next';
-import { IUser } from '@/models/User';
 import { request, showToast } from '@/util/ui';
 
-interface IForgotPassProps {
-    user: IUser;
-    isAuthenticated: boolean;
-}
-
-export default function ForgotPass(_props: IForgotPassProps) {
+export default function ForgotPass() {
     const toast = useToast();
     const [email, setEmail] = useState('');
 
@@ -80,6 +74,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     }
 
     return {
-        props: { ...result },
+        props: {},
     };
 }

@@ -1,6 +1,6 @@
 import Layout from '@/components/Layout';
+import { useUser } from '@/context/UserContext';
 import { ICountryStats } from '@/models/Country';
-import { IUser } from '@/models/User';
 import { getCurrentUser } from '@/util/auth';
 import { request } from '@/util/ui';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
@@ -9,15 +9,12 @@ import { useRouter } from 'next/router';
 import { destroyCookie } from 'nookies';
 import { useEffect, useState } from 'react';
 
-interface ICountryRankings {
-  user: IUser;
-  isAuthenticated: boolean;
-}
-
 // URL => `/rankings/countries`
 // TODO: Add pagination
-export default function CountryRankings({ user, ...props }: ICountryRankings) {
+export default function CountryRankings() {
   const router = useRouter();
+  const user = useUser();
+
   const [countries, setCountries] = useState<ICountryStats[]>([]);
 
   useEffect(() => {
@@ -77,6 +74,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   }
 
   return {
-    props: { ...result },
+    props: {},
   };
 }

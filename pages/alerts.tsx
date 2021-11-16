@@ -1,6 +1,7 @@
 import Layout from '@/components/Layout';
 import AlertItem from '@/components/sidebar/AlertItem';
-import { IAlert, IUser } from '@/models/User';
+import { useUser } from '@/context/UserContext';
+import { IAlert } from '@/models/User';
 import { getCurrentUser } from '@/util/auth';
 import { refreshData, request, showToast } from '@/util/ui';
 import { Button } from '@chakra-ui/button';
@@ -9,15 +10,11 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 
-interface IAlerts {
-  user: IUser,
-  isAuthenticated: boolean,
-}
-
-const Alerts: React.FC<IAlerts> = ({ user, ...props }) => {
+const Alerts: React.FC = () => {
   const cookies = parseCookies();
   const toast = useToast();
   const router = useRouter();
+  const user = useUser();
 
   const handleReadAll = () => {
     (async () => {
@@ -109,7 +106,7 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   }
 
   return {
-    props: { ...result },
+    props: {},
   };
 }
 

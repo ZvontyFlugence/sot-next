@@ -1,4 +1,3 @@
-import { IUser } from '@/models/User';
 import { destroyCookie } from 'nookies';
 import { getCurrentUser } from '@/util/auth';
 import { Box, SimpleGrid } from '@chakra-ui/layout';
@@ -8,14 +7,11 @@ import News from '@/components/dashboard/News';
 import Layout from '@/components/Layout';
 import ElectionMsg from '@/components/dashboard/ElectionMsg';
 import { GetServerSideProps } from 'next';
+import { useUser } from '@/context/UserContext';
 
-interface IDashboardProps {
-  user: IUser;
-  isAuthenticated: boolean;
-}
-
-export default function Dashboard({ user, ...props }: IDashboardProps) {
+export default function Dashboard() {
   let date: Date = new Date(Date.now());
+  const user = useUser();
 
   return user ? (
     <Layout user={user}>
@@ -63,6 +59,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   }
 
   return {
-    props: { ...result },
+    props: {},
   };
 }

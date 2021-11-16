@@ -1,26 +1,26 @@
-import Layout from "@/components/Layout";
-import ManageParty from "@/components/party/ManageParty";
-import PartyBody from "@/components/party/PartyBody";
-import PartyHead from "@/components/party/PartyHead";
-import Party, { IParty } from "@/models/Party";
-import { IUser } from "@/models/User";
-import { getParty, ICountryInfo, ILeadershipInfo } from "@/pages/api/parties/[partyId]";
-import { jsonify } from "@/util/apiHelpers";
-import { getCurrentUser } from "@/util/auth";
-import { GetServerSideProps } from "next";
-import { destroyCookie } from "nookies";
-import { useState } from "react";
+import Layout from '@/components/Layout';
+import ManageParty from '@/components/party/ManageParty';
+import PartyBody from '@/components/party/PartyBody';
+import PartyHead from '@/components/party/PartyHead';
+import { useUser } from '@/context/UserContext';
+import Party, { IParty } from '@/models/Party';
+import { getParty, ICountryInfo, ILeadershipInfo } from '@/pages/api/parties/[partyId]';
+import { jsonify } from '@/util/apiHelpers';
+import { getCurrentUser } from '@/util/auth';
+import { GetServerSideProps } from 'next';
+import { destroyCookie } from 'nookies';
+import { useState } from 'react';
 
 interface IPartyPageProps {
-  user: IUser,
-  isAuthenticated: boolean,
   party: IParty,
   partyRank: number,
   leadershipInfo: ILeadershipInfo,
   countryInfo: ICountryInfo,
 }
 
-const PartyPage: React.FC<IPartyPageProps> = ({ user, party, ...props }) => {
+const PartyPage: React.FC<IPartyPageProps> = ({ party, ...props }) => {
+  const user = useUser();
+  
   const [isManageMode, setManageMode] = useState<boolean>(false);
 
   const handleChangeMode = () => {
@@ -69,7 +69,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
 
   return {
     props: {
-      ...result,
       party: jsonify(party),
       partyRank: jsonify(rank),
       leadershipInfo: jsonify(leadershipInfo),

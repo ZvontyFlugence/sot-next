@@ -13,13 +13,11 @@ import ForgotPassRequest, { IForgotPassRequest } from '@/models/ForgotPassReques
 import { useRouter } from 'next/router';
 
 interface IResetPassProps {
-    user: IUser;
-    isAuthenticated: boolean;
     requestId: string;
     email: string;
 }
 
-export default function ResetPass({ requestId, email, ...props }: IResetPassProps) {
+export default function ResetPass({ requestId, email }: IResetPassProps) {
     const router = useRouter();
     const toast = useToast();
     const [pass, setPass] = useState('');
@@ -110,7 +108,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
 
     return {
         props: {
-            ...result,
             requestId: forgotPassRequest._id.toHexString(),
             email: forgotPassRequest.user
         },

@@ -1,8 +1,8 @@
 import Layout from '@/components/Layout';
 import Select from '@/components/Select';
+import { useUser } from '@/context/UserContext';
 import Country, { ICountry } from '@/models/Country';
 import { INewspaper } from '@/models/Newspaper';
-import { IUser } from '@/models/User';
 import { jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
 import { request } from '@/util/ui';
@@ -14,16 +14,16 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 
 interface INewsRankings {
-  user: IUser;
-  isAuthenticated: boolean;
   countries: ICountry[];
 }
 
 // URL => `/rankings/newspapers` || `/rankings/newspapers?country=[countryId]`
 // TODO: Add pagination
-export default function NewsRankings({ user, countries, ...props }: INewsRankings) {
+export default function NewsRankings({ countries }: INewsRankings) {
   const cookies = parseCookies();
   const router = useRouter();
+  const user = useUser();
+
   const [newspapers, setNewspapers] = useState<INewspaper[]>([]);
 
   useEffect(() => {
@@ -112,7 +112,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   return {
     props: {
-      ...result,
       countries: jsonify(countries),
     },
   };

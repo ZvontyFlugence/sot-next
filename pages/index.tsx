@@ -5,20 +5,14 @@ import TopCitizens from '@/components/index/TopCitizens';
 import Nav from '@/components/Nav';
 import TopCountries from '@/components/index/TopCountries';
 import { getCurrentUser } from '@/util/auth';
-import { IUser } from '@/models/User';
 import { GetServerSideProps } from 'next';
 import useSWR from 'swr';
 import { request } from '@/util/ui';
 
-interface IIndexProps {
-  user: IUser,
-  isAuthenticated: boolean,
-}
-
 export const topCitizensFetcher = (url: string) => request({ url, method: 'GET' });
 export const topNationsFetcher = (url: string) => request({ url, method: 'GET' });
 
-export default function Index(_props: IIndexProps) {
+export default function Index() {
   const router = useRouter();
 
   const citizenQuery = useSWR('/api/stats/user?scope=global&stat=xp&limit=5', topCitizensFetcher);
@@ -75,6 +69,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   }
 
   return {
-    props: { ...result },
+    props: {},
   };
 }

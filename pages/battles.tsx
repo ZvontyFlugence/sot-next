@@ -1,31 +1,30 @@
 import BattleLink from "@/components/battles/BattleLink";
 import Layout from "@/components/Layout";
 import Select from "@/components/Select";
+import { useUser } from "@/context/UserContext";
 import Battle, { IBattle } from "@/models/Battle";
 import Country, { ICountry } from "@/models/Country";
 import Region, { IRegion } from "@/models/Region";
-import { IUser } from "@/models/User";
 import War, { IWar } from "@/models/War";
 import { jsonify } from "@/util/apiHelpers";
 import { getCurrentUser } from "@/util/auth";
-import { IRegionSet, refreshData, request } from "@/util/ui";
+import { IRegionSet } from "@/util/ui";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
-import { destroyCookie, parseCookies } from "nookies";
+import { destroyCookie } from "nookies";
 import { useState } from "react";
 import { useEffect } from "react";
 
 interface IBattles {
-  user: IUser;
-  isAuthenticated: boolean;
   countries: ICountry[];
   battles: IBattle[];
   wars: IWar[];
   regionSet: IRegionSet;
 }
 
-export default function Battles({ user, countries, battles, ...props }: IBattles) {
+export default function Battles({ countries, battles, ...props }: IBattles) {
   const router = useRouter();
+  const user = useUser();
 
   const [filteredBattles, setFilteredBattles] = useState<IBattle[]>([]);
 
@@ -117,7 +116,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   return {
     props: {
-      ...result,
       countries: jsonify(countries),
       battles: jsonify(battles),
       wars: jsonify(wars),

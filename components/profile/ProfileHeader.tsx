@@ -16,12 +16,13 @@ import DonateModal from './DonateModal';
 import GiftModal from './GiftModal';
 
 interface IProfileHeader {
-  user: IUser,
-  profile: IUser,
-  locationInfo: ILocationInfo,
+  user: IUser;
+  profile: IUser;
+  locationInfo: ILocationInfo;
+  residenceInfo: ILocationInfo;
 }
 
-const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }) => {
+const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo, residenceInfo }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
@@ -77,16 +78,28 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
               {profile.username}
               <i className={`flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
             </h3>
-            <p className='flex flex-row items-center mt-4'>
-              <span className='mr-2'>Location:</span>
-              <span className='mr-2 link' onClick={() => router.push(`/region/${profile.location}`)}>
-                {locationInfo.region_name},
-              </span>
-              <span className='link' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
-                {locationInfo.owner_name}
-                <i className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
-              </span>
-            </p>
+            <div className='flex items-center mt-4 gap-4'>
+              <p className='flex items-center'>
+                <span className='mr-2'>Location:</span>
+                <span className='link mr-2' onClick={() => router.push(`/region/${profile.location}`)}>
+                  {locationInfo.region_name},
+                </span>
+                <span className='link' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
+                  {locationInfo.owner_name}
+                  <i className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
+                </span>
+              </p>
+              <p className='flex items-center'>
+                  <span className='mr-2'>Residence:</span>
+                  <span className='link mr-2' onClick={() => router.push(`/region/${profile.residence}`)}>
+                    {residenceInfo.region_name},
+                  </span>
+                  <span className='link' onClick={() => router.push(`/country/${residenceInfo.owner_id}`)}>
+                    {residenceInfo.owner_name}
+                    <i className={`ml-2 flag-icon flag-icon-${residenceInfo.owner_flag} rounded shadow-md`} />
+                  </span>
+              </p>
+            </div>
             <p className='flex flex-row items-center mt-4 gap-6'>
               <span>Level: {profile.level}</span>
               <span>Experience: {profile.xp}</span>
@@ -176,16 +189,28 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo }
             </h3>
           </div>
           <div className='flex flex-col text-sm'>
-            <p className='flex flex-row items-center mt-4'>
-              <span className='mr-2'>Location:</span>
-              <span className='cursor-pointer mr-2' onClick={() => router.push(`/region/${profile.location}`)}>
-                {locationInfo.region_name},
-              </span>
-              <span className='cursor-pointer' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
-                {locationInfo.owner_name}
-                <i className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
-              </span>
-            </p>
+            <div className='flex items-center mt-4 gap-4'>
+              <p className='flex items-center'>
+                <span className='mr-2'>Location:</span>
+                <span className='link mr-2' onClick={() => router.push(`/region/${profile.location}`)}>
+                  {locationInfo.region_name},
+                </span>
+                <span className='link' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
+                  {locationInfo.owner_name}
+                  <i className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
+                </span>
+              </p>
+              <p className='flex items-center'>
+                  <span className='mr-2'>Residence:</span>
+                  <span className='link mr-2' onClick={() => router.push(`/region/${profile.residence}`)}>
+                    {residenceInfo.region_name},
+                  </span>
+                  <span className='link' onClick={() => router.push(`/country/${residenceInfo.owner_id}`)}>
+                    {residenceInfo.owner_name}
+                    <i className={`ml-2 flag-icon flag-icon-${residenceInfo.owner_flag} rounded shadow-md`} />
+                  </span>
+              </p>
+            </div>
             <p className='flex flex-row items-center mt-4 gap-6'>
               <span>Level: {profile.level}</span>
               <span>Experience: {profile.xp}</span>

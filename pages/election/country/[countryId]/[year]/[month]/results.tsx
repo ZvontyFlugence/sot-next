@@ -1,9 +1,9 @@
 import Layout from '@/components/Layout';
 import Select from '@/components/Select';
+import { useUser } from '@/context/UserContext';
 import { ElectionSystem, ICountry } from '@/models/Country';
 import Election, { ElectionType, ICandidate, IElection } from '@/models/Election';
 import { IPath, IRegion } from '@/models/Region';
-import { IUser } from '@/models/User';
 import { jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
 import { MAP_STYLE } from '@/util/constants';
@@ -16,15 +16,13 @@ import { GMap } from 'primereact/gmap';
 import React, { useEffect, useState } from 'react';
 
 interface ICPElection {
-  user?: IUser,
-  isAuthenticated: boolean,
   election: IElection,
 }
 
-const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
+const CPElection: React.FC<ICPElection> = ({ election }) => {
   const cookies = parseCookies();
   const router = useRouter();
-  const toast = useToast();
+  const user = useUser();
 
   const [countries, setCountries] = useState<ICountry[]>([]);
 

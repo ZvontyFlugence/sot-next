@@ -1,6 +1,6 @@
 import Layout from '@/components/Layout';
+import { useUser } from '@/context/UserContext';
 import Newspaper, { INewspaper } from '@/models/Newspaper';
-import { IUser } from '@/models/User';
 import { NewspaperActions } from '@/util/actions';
 import { jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
@@ -15,18 +15,18 @@ import { destroyCookie, parseCookies } from 'nookies';
 import { useEffect, useState } from 'react';
 
 interface IEditArticlePage {
-  user: IUser;
-  isAuthenticated: boolean;
   newspaper: INewspaper;
   articleId: string;
 }
 
 const EMPTY_DELTA: any = { ops: [] };
 
-const EditArticle: React.FC<IEditArticlePage> = ({ user, newspaper, ...props }) => {
+const EditArticle: React.FC<IEditArticlePage> = ({ newspaper, ...props }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
+
   const [editorValue, setEditorValue] = useState(EMPTY_DELTA);
   const [articleName, setArticleName] = useState('');
 
@@ -176,7 +176,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   return {
     props: {
-      ...result,
       newspaper: jsonify(newspaper),
       articleId: params.articleId as string,
     },

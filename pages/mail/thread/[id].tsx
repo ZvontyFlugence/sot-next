@@ -1,4 +1,5 @@
 import Layout from '@/components/Layout';
+import { useUser } from '@/context/UserContext';
 import User, { IThread, IUser } from '@/models/User';
 import { UserActions } from '@/util/actions';
 import { getCurrentUser } from '@/util/auth';
@@ -15,10 +16,8 @@ import { destroyCookie, parseCookies } from 'nookies';
 import { useEffect, useState } from 'react';
 
 interface IMailThread {
-  user: IUser,
-  isAuthenticated: boolean,
-  thread: IThread,
-  participants: IParticipant[],
+  thread: IThread;
+  participants: IParticipant[];
 }
 
 interface IParticipant {
@@ -27,10 +26,11 @@ interface IParticipant {
   username: string,
 }
 
-const MailThread: React.FC<IMailThread> = ({ user, thread, participants, ...props }) => {
+const MailThread: React.FC<IMailThread> = ({ thread, participants }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -195,7 +195,7 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   }
 
   return {
-    props: { ...result, thread, participants },
+    props: { thread, participants },
   };
 }
 

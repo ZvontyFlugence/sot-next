@@ -10,20 +10,21 @@ import { getCurrentUser } from "@/util/auth";
 import { ICEOInfo, ILocationInfo, jsonify } from "@/util/apiHelpers";
 import { destroyCookie } from 'nookies';
 import { useState } from "react";
-import user from "../api/stats/user";
 import { GetServerSideProps } from "next";
+import { useUser } from "@/context/UserContext";
 
 interface ICompanyPageProps {
-  user: IUser,
-  isAuthenticated: boolean,
   company: ICompany,
   location_info: ILocationInfo,
   ceo_info: ICEOInfo,
   currency: string,
 }
 
-export default function CompanyPage({ user, company, location_info, ceo_info, ...props }: ICompanyPageProps) {
+export default function CompanyPage({ company, location_info, ceo_info, ...props }: ICompanyPageProps) {
+  const user = useUser();
+
   const [isManageMode, setManageMode] = useState(false);
+
   return (
     <Layout user={user}>
       <div className='pt-2 px-2 md:pt-0 md:px-24'>
@@ -95,7 +96,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
 
   return {
     props: {
-      ...result,
       company: jsonify(company),
       location_info: jsonify(location_info),
       ceo_info: jsonify(ceo_info),

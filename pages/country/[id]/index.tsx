@@ -1,21 +1,21 @@
 import CountryBody from "@/components/country/CountryBody";
 import CountryHead from "@/components/country/CountryHead";
 import Layout from "@/components/Layout";
+import { useUser } from "@/context/UserContext";
 import Country, { ICountry } from "@/models/Country";
-import { IUser } from "@/models/User";
 import { jsonify } from "@/util/apiHelpers";
 import { getCurrentUser } from "@/util/auth";
 import { GetServerSideProps } from "next";
 import { destroyCookie } from "nookies";
 
 interface ICountryPage {
-  user: IUser,
-  isAuthenticated: boolean,
   country: ICountry,
   countries: ICountry[],
 }
 
-const CountryPage: React.FC<ICountryPage> = ({ user, country, ...props }) => {
+const CountryPage: React.FC<ICountryPage> = ({ country, ...props }) => {
+  const user = useUser();
+
   return user ? (
     <Layout user={user}>
       <div className='px-2 pt-2 md:px-24'>
@@ -48,7 +48,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
 
   return {
     props: {
-      ...result,
       country: jsonify(country),
       countries: jsonify(countries),
     },

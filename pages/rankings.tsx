@@ -1,5 +1,5 @@
 import Layout from '@/components/Layout';
-import { IUser } from '@/models/User';
+import { useUser } from '@/context/UserContext';
 import { getCurrentUser } from '@/util/auth';
 import { RANKING_TYPES } from '@/util/constants';
 import { IRankingType } from '@/util/ui';
@@ -7,13 +7,9 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie } from 'nookies';
 
-interface IRankingsProps {
-  user: IUser;
-  isAuthenticated: boolean;
-}
-
-export default function Rankings({ user, ...props }: IRankingsProps) {
+export default function Rankings() {
   const router = useRouter();
+  const user = useUser();
 
   const getRankingTypeCard = (rankingType: IRankingType) => (
     <div
@@ -50,6 +46,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   }
 
   return {
-    props: { ...result },
+    props: {},
   }
 }

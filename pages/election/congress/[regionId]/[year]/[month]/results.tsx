@@ -1,29 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
-import Select from "@/components/Select";
-import { ICountry } from "@/models/Country";
-import Election, { ElectionType, ICandidate, IElection } from "@/models/Election";
-import Region, { IRegion } from "@/models/Region";
-import { IUser } from '@/models/User';
-import { UserActions } from "@/util/actions";
-import { jsonify } from "@/util/apiHelpers";
+import Select from '@/components/Select';
+import { ICountry } from '@/models/Country';
+import Election, { ElectionType, ICandidate, IElection } from '@/models/Election';
+import Region, { IRegion } from '@/models/Region';
+import { jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
-import { request } from "@/util/ui";
-import { Avatar, Button, Table, Tbody, Td, Th, Thead, Tr } from "@chakra-ui/react";
-import { useRouter } from "next/router";
-import { destroyCookie, parseCookies } from "nookies";
-import { GetServerSideProps } from "next";
+import { request } from '@/util/ui';
+import { Avatar, Button, Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
+import { useRouter } from 'next/router';
+import { destroyCookie, parseCookies } from 'nookies';
+import { GetServerSideProps } from 'next';
+import { useUser } from '@/context/UserContext';
 
 interface ICongressResults {
-  user?: IUser,
-  isAuthenticated: boolean,
   election: IElection,
   country: number,
 }
 
-const CongressResults: React.FC<ICongressResults> = ({ user, election, country, ...props }) => {
+const CongressResults: React.FC<ICongressResults> = ({ election, country }) => {
   const cookies = parseCookies();
   const router = useRouter();
+  const user = useUser();
 
   const [selectedCountry, setSelectedCountry] = useState<number>(country);
   const [countries, setCountries] = useState<ICountry[]>([]);
@@ -184,7 +182,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
 
   return {
     props: {
-      ...result,
       election: jsonify(election),
       country: jsonify(region.owner),
     },

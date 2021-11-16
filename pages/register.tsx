@@ -1,23 +1,17 @@
-import Nav from "@/components/Nav";
-import { Button } from "@chakra-ui/button";
-import { FormControl, FormLabel } from "@chakra-ui/form-control";
-import { Input } from "@chakra-ui/input";
-import { Box, Center, Container } from "@chakra-ui/layout";
-import { useToast } from "@chakra-ui/toast";
+import Nav from '@/components/Nav';
+import { Button } from '@chakra-ui/button';
+import { FormControl, FormLabel } from '@chakra-ui/form-control';
+import { Input } from '@chakra-ui/input';
+import { Box, Center, Container } from '@chakra-ui/layout';
+import { useToast } from '@chakra-ui/toast';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from "react";
-import { getCurrentUser } from "@/util/auth";
-import { IUser } from "@/models/User";
-import { request } from "@/util/ui";
-import Select from "@/components/Select";
-import { ICountry } from "@/models/Country";
-import { GetServerSideProps } from "next";
-
-interface IRegProps {
-  user: IUser,
-  isAuthenticated: boolean,
-}
+import { useEffect, useState } from 'react';
+import { getCurrentUser } from '@/util/auth';
+import { request } from '@/util/ui';
+import Select from '@/components/Select';
+import { ICountry } from '@/models/Country';
+import { GetServerSideProps } from 'next';
 
 interface IRegForm {
   email: string,
@@ -26,7 +20,7 @@ interface IRegForm {
   country: number,
 }
 
-export default function Register(_props: IRegProps) {
+export default function Register() {
   const router = useRouter();
   const toast = useToast();
 
@@ -139,6 +133,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   }
 
   return {
-    props: { ...result }
+    props: {}
   }
 }

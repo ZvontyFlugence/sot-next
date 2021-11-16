@@ -1,5 +1,6 @@
 import BattleLink, { IFighter } from '@/components/battles/BattleLink';
 import Layout from '@/components/Layout';
+import { useUser } from '@/context/UserContext';
 import Battle, { IBattle } from '@/models/Battle';
 import Country, { ICountry } from '@/models/Country';
 import Region, { IRegion } from '@/models/Region';
@@ -13,8 +14,6 @@ import { useRouter } from 'next/router';
 import { destroyCookie } from 'nookies';
 
 interface IBattleViewPage {
-  user: IUser;
-  isAuthenticated: boolean;
   countries: ICountry[];
   battle: IBattle;
   war: IWar;
@@ -22,8 +21,9 @@ interface IBattleViewPage {
   users: IUser[];
 }
 
-export default function BattleViewPage({ user, battle, users, ...props }: IBattleViewPage) {
+export default function BattleViewPage({ battle, users, ...props }: IBattleViewPage) {
   const router = useRouter();
+  const user = useUser();
 
   const attackBattleHero = getBattleHero('attackers');
   const defendBattleHero = getBattleHero('defenders');
@@ -122,7 +122,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   return {
     props: {
-      ...result,
       battle: jsonify(battle),
       countries: jsonify(countries),
       war: jsonify(war),

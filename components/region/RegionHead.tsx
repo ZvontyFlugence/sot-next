@@ -2,7 +2,6 @@
 import { useSelectTab } from '@/context/RegionPageContext';
 import { ICountry } from '@/models/Country';
 import { IPath, IRegion } from '@/models/Region';
-import { IUser } from '@/models/User';
 import { RESOURCES } from '@/util/constants';
 import { request } from '@/util/ui';
 import { Button, ButtonGroup } from '@chakra-ui/react';
@@ -13,13 +12,10 @@ import MapComponent from '../MapComponent';
 import Select from '../Select';
 
 interface IRegionHead {
-    user: IUser;
-    isAuthenticated: boolean;
     region: IRegion;
-    population: number;
 }
 
-const RegionHead: React.FC<IRegionHead> = ({ user, region, population, ...props }) => {
+const RegionHead: React.FC<IRegionHead> = ({ region }) => {
     const cookies = parseCookies();
     const router = useRouter();
     const selectTab = useSelectTab();
@@ -94,8 +90,8 @@ const RegionHead: React.FC<IRegionHead> = ({ user, region, population, ...props 
     }
 
     const getResourceInfo = () => {
-        const resourceId = Math.floor(region.resource / 3);
-        const resourceLevelId = region.resource % 3;
+        const resourceId = Math.floor((region.resource - 1) / 3);
+        const resourceLevelId = (region.resource - 1) % 3;
         if (resourceId < 0)
             return 'None';
 

@@ -17,20 +17,21 @@ import { useEffect, useState } from 'react';
 import Select from '@/components/Select';
 import { GetServerSideProps } from 'next';
 import useSWR from 'swr';
+import { useUser } from '@/context/UserContext';
 
 interface IJobMarket {
-  user: IUser,
-  isAuthenticated: boolean,
   location_info: ILocationInfo,
   countries: ICountry[],
 }
 
 export const getCountryJobOffersFetcher = (url: string, token: string) => request({ url, method: 'GET', token })
 
-const JobMarket: React.FC<IJobMarket> = ({ user, ...props }) => {
+const JobMarket: React.FC<IJobMarket> = (props) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
+
   const [country, setCountry] = useState(props.location_info.owner_id);
 
   const query = useSWR([`/api/markets/jobs?country_id=${country}`, cookies.token], getCountryJobOffersFetcher);
@@ -161,7 +162,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
 
   return {
     props: {
-      ...result,
       location_info: jsonify(location_info),
       countries: jsonify(countries),
     },

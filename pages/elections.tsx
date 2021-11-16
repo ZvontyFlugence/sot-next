@@ -1,23 +1,19 @@
 import Layout from '@/components/Layout';
+import { useUser } from '@/context/UserContext';
 import { ElectionType } from '@/models/Election';
-import { IUser } from '@/models/User';
 import { getCurrentUser } from '@/util/auth';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie } from 'nookies';
 
-interface IElectionsProps {
-  user: IUser;
-  isAuthenticated: boolean;
-}
-
-export default function Elections({ user, ...props }: IElectionsProps) {
+export default function Elections() {
   const router = useRouter();
+  const user = useUser();
 
   const getElectionTypeCard = (electionType: ElectionType) => (
     <div
       className='flex justify-center bg-night rounded shadow-md px-4 py-2 text-white cursor-pointer'
-      onClick={() => goToElection(electionType)}
+      onClick={() => router.push(goToElection(electionType))}
     >
       {electionType}
     </div>
@@ -67,6 +63,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   }
 
   return {
-    props: { ...result },
+    props: {},
   };
 }

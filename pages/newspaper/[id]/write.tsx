@@ -1,32 +1,32 @@
-import Layout from "@/components/Layout";
-import Newspaper, { INewspaper } from "@/models/Newspaper";
-import { IUser } from "@/models/User";
-import { NewspaperActions } from "@/util/actions";
-import { jsonify } from "@/util/apiHelpers";
-import { getCurrentUser } from "@/util/auth";
-import { refreshData, request, showToast } from "@/util/ui";
-import { Button } from "@chakra-ui/button";
-import { FormControl, FormLabel } from "@chakra-ui/form-control";
-import { Input } from "@chakra-ui/input";
-import { useToast } from "@chakra-ui/toast";
-import { GetServerSideProps } from "next";
-import { useRouter } from "next/router";
-import { destroyCookie, parseCookies } from "nookies";
-import { useState } from "react";
+import Layout from '@/components/Layout';
+import { useUser } from '@/context/UserContext';
+import Newspaper, { INewspaper } from '@/models/Newspaper';
+import { NewspaperActions } from '@/util/actions';
+import { jsonify } from '@/util/apiHelpers';
+import { getCurrentUser } from '@/util/auth';
+import { refreshData, request, showToast } from '@/util/ui';
+import { Button } from '@chakra-ui/button';
+import { FormControl, FormLabel } from '@chakra-ui/form-control';
+import { Input } from '@chakra-ui/input';
+import { useToast } from '@chakra-ui/toast';
+import { GetServerSideProps } from 'next';
+import { useRouter } from 'next/router';
+import { destroyCookie, parseCookies } from 'nookies';
+import { useState } from 'react';
 
 
 interface IWriteArticlePage {
-  user: IUser,
-  isAuthenticated: boolean,
   newspaper: INewspaper,
 }
 
 const EMPTY_DELTA: any = { ops: [] };
 
-const WriteArticlePage: React.FC<IWriteArticlePage> = ({ user, newspaper, ...props }) => {
+const WriteArticlePage: React.FC<IWriteArticlePage> = ({ newspaper }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
+
   const [editorValue, setEditorValue] = useState(EMPTY_DELTA);
   const [articleName, setArticleName] = useState('');
 
@@ -161,7 +161,7 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   let newspaper: INewspaper = await Newspaper.findOne({ _id: Number.parseInt(params.id as string)});
 
   return {
-    props: { ...result, newspaper: jsonify(newspaper) },
+    props: { newspaper: jsonify(newspaper) },
   };
 }
 

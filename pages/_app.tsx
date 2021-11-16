@@ -8,7 +8,10 @@ import 'react-quill/dist/quill.snow.css';
 
 import '../styles/globals.css';
 import MaintenancePage from './maintenance';
-import { GetStaticProps } from 'next';
+import { GetServerSideProps } from 'next';
+import { UserContextProvider } from '@/context/UserContext';
+import { destroyCookie } from 'nookies';
+import { getCurrentUser } from '@/util/auth';
 
 const theme = extendTheme({ colors });
 
@@ -27,16 +30,27 @@ function MyApp({ Component, pageProps }) {
       {(typeof pageProps.MAINTENANCE_MODE === 'boolean' && pageProps.MAINTENANCE_MODE === true) || pageProps.MAINTENANCE_MODE === 'true' ? (
         <MaintenancePage />
       ) : (
-        <Component {...pageProps} />
+        <UserContextProvider fallback={pageProps.fallback}>
+          <Component {...pageProps} />
+        </UserContextProvider>
       )}      
     </ChakraProvider>
   );
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  let result = await getCurrentUser(context.req);
+
+  if (!result.isAuthenticated) {
+    destroyCookie(context, 'token');
+  }
+  
   return {
     props: {
       MAINTENANCE_MODE: process.env.NEXT_PUBLIC_MAINTENANCE_MODE,
+      fallback: {
+        '/api/me': result.user,
+      }
     },
   };
 }

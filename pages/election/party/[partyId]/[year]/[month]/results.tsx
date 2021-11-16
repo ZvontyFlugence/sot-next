@@ -1,28 +1,27 @@
 import Layout from '@/components/Layout';
 import Select from '@/components/Select';
+import { useUser } from '@/context/UserContext';
 import { ICountry } from '@/models/Country';
 import Election, { ElectionType, ICandidate, IElection } from '@/models/Election';
 import Party, { IParty } from '@/models/Party';
-import { IUser } from '@/models/User';
 import { jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
 import { request } from '@/util/ui';
-import { Avatar, Button, flexbox, Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
+import { Avatar, Button, Table, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 import { useEffect, useState } from 'react';
 
 interface IPPResults {
-  user?: IUser,
-  isAuthenticated: boolean,
   election: IElection,
   country: number,
 }
 
-const PPResults: React.FC<IPPResults> = ({ user, election, country, ...props }) => {
+const PPResults: React.FC<IPPResults> = ({ election, country }) => {
   const cookies = parseCookies();
   const router = useRouter();
+  const user = useUser();
 
   const [selectedCountry, setSelectedCountry] = useState<number>(country);
   const [countries, setCountries] = useState<ICountry[]>([]);
@@ -184,7 +183,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
 
   return {
     props: {
-      ...result,
       election: jsonify(election),
       country: jsonify(party.country),
     },

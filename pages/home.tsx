@@ -1,4 +1,3 @@
-import { IUser } from '@/models/User';
 import { parseCookies, destroyCookie } from 'nookies';
 import Layout from '@/components/Layout';
 import { getCurrentUser } from '@/util/auth';
@@ -16,17 +15,17 @@ import { COMPANY_TYPES } from '@/util/constants';
 import { GetServerSideProps } from 'next';
 import useSWR, { useSWRConfig } from 'swr';
 import { getWalletInfoFetcher } from '@/components/Sidebar';
+import { useUser } from '@/context/UserContext';
 
 interface IHomeProps {
-  user: IUser,
-  isAuthenticated: boolean,
   job: ICompany,
 }
 
-export default function Home({ user, job, ...props }: IHomeProps) {
+export default function Home({ job }: IHomeProps) {
   const toast = useToast();
   const router = useRouter();
   const cookies = parseCookies();
+  const user = useUser();
   const { mutate } = useSWRConfig();
   const { data: walletInfo } = useSWR(['/api/me/wallet-info', cookies.token], getWalletInfoFetcher);
 
@@ -44,6 +43,7 @@ export default function Home({ user, job, ...props }: IHomeProps) {
         if (data.success) {
           showToast(toast, 'success', 'Training Complete', data?.message);
           refreshData(router);
+          mutate('/api/me');
         } else {
           showToast(toast, 'error', 'Training Failed', data?.error);
         }
@@ -62,7 +62,7 @@ export default function Home({ user, job, ...props }: IHomeProps) {
           ...walletInfo,
           [user.country]: {
             ...walletInfo[user.country],
-            amount: roundMoney(walletInfo[user.country].amount + job.employees.find(emp => emp.user_id === user._id).wage),
+            amount: roundMoney(walletInfo?.walletInfo[user.country]?.amount + job.employees.find(emp => emp.user_id === user._id)?.wage),
           }
         },
         false
@@ -80,6 +80,8 @@ export default function Home({ user, job, ...props }: IHomeProps) {
           refreshData(router);
           // Revalidate Wallet Info
           mutate('/api/me/wallet-info');
+          // Revalidate User Stats
+          mutate('/api/me');
         } else {
           showToast(toast, 'error', 'Working Failed', data?.error);
         }
@@ -240,6 +242,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   }
 
   return {
-    props: { ...result, job: (job && jsonify(job)) || null },
+    props: { job: (job && jsonify(job)) || null },
   };
 }

@@ -1,8 +1,8 @@
 import Layout from '@/components/Layout';
 import Select from '@/components/Select';
+import { useUser } from '@/context/UserContext';
 import { ICountry } from '@/models/Country';
 import Election, { ECVote, ElectionType, ICandidate, IElection } from '@/models/Election';
-import { IUser } from '@/models/User';
 import { UserActions } from '@/util/actions';
 import { findVote, jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
@@ -12,16 +12,16 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 import React, { useEffect, useState } from 'react';
+
 interface ICPElection {
-  user?: IUser,
-  isAuthenticated: boolean,
   election: IElection,
 }
 
-const CPElection: React.FC<ICPElection> = ({ user, election, ...props }) => {
+const CPElection: React.FC<ICPElection> = ({ election }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
 
   const [countries, setCountries] = useState<ICountry[]>([]);
 
@@ -187,7 +187,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
 
   return {
     props: {
-      ...result,
       election: jsonify(election),
     }
   }

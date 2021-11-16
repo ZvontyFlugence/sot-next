@@ -1,7 +1,7 @@
 import Layout from '@/components/Layout';
 import ComposeModal from '@/components/sidebar/ComposeModal';
 import MailItem from '@/components/sidebar/MailItem';
-import { IUser } from '@/models/User';
+import { useUser } from '@/context/UserContext';
 import { UserActions } from '@/util/actions';
 import { getCurrentUser } from '@/util/auth';
 import { refreshData, request, showToast } from '@/util/ui';
@@ -12,15 +12,11 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 
-interface IMail {
-  user: IUser,
-  isAuthenticated: boolean,
-}
-
-const Mail: React.FC<IMail> = ({ user, ...props }) => {
+const Mail: React.FC = () => {
   const cookies = parseCookies();
   const toast = useToast();
   const router = useRouter();
+  const user = useUser();
   
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -115,7 +111,7 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   }
 
   return {
-    props: { ...result },
+    props: {},
   };
 }
 

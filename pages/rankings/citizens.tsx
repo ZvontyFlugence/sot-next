@@ -1,5 +1,6 @@
 import Layout from '@/components/Layout';
 import Select from '@/components/Select';
+import { useUser } from '@/context/UserContext';
 import Country, { ICountry } from '@/models/Country';
 import { IUser, IUserStats } from '@/models/User';
 import { jsonify } from '@/util/apiHelpers';
@@ -15,8 +16,6 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 
 interface ICitizenRankings {
-  user: IUser;
-  isAuthenticated: boolean;
   countries: ICountry[];
 }
 
@@ -35,8 +34,10 @@ const buildRequestURL = (query: ParsedUrlQuery): string => {
 
 // URL => `/rankings/citizens?scope=[scopeType]&country=[countryId]&stat=[statType]
 // TODO: Add pagination
-export default function CitizenRankings({ user, countries, ...props }: ICitizenRankings) {
+export default function CitizenRankings({ countries }: ICitizenRankings) {
   const router = useRouter();
+  const user = useUser();
+  
   const [citizens, setCitizens] = useState<IUserStats[]>([]);
 
   useEffect(() => {
@@ -145,7 +146,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   return {
     props: {
-      ...result,
       countries: jsonify(countries),
     },
   };

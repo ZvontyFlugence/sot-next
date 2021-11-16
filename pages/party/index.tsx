@@ -1,28 +1,24 @@
-import Layout from "@/components/Layout";
-import { EconomicStance, SocialStance } from "@/models/Party";
-import { IUser } from "@/models/User";
-import { roundMoney } from "@/util/apiHelpers";
-import { getCurrentUser } from "@/util/auth";
-import { request, showToast } from "@/util/ui";
-import { Button } from "@chakra-ui/button";
-import { FormControl, FormLabel } from "@chakra-ui/form-control";
-import { Input } from "@chakra-ui/input";
-import { Slider, SliderFilledTrack, SliderThumb, SliderTrack } from "@chakra-ui/slider";
-import { useToast } from "@chakra-ui/toast";
-import { GetServerSideProps } from "next";
-import { useRouter } from "next/router";
-import { destroyCookie, parseCookies } from "nookies";
-import { useState } from "react";
+import Layout from '@/components/Layout';
+import { useUser } from '@/context/UserContext';
+import { EconomicStance, SocialStance } from '@/models/Party';
+import { roundMoney } from '@/util/apiHelpers';
+import { getCurrentUser } from '@/util/auth';
+import { request, showToast } from '@/util/ui';
+import { Button } from '@chakra-ui/button';
+import { FormControl, FormLabel } from '@chakra-ui/form-control';
+import { Input } from '@chakra-ui/input';
+import { Slider, SliderFilledTrack, SliderThumb, SliderTrack } from '@chakra-ui/slider';
+import { useToast } from '@chakra-ui/toast';
+import { GetServerSideProps } from 'next';
+import { useRouter } from 'next/router';
+import { destroyCookie, parseCookies } from 'nookies';
+import { useState } from 'react';
 
-interface ICreatePartyProps {
-  user: IUser,
-  isAuthenticated: boolean,
-}
-
-const CreateParty: React.FC<ICreatePartyProps> = ({ user, ...props }) => {
+const CreateParty: React.FC = () => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
 
   const [name, setName] = useState<string>('');
   const [color, setColor] = useState<string>('');
@@ -97,7 +93,7 @@ const CreateParty: React.FC<ICreatePartyProps> = ({ user, ...props }) => {
           </FormControl>
           <FormControl>
             <FormLabel>Social Stance</FormLabel>
-            <p className="text-center">{SocialStance.toString(SocialStance.valueOf(socStance))}</p>
+            <p className='text-center'>{SocialStance.toString(SocialStance.valueOf(socStance))}</p>
             <Slider
               aria-label='soc-slider'
               defaultValue={0}
@@ -142,7 +138,7 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
   }
 
   return {
-    props: { ...result },
+    props: {},
   };
 }
 

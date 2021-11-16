@@ -9,16 +9,10 @@ import { useRouter } from 'next/router';
 import { useState } from "react";
 import { setCookie } from 'nookies';
 import { getCurrentUser } from '@/util/auth';
-import { IUser } from "@/models/User";
 import { GetServerSideProps } from "next";
 import { request } from "@/util/ui";
 
-interface ILoginProps {
-  user: IUser;
-  isAuthenticated: boolean;
-}
-
-export default function Login(_props: ILoginProps) {
+export default function Login() {
   const router = useRouter();
   const toast = useToast();
   
@@ -108,6 +102,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   }
 
   return {
-    props: { ...result },
+    props: {},
   };
 }

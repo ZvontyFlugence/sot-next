@@ -3,6 +3,7 @@ import FriendsList, { IFriendListItem } from "@/components/profile/FriendsList";
 import ProfileActivities from "@/components/profile/ProfileActivities";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileStats from "@/components/profile/ProfileStats";
+import { useUser } from "@/context/UserContext";
 import Company, { ICompany } from "@/models/Company";
 import Country, { ICountry } from "@/models/Country";
 import Newspaper, { INewspaper } from "@/models/Newspaper";
@@ -13,13 +14,11 @@ import { ILocationInfo, jsonify } from "@/util/apiHelpers";
 import { getCurrentUser } from "@/util/auth";
 import { GetServerSideProps } from "next";
 import { destroyCookie } from "nookies";
-import user from "../api/stats/user";
 
 interface IProfile {
-  user: IUser,
-  isAuthenticated: boolean,
   profile: IUser,
   location_info: ILocationInfo,
+  residence_info: ILocationInfo,
   job_info: IActivityInfo,
   party_info: IActivityInfo,
   army_info: IActivityInfo,
@@ -35,10 +34,17 @@ export interface IActivityInfo {
 }
 
 const Profile: React.FC<IProfile> = ({ profile, ...props }) => {
-  return props.user ? (
-    <Layout user={props.user}>
+  const user = useUser();
+
+  return user ? (
+    <Layout user={user}>
       <div className='hidden md:block px-24'>
-        <ProfileHeader user={props.user} profile={profile} locationInfo={props.location_info} />
+        <ProfileHeader
+          user={user}
+          profile={profile}
+          locationInfo={props.location_info}
+          residenceInfo={props.residence_info}
+        />
         <div className='flex gap-4 mt-4'>
           <div className='w-1/4'>
             <ProfileActivities
@@ -62,7 +68,12 @@ const Profile: React.FC<IProfile> = ({ profile, ...props }) => {
         </div>
       </div>
       <div className='block md:hidden px-2'>
-        <ProfileHeader user={props.user} profile={profile} locationInfo={props.location_info} />
+        <ProfileHeader
+          user={user}
+          profile={profile}
+          locationInfo={props.location_info}
+          residenceInfo={props.residence_info}
+        />
         <div className='flex gap-2 mt-4'>
           <div className='w-1/2'>
             <ProfileActivities
@@ -126,7 +137,16 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
     owner_id: owner._id,
     owner_name: owner.name,
     owner_flag: owner.flag_code,
-  }
+  };
+
+  let residence: IRegion = await Region.findOne({ _id: profile.residence }).exec();
+  let residenceOwner: ICountry = await Country.findOne({ _id: residence.owner }).exec();
+  let residence_info: ILocationInfo = {
+    region_name: residence.name,
+    owner_id: residenceOwner._id,
+    owner_name: residenceOwner.name,
+    owner_flag: residenceOwner.flag_code,
+  };
 
   let job_info: IActivityInfo = null;
   let party_info: IActivityInfo = null;
@@ -199,9 +219,9 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
 
   return {
     props: {
-      ...result,
       profile: jsonify(profile),
       location_info: jsonify(location_info),
+      residence_info: jsonify(residence_info),
       job_info: jsonify(job_info),
       party_info: jsonify(party_info),
       army_info: jsonify(army_info),

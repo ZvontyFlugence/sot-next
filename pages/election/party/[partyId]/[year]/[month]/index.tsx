@@ -1,9 +1,9 @@
 import Layout from '@/components/Layout';
 import Select from '@/components/Select';
+import { useUser } from '@/context/UserContext';
 import { ICountry } from '@/models/Country';
 import Election, { ElectionType, ICandidate, IElection } from '@/models/Election';
 import Party, { IParty } from '@/models/Party';
-import { IUser } from '@/models/User';
 import { UserActions } from '@/util/actions';
 import { findVote, jsonify } from '@/util/apiHelpers';
 import { getCurrentUser } from '@/util/auth';
@@ -16,16 +16,15 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 
 interface IPartyElection {
-  user?: IUser,
-  isAuthenticated: boolean,
   election: IElection,
   country: number,
 }
 
-const PartyElection: React.FC<IPartyElection> = ({ user, election, country: countryId }) => {
+const PartyElection: React.FC<IPartyElection> = ({ election, country: countryId }) => {
   const cookies = parseCookies();
   const router = useRouter();
   const toast = useToast();
+  const user = useUser();
 
   const [country, setCountry] = useState<number>(countryId);
   const [countries, setCountries] = useState<ICountry[]>([]);
@@ -228,7 +227,6 @@ export const getServerSideProps: GetServerSideProps = async ctx => {
 
   return {
     props: {
-      ...result,
       election: jsonify(election),
       country: jsonify(party.country),
     },

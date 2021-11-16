@@ -34,8 +34,8 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
 
   const hasHealed = new Date(user.canHeal) > new Date(Date.now());
 
-  const walletQuery = useSWR(['/api/me/wallet-info', cookies.token], getWalletInfoFetcher);
-  const locationQuery = useSWR(['/api/me/location-info', cookies.token], getLocationInfoFetcher);
+  const walletQuery = useSWR(['/api/me/wallet-info', cookies.token], getWalletInfoFetcher, { refreshInterval: 500 });
+  const locationQuery = useSWR(['/api/me/location-info', cookies.token], getLocationInfoFetcher, { refreshInterval: 500 });
 
   const handleHeal = () => {
     if (user.health < 100 && !hasHealed) {
