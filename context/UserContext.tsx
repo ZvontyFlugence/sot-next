@@ -23,6 +23,9 @@ export const getUserFetcher = (url: string, token: string) => request({ url, met
 
 export function UserContextProvider({ fallback, children }) {
     const cookies = parseCookies();
+
+    console.log('Fallback Data:', fallback);
+
     const userQuery = useSWR([`/api/me`, cookies.token], getUserFetcher, { refreshInterval: 500, fallbackData: fallback });
 
     return (

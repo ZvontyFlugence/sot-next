@@ -2,7 +2,6 @@ import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import Head from 'next/head';
 
 import colors from '../util/theme';
-import 'flag-icon-css/css/flag-icon.min.css';
 import 'react-contexify/dist/ReactContexify.css';
 import 'react-quill/dist/quill.snow.css';
 
