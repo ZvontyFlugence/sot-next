@@ -30,10 +30,10 @@ export default function WarPage({ war, battles, countries, ...props }: IWarPage)
   return user ? (
     <Layout user={user}>
       <h1 className='flex items-center gap-2 text-accent text-2xl'>
-        <i className={`flag-icon flag-icon-${source?.flag_code}`} />
+        <i className={`sot-flag sot-flag-${source?.flag_code}`} />
         {source.name}
         <span>-</span>
-        <i className={`flag-icon flag-icon-${target?.flag_code}`} />
+        <i className={`sot-flag sot-flag-${target?.flag_code}`} />
         {target.name}
         <span>War</span>
       </h1>
@@ -43,7 +43,7 @@ export default function WarPage({ war, battles, countries, ...props }: IWarPage)
             <h3 className='text-2xl text-center'>Attackers</h3>
             {war.sourceAllies.map((cid: number) => (
               <p key={cid} className='flex items-center gap-2 text-xl cursor-pointer' onClick={() => router.push(`/country/${cid}`)}>
-                <i className={`flag-icon flag-icon-${countries[cid - 1]?.flag_code}`} />
+                <i className={`sot-flag sot-flag-${countries[cid - 1]?.flag_code}`} />
                 <span className={cid === war.source && 'text-accent-alt'}>{countries[cid - 1]?.name}</span>
               </p>
             ))}
@@ -52,7 +52,7 @@ export default function WarPage({ war, battles, countries, ...props }: IWarPage)
             <h3 className='text-2xl text-center'>Defenders</h3>
             {war.targetAllies.map((cid: number) => (
               <p key={cid} className='flex items-center gap-2 text-xl cursor-pointer' onClick={() => router.push(`/country/${cid}`)}>
-                <i className={`flag-icon flag-icon-${countries[cid - 1]?.flag_code}`} />
+                <i className={`sot-flag sot-flag-${countries[cid - 1]?.flag_code}`} />
                 <span className={cid === war.target && 'text-accent-alt'}>{countries[cid - 1]?.name}</span>
               </p>
             ))}

@@ -53,7 +53,7 @@ export default function PartyRankings({ countries, scope }: IPartyRankings) {
                   {c ? (
                     <>
                       {c.name}
-                      <i className={`ml-2 flag-icon flag-icon-${c.flag_code} rounded shadow-md`} />
+                      <i className={`ml-2 sot-flag sot-flag-${c.flag_code}`} />
                     </>
                   ) : <>Global</>}
                 </Select.Option>
@@ -88,7 +88,7 @@ export default function PartyRankings({ countries, scope }: IPartyRankings) {
                   </Td>
                   {scope === 'global' && (
                     <Td className='text-xl font-semi items-center cursor-pointer' onClick={() => router.push(`/country/${party.country}`)}>
-                      <i className={`flag-icon flag-icon-${countries[party.country - 1]?.flag_code}`} />
+                      <i className={`sot-flag sot-flag-${countries[party.country - 1]?.flag_code}`} />
                     </Td>
                   )}
                   <Td className='text-xl font-semibold'>{party.members.length}</Td>

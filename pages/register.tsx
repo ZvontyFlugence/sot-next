@@ -93,7 +93,7 @@ export default function Register() {
                 {countries.map((c: ICountry, i: number) => (
                   <Select.Option key={i} value={c._id}>
                     {c.name}
-                    <i className={`ml-2 flag-icon flag-icon-${c.flag_code} rounded shadow-md`} title={c.name} />
+                    <i className={`ml-2 sot-flag sot-flag-${c.flag_code}`} title={c.name} />
                   </Select.Option>
                 ))}
               </Select>

@@ -139,10 +139,12 @@ const Government: React.FC<IGovernmentTab> = ({ country }) => {
       <div className='flex flex-col gap-2'>
         {cp && (
           <div className='flex justify-between items-center'>
-            <div className='flex items-center gap-2 max-w-min cursor-pointer' onClick={() => router.push(`/profile/${cp._id}`)}>
+            <div className='flex items-center gap-2'>
               <span>President:</span>
-              <Avatar src={cp.image} name={cp.username} />
-              <span>{cp.username}</span>
+              <div className='flex items-center gap-2 link' onClick={() => router.push(`/profile/${cp._id}`)}>
+                <Avatar src={cp.image} name={cp.username} />
+                <span>{cp.username}</span>
+              </div>
             </div>
             <Button
               size='sm'
@@ -155,30 +157,34 @@ const Government: React.FC<IGovernmentTab> = ({ country }) => {
         )}
 
         {vp && (
-          <div className='flex items-center gap-2 max-w-min cursor-pointer' onClick={() => router.push(`/profile/${vp._id}`)}>
+          <div className='flex items-center gap-2'>
             <span>President:</span>
-            <Avatar src={vp.image} name={vp.username} />
-            <span>{vp.username}</span>
+            <div className='flex items-center gap-2 link' onClick={() => router.push(`/profile/${vp._id}`)}>
+              <Avatar src={vp.image} name={vp.username} />
+              <span>{vp.username}</span>
+            </div>
           </div>
         )}
 
         {Object.keys(cabinet).map((key: string, i: number) => (
-          <div key={i} className='flex items-center gap-2 max-w-min cursor-pointer' onClick={() => router.push(`/profile/${cabinet[key]?._id}`)}>
+          <div key={i} className='flex items-center gap-2'>
             <span>{getCabinetPosition(key)}:</span>
-            <Avatar src={cabinet[key]?.image} name={cabinet[key]?.username} />
-            <span>{cabinet[key]?.username}</span>
+            <div className='flex items-center gap-2 link' onClick={() => router.push(`/profile/${cabinet[key]?._id}`)}>
+              <Avatar src={cabinet[key]?.image} name={cabinet[key]?.username} />
+              <span>{cabinet[key]?.username}</span>
+            </div>
           </div>
         ))}
       </div>
       <h4 className='text-lg mt-4'>Legislature</h4>
       <div className='flex flex-col gap-2'>
         {congress.map((member: ICongressUser, i: number) => (
-          <div key={i} className='flex items-center gap-2 max-w-min'>
-            <div className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/profile/${member._id}`)}>
+          <div key={i} className='flex items-center gap-2'>
+            <div className='flex items-center gap-2 link' onClick={() => router.push(`/profile/${member._id}`)}>
               <Avatar src={member.image} name={member.username} />
               <span>{member.username}</span>
             </div>
-            <span className='cursor-pointer' onClick={() => router.push(`/region/${member.residence}`)}>{member.residenceName}</span>
+            <span className='link' onClick={() => router.push(`/region/${member.residence}`)}>{member.residenceName}</span>
           </div>
         ))}
       </div>

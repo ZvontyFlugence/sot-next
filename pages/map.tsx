@@ -51,7 +51,7 @@ const Map: React.FC<IMap> = ({ regions, owners, ...props }) => {
 
     if (value > 0 && resource.css) {
       return (
-        <span className='flex justify-end'>
+        <span className='flex items-center justify-end gap-2'>
           {quality} {resource.name}
           <i className={`ml-2 align-middle ${resource.css}`} title={resource.name} />
         </span>
@@ -97,23 +97,27 @@ const Map: React.FC<IMap> = ({ regions, owners, ...props }) => {
       position: 'top-right',
       status: 'info',
       title: (
-        <span>
+        <span className='flex items-center'>
           {region.name} ({region._id})
           &nbsp;
-          <i className={`flag-icon flag-icon-${owners[region.owner-1].flag_code} rounded shadow-md`} />
+          <span className='sot-flag-wrap'>
+            <i className={`sot-flag sot-flag-${owners[region.owner-1].flag_code} h-8`} />
+          </span>
         </span>
       ),
       description: (
         <div className='mx-auto'>
-          <p className='flex justify-between'>
+          <p className='flex items-center justify-between'>
             <span>Core:</span>
-            <span>
+            <span className='flex items-center gap-2'>
               {owners[region.core-1].nick}
               &nbsp;
-              <i className={`flag-icon flag-icon-${owners[region.core-1].flag_code} rounded shadow-md`} />
+              <span className='sot-flag-wrap'>
+                <i className={`sot-flag sot-flag-${owners[region.core-1].flag_code} h-7`} />
+              </span>
             </span>
           </p>
-          <p className='flex justify-between'>
+          <p className='flex justify-between items-center gap-2 mt-2'>
             <span>Resource:</span>
             <span>{getResource(region.resource)}</span>
           </p>

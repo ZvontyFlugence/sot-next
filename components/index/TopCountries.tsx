@@ -16,7 +16,7 @@ export default function TopCountries({ countries }: { countries: ICountryStats[]
               return (
                 <ListItem key={c._id} className='flex justify-between mt-4 text-white'>
                   <div className='flex justify-start items-center'>
-                    <span className={`flag-icon flag-icon-${c.flag_code} rounded shadow-md text-3xl`}></span>
+                    <span className={`sot-flag sot-flag-${c.flag_code} text-3xl`}></span>
                     <span className='ml-4'>{ c.name }</span>
                   </div>
                   <div className='flex justify-end'>

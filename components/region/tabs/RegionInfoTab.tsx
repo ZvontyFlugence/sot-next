@@ -77,7 +77,7 @@ const RegionInfoTab: React.FC<IRegionInfoProps> = ({ region }) => {
                                 <span className='link' onClick={() => router.push(`/region/${neighbor._id}`)}>{neighbor.name}</span>
                                 <span className='link' onClick={() => router.push(`/country/${neighbor.owner}`)}>
                                     {countries[neighbor.owner - 1]?.name}
-                                    <i className={`ml-2 flag-icon flag-icon-${countries[neighbor.owner - 1]?.flag_code}`} />
+                                    <i className={`ml-2 sot-flag sot-flag-${countries[neighbor.owner - 1]?.flag_code}`} />
                                 </span>
                             </ListItem>
                         ))}

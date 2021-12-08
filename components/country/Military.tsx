@@ -126,7 +126,7 @@ export default function Military({ country, user }: IMilitary) {
           {country.policies.allies.length > 0 ? country.policies.allies.map((ally: IAlly, i: number) => (
             <div key={i} className='flex justify-between items-center'>
               <p className='flex items-center gap-2 cursor-pointer' onClick={() => router.push(`/country/${countries[ally.country - 1]?._id}`)}>
-                <i className={`flag-icon flag-icon-${countries[ally.country - 1]?.flag_code} rounded shadow-md`} />
+                <i className={`sot-flag sot-flag-${countries[ally.country - 1]?.flag_code}`} />
                 {countries[ally.country - 1]?.name}
               </p>
               <span className='ml-8 text-gray-300 text-sm'>
@@ -142,12 +142,12 @@ export default function Military({ country, user }: IMilitary) {
           {wars.length > 0 ? wars.map((war: IWar, i: number) => (
             <div key={i} className='flex justify-between items-center gap-2'>
               <p className='flex items-center gap-2 cursor-pointer'>
-                <i className={`flag-icon flag-icon-${countries[war.source - 1]?.flag_code} rounded shadow-md`} />
+                <i className={`sot-flag sot-flag-${countries[war.source - 1]?.flag_code}`} />
                 {countries[war.source - 1]?.name}
               </p>
               <span>vs.</span>
               <p className='flex items-center gap-2 cursor-pointer'>
-                <i className={`flag-icon flag-icon-${countries[war.target - 1]?.flag_code} rounded shadow-md`} />
+                <i className={`sot-flag sot-flag-${countries[war.target - 1]?.flag_code}`} />
                 {countries[war.target - 1]?.name}
               </p>
               <Button size='xs' colorScheme='blue' onClick={() => router.push(`/war/${war._id}`)}>View</Button>
@@ -180,12 +180,12 @@ export default function Military({ country, user }: IMilitary) {
                       <Select.Option key={i} value={`${war._id}`}>
                         <div className='flex justify-between items-center gap-2'>
                           <p className='flex items-center gap-2 cursor-pointer'>
-                            <i className={`flag-icon flag-icon-${countries[war.source - 1]?.flag_code} rounded shadow-md`} />
+                            <i className={`sot-flag sot-flag-${countries[war.source - 1]?.flag_code}`} />
                             {countries[war.source - 1]?.name}
                           </p>
                           <span>vs.</span>
                           <p className='flex items-center gap-2 cursor-pointer'>
-                            <i className={`flag-icon flag-icon-${countries[war.target - 1]?.flag_code} rounded shadow-md`} />
+                            <i className={`sot-flag sot-flag-${countries[war.target - 1]?.flag_code}`} />
                             {countries[war.target - 1]?.name}
                           </p>
                         </div>
@@ -202,7 +202,7 @@ export default function Military({ country, user }: IMilitary) {
                         {countries.filter(c => getWarOpponents().includes(c._id)).map((country: ICountry, i: number) => (
                           <Select.Option key={i} value={country._id}>
                             <div className='flex items-center gap-2'>
-                              <i className={`flag-icon flag-icon-${country.flag_code} rounded shadow-md`} />
+                              <i className={`sot-flag sot-flag-${country.flag_code}`} />
                               {country.name}
                             </div>
                           </Select.Option>

@@ -119,8 +119,12 @@ const ManageTreasury: React.FC<IManageTreasury> = ({ funds, gold, user, ...props
           <Stat>
             <StatLabel>{props.currency}</StatLabel>
             <StatNumber>
-              <span className='mr-2'>{defaultCC > -1 && funds[defaultCC].amount.toFixed(2) || 0.00}</span>
-              <i className={`flag-icon flag-icon-${props.locationInfo.owner_flag} rounded shadow-md`} />
+              <div className='flex items-center gap-2'>
+                <span>{defaultCC > -1 && funds[defaultCC].amount.toFixed(2) || 0.00}</span>
+                <span className='sot-flag-wrap'>
+                  <i className={`sot-flag sot-flag-${props.locationInfo.owner_flag} h-10`} />
+                </span>
+              </div>
             </StatNumber>
           </Stat>
         </StatGroup>
@@ -151,10 +155,10 @@ const ManageTreasury: React.FC<IManageTreasury> = ({ funds, gold, user, ...props
             </FormControl>
             <FormControl>
               <FormLabel>Currency</FormLabel>
-              <Select className='border border-white rounded' onChange={val => setCurrency(val as number)}>
-                <Select.Option value={-1} disabled>Select Currency</Select.Option>
-                {user.wallet.map((cc: IWalletItem, i: number) => (
-                  <Select.Option key={i} value={i}>{cc.currency}</Select.Option>
+              {/* TODO: Fix Select Component Not Updating Selected Value Displayed */}
+              <Select className='border border-white rounded' selected={currency} onChange={val => setCurrency(val as number)}>
+                {[null].concat(user.wallet).map((cc: IWalletItem, i: number) => (
+                  <Select.Option key={i} value={i - 1} disabled={!cc}>{cc ? cc.currency : 'Select Currency'}</Select.Option>
                 ))}
               </Select>
             </FormControl>
@@ -198,10 +202,10 @@ const ManageTreasury: React.FC<IManageTreasury> = ({ funds, gold, user, ...props
             </FormControl>
             <FormControl>
               <FormLabel>Currency</FormLabel>
-              <Select className='border border-white rounded' onChange={val => setCurrency(val as number)}>
-                <Select.Option value={-1} disabled>Select Currency</Select.Option>
-                {funds.map((cc: IWalletItem, i: number) => (
-                  <Select.Option key={i} value={i}>{cc.currency}</Select.Option>
+              {/* TODO: Fix Select Component Not Updating Selected Value Displayed */}
+              <Select className='border border-white rounded' selected={currency} onChange={val => setCurrency(val as number)}>
+                {[null].concat(funds).map((cc: IWalletItem, i: number) => (
+                  <Select.Option key={i} value={i - 1} disabled={!cc}>{cc ? cc.currency : 'Select Currency'}</Select.Option>
                 ))}
               </Select>
             </FormControl>

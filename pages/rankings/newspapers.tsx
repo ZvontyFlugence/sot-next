@@ -52,7 +52,7 @@ export default function NewsRankings({ countries }: INewsRankings) {
                   {c ? (
                     <>
                       {c.name}
-                      <i className={`ml-2 flag-icon flag-icon-${c.flag_code} rounded shadow-md`} />
+                      <i className={`ml-2 sot-flag sot-flag-${c.flag_code}`} />
                     </>
                   ) : <>Global</>}
                 </Select.Option>

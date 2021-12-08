@@ -74,9 +74,11 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo, 
         <div className='flex flex-row items-stretch gap-4'>
           <Image boxSize='12.0rem' borderRadius='full' src={profile.image} alt={profile.username} />
           <div className='flex flex-col w-full items-top'>
-            <h3 className='flex gap-4 text-2xl text-accent font-semibold'>
+            <h3 className='flex items-center gap-4 text-2xl text-accent font-semibold'>
               {profile.username}
-              <i className={`flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
+              <span className='sot-flag-wrap'>
+                <i className={`sot-flag sot-flag-${locationInfo.owner_flag} h-10`} />
+              </span>
             </h3>
             <div className='flex items-center mt-4 gap-4'>
               <p className='flex items-center'>
@@ -84,9 +86,11 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo, 
                 <span className='link mr-2' onClick={() => router.push(`/region/${profile.location}`)}>
                   {locationInfo.region_name},
                 </span>
-                <span className='link' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
+                <span className='flex items-center gap-2 link' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
                   {locationInfo.owner_name}
-                  <i className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
+                  <span className='sot-flag-wrap'>
+                    <i className={`sot-flag sot-flag-${locationInfo.owner_flag} h-7`} />
+                  </span>
                 </span>
               </p>
               <p className='flex items-center'>
@@ -94,9 +98,11 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo, 
                   <span className='link mr-2' onClick={() => router.push(`/region/${profile.residence}`)}>
                     {residenceInfo.region_name},
                   </span>
-                  <span className='link' onClick={() => router.push(`/country/${residenceInfo.owner_id}`)}>
+                  <span className='flex items-center gap-2 link' onClick={() => router.push(`/country/${residenceInfo.owner_id}`)}>
                     {residenceInfo.owner_name}
-                    <i className={`ml-2 flag-icon flag-icon-${residenceInfo.owner_flag} rounded shadow-md`} />
+                    <span className='sot-flag-wrap'>
+                      <i className={`sot-flag sot-flag-${residenceInfo.owner_flag} h-7`} />
+                    </span>
                   </span>
               </p>
             </div>
@@ -183,9 +189,11 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo, 
         <div className='flex flex-col flex-grow'>
           <div className='flex items-center gap-2'>
             <Image boxSize='3.0rem' borderRadius='full' src={profile.image} alt={profile.username} />
-            <h3 className='flex gap-4 text-2xl text-accent font-semibold'>
+            <h3 className='flex items-center gap-4 text-2xl text-accent font-semibold'>
               {profile.username}
-              <i className={`flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
+              <span className='sot-flag-wrap'>
+                <i className={`sot-flag sot-flag-${locationInfo.owner_flag} h-7`} />
+              </span>
             </h3>
           </div>
           <div className='flex flex-col text-sm'>
@@ -197,7 +205,9 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo, 
                 </span>
                 <span className='link' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
                   {locationInfo.owner_name}
-                  <i className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`} />
+                  <span className='sot-flag-wrap'>
+                    <i className={`ml-2 sot-flag sot-flag-${locationInfo.owner_flag} h-7`} />
+                  </span>
                 </span>
               </p>
               <p className='flex items-center'>
@@ -207,7 +217,9 @@ const ProfileHeader: React.FC<IProfileHeader> = ({ user, profile, locationInfo, 
                   </span>
                   <span className='link' onClick={() => router.push(`/country/${residenceInfo.owner_id}`)}>
                     {residenceInfo.owner_name}
-                    <i className={`ml-2 flag-icon flag-icon-${residenceInfo.owner_flag} rounded shadow-md`} />
+                    <span className='sot-flag-wrap'>
+                      <i className={`sot-flag sot-flag-${residenceInfo.owner_flag} h-7`} />
+                    </span>
                   </span>
               </p>
             </div>

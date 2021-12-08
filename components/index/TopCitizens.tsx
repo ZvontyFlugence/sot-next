@@ -21,7 +21,7 @@ export default function TopCitizens({ citizens }: { citizens: IUserStats[] }) {
                   <span className='ml-4'>{ c.username }</span>
                 </div>
                 <div className='flex justify-end items-center'>
-                  <span className={`flag-icon flag-icon-${c.country.flag_code} rounded shadow-md text-3xl`}></span>
+                  <span className={`sot-flag sot-flag-${c.country.flag_code} text-3xl`}></span>
                   <span className='ml-4'>{ c.xp } XP</span>
                 </div>
               </ListItem>

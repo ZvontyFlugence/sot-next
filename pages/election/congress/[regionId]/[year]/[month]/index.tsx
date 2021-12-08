@@ -113,7 +113,7 @@ const CongressElection: React.FC<ICongressElection> = ({ election, country: coun
               {countries.map((country: ICountry, i: number) => (
                 <Select.Option key={i} value={country._id}>
                   {country.name}
-                  <i className={`ml-2 flag-icon flag-icon-${country.flag_code} rounded shadow-md`} />
+                  <i className={`ml-2 sot-flag sot-flag-${country.flag_code}`} />
                 </Select.Option>
               ))}
             </Select>

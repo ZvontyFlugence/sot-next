@@ -138,21 +138,21 @@ const RegionHead: React.FC<IRegionHead> = ({ region }) => {
                 <div className='flex flex-col flex-grow'>
                     <h1 className='text-2xl'>
                         { region.name }
-                        <i className={`ml-2 flag-icon flag-icon-${owners[region.owner - 1]?.flag_code}`} />
+                        <i className={`ml-2 sot-flag sot-flag-${owners[region.owner - 1]?.flag_code}`} />
                     </h1>
                     <div className='flex flex-row items-center gap-2'>
                         <p>
                             Owner: 
                             <span className='ml-2 link' onClick={() => router.push(`/country/${region.owner}`)}>
                                 {owners[region.owner - 1]?.name}
-                                <i className={`ml-2 flag-icon flag-icon-${owners[region.owner - 1]?.flag_code}`} />
+                                <i className={`ml-2 sot-flag sot-flag-${owners[region.owner - 1]?.flag_code}`} />
                             </span>
                         </p>
                         <p>
                             Core:
                             <span className='ml-2 link' onClick={() => router.push(`/country/${region.core}`)}>
                                 {owners[region.core - 1]?.name}
-                                <i className={`ml-2 flag-icon flag-icon-${owners[region.core - 1]?.flag_code}`} />
+                                <i className={`ml-2 sot-flag sot-flag-${owners[region.core - 1]?.flag_code}`} />
                             </span>
                         </p>
                     </div>
@@ -171,7 +171,7 @@ const RegionHead: React.FC<IRegionHead> = ({ region }) => {
                 <Select className='border border-white border-opacity-25 rounded' selected={region._id} onChange={val => goToRegion(val)}>
                     {regions.map((r, i) => (
                         <Select.Option key={i} value={r._id}>
-                            <i className={`mr-2 flag-icon flag-icon-${owners[r.owner - 1]?.flag_code} rounded shadow-md`} />
+                            <i className={`mr-2 sot-flag sot-flag-${owners[r.owner - 1]?.flag_code}`} />
                             {r.name}
                         </Select.Option>
                     ))}

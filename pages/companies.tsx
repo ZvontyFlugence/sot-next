@@ -20,16 +20,6 @@ import { destroyCookie, parseCookies } from 'nookies';
 import { useState } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 
-interface IMyCompsResponse {
-  companies?: ICompany[],
-  error?: string,
-}
-
-interface ICreateCompParams {
-  name: string,
-  type: number,
-}
-
 export const getUserCompaniesFetcher = (url: string, token: string) => request({ url, method: 'GET', token });
 
 export default function Companies() {
@@ -46,7 +36,7 @@ export default function Companies() {
   const { data, error } = useSWR(['/api/me/companies', cookies.token], getUserCompaniesFetcher);
 
   const handleCreateComp = () => {
-    if (user.gold >= 25 && type !== 0 && name) {
+    if (user.gold >= 25 && name) {
       request({
         url: '/api/companies',
         method: 'POST',
@@ -62,12 +52,14 @@ export default function Companies() {
           showToast(toast, 'error', 'Company Creation Error', data?.error);
         }
       });
-    } else {
+    } else if (user.gold < 25) {
       showToast(toast, 'error', 'Create Company Failed', 'Insufficient Funds');
+    } else {
+      showToast(toast, 'error', 'Create Company Failed', 'Company Must Have A Name');
     }
   }
 
-  return (
+  return user ? (
     <>
     <Layout user={user}>
       <h1 className='text-2xl font-semibold pl-4 text-accent'>My Companies</h1>
@@ -105,9 +97,13 @@ export default function Companies() {
                       <span className='ml-2'>{COMPANY_TYPES[comp._doc.type].text}</span>
                     </Td>
                     <Td>
-                      <span>{comp.location_info?.region_name}</span>,&nbsp;
-                      <span>{comp.location_info?.owner_name}</span>
-                      <span className={`ml-4 flag-icon flag-icon-${comp.location_info?.owner_flag} rounded shadow-md`}></span>
+                      <div className='flex items-center'>
+                        <span>{comp.location_info?.region_name}</span>,&nbsp;
+                        <span>{comp.location_info?.owner_name}</span>
+                        <span className='sot-flag-wrap ml-2'>
+                          <i className={`sot-flag sot-flag-${comp.location_info?.owner_flag} h-8`} />
+                        </span>
+                      </div>
                     </Td>
                   </Tr>
                 ))
@@ -141,11 +137,13 @@ export default function Companies() {
                         <span className='mr-2'>{COMPANY_TYPES[comp._doc.type].text}</span>
                         <i className={COMPANY_TYPES[comp._doc.type].css} />
                       </p>
-                      <p>
-                        <span>{comp.location_info?.region_name}</span>,&nbsp;
-                        <span>{comp.location_info?.owner_name}</span>
-                        <span className={`ml-4 flag-icon flag-icon-${comp.location_info?.owner_flag} rounded shadow-md`}></span>
-                      </p>
+                      <div className='flex items-center gap-2'>
+                        <p>{comp.location_info?.region_name}</p>,&nbsp;
+                        <p>{comp.location_info?.owner_name}</p>
+                        <span className='sot-flag-wrap'>
+                          <i className={`sot-flag sot-flag-${comp.location_info?.owner_flag} h-8`} />
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -168,9 +166,9 @@ export default function Companies() {
           </FormControl>
           <FormControl className='mt-2 justify-start'>
             <FormLabel>Company Type</FormLabel>
-            <Select className='border border-white rounded w-max' onChange={val => setType(val as number)}>
-              {COMPANY_TYPES.map(comp_type => (
-                <Select.Option key={comp_type.css} value={comp_type.item}>
+            <Select className='border border-white rounded w-max' selected={type} onChange={val => setType(val as number)}>
+              {COMPANY_TYPES.map((comp_type, i) => (
+                <Select.Option key={i} value={comp_type.item}>
                   <div>
                     <i className={`${comp_type.css}`} />
                     &nbsp;
@@ -189,7 +187,7 @@ export default function Companies() {
       </ModalContent>
     </Modal>
     </>
-  );
+  ) : null;
 }
 
 export const getServerSideProps: GetServerSideProps = async ctx => {

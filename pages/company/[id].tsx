@@ -25,7 +25,7 @@ export default function CompanyPage({ company, location_info, ceo_info, ...props
 
   const [isManageMode, setManageMode] = useState(false);
 
-  return (
+  return user ? (
     <Layout user={user}>
       <div className='pt-2 px-2 md:pt-0 md:px-24'>
         <CompanyHeader
@@ -44,7 +44,7 @@ export default function CompanyPage({ company, location_info, ceo_info, ...props
         </div>
       </div>
     </Layout>
-  );
+  ) : null;
 }
 
 export const getServerSideProps: GetServerSideProps = async ctx => {

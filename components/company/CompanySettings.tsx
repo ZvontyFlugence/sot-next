@@ -124,10 +124,9 @@ const CompanySettings: React.FC<ICompanySettings> = ({ company }) => {
         </FormControl>
         <FormControl>
           <FormLabel className='text-xl'>Travel</FormLabel>
-          <Select className='border border-white border-opacity-25 rounded shadow-md' onChange={val => setRegion(val as number)}>
-            <Select.Option value={-1} disabled>Select Region</Select.Option>
-            {regionQuery.data && regionQuery.data?.regions?.map((region, i) => (
-              <Select.Option key={i} value={region._id}>{region.name}</Select.Option>
+          <Select className='border border-white border-opacity-25 rounded shadow-md' selected={region}  onChange={val => setRegion(val as number)}>
+            {regionQuery.data && [{ _id: -1, disabled: true, name: 'Select Region' }].concat(regionQuery.data?.regions).map((option, i) => (
+              <Select.Option key={i} value={option._id} disabled={option?.disabled}>{option.name}</Select.Option>
             ))}
           </Select>
           <Button

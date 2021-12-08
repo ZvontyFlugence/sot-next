@@ -44,7 +44,9 @@ export default function CountryRankings() {
                 <Tr key={i}>
                   <Td className='text-xl font-semibold'>{i + 1}</Td>
                   <Td className='flex items-center gap-2 cursor-pointer text-2xl' onClick={() => router.push(`/country/${cs._id}`)}>
-                    <i className={`flag-icon flag-icon-${cs.flag_code} shadow-md rounded`} />
+                    <span className='sot-flag-wrap'>
+                      <i className={`sot-flag sot-flag-${cs.flag_code} h-12`} />
+                    </span>
                     {cs.name}
                   </Td>
                   <Td className='text-xl font-semibold'>{cs.population}</Td>

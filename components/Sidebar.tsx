@@ -11,7 +11,7 @@ import { Avatar } from "@chakra-ui/avatar";
 import { Tag } from "@chakra-ui/tag";
 import { parseCookies } from 'nookies';
 import { useToast } from "@chakra-ui/toast";
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 
 interface ISidebar {
   user: IUser,
@@ -27,6 +27,11 @@ export const getLocationInfoFetcher = (url: string, token: string) => {
     .then(res => res.json());
 }
 
+export const getMeFetcher = (url: string, token: string) => {
+  return fetch(url, { headers: { authorization: `Bearer ${token}` } })
+    .then(res => res.json());
+}
+
 const Sidebar: React.FC<ISidebar> = ({ user }) => {
   const router = useRouter();
   const toast = useToast();
@@ -34,6 +39,7 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
 
   const hasHealed = new Date(user.canHeal) > new Date(Date.now());
 
+  // SWR
   const walletQuery = useSWR(['/api/me/wallet-info', cookies.token], getWalletInfoFetcher, { refreshInterval: 500 });
   const locationQuery = useSWR(['/api/me/location-info', cookies.token], getLocationInfoFetcher, { refreshInterval: 500 });
 
@@ -119,8 +125,8 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
             </Button>
           </div>
           {(locationQuery.data && !locationQuery.error) && (
-            <div className='flex justify-between mt-4'>
-              <p>
+            <div className='flex justify-between items-center mt-4'>
+              <p className='flex-grow'>
                 <span className='link' onClick={() => router.push(`/region/${user.location}`)}>
                   {locationQuery.data.locationInfo.region_name}
                 </span>,&nbsp;
@@ -128,10 +134,12 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
                   {locationQuery.data.locationInfo.owner_name}
                 </span>
               </p>
-              <span
-                className={`cursor-pointer flag-icon flag-icon-${locationQuery.data.locationInfo.owner_flag} rounded shadow-md`}
-                onClick={() => router.push(`/country/${locationQuery.data.locationInfo.owner_id}`)}
-              ></span>
+              <span className='sot-flag-wrap'>
+                <i
+                  className={`cursor-pointer sot-flag sot-flag-${locationQuery.data.locationInfo.owner_flag} h-7`}
+                  onClick={() => router.push(`/country/${locationQuery.data.locationInfo.owner_id}`)}
+                />
+              </span>
             </div>
           )}
           <div className='mt-4'>
@@ -144,14 +152,16 @@ const Sidebar: React.FC<ISidebar> = ({ user }) => {
                 </p>
               </ListItem>
               {(walletQuery.data && !walletQuery.error) && (
-                <ListItem className='flex justify-between'>
+                <ListItem className='flex justify-between mt-2'>
                   <span>{walletQuery.data.walletInfo[user.country].currency}</span>
-                  <span>
+                  <span className='flex items-center gap-2'>
                     {walletQuery.data.walletInfo[user.country].amount.toFixed(2)}
-                    <span
-                      className={`ml-2 cursor-pointer flag-icon flag-icon-${walletQuery.data.walletInfo[user.country].flag_code} rounded shadow-md`}
-                      onClick={() => router.push(`/country/${user.country}`)}
-                    ></span>
+                    <span className='sot-flag-wrap'>
+                      <i
+                        className={`cursor-pointer sot-flag sot-flag-${walletQuery.data.walletInfo[user.country].flag_code} h-7`}
+                        onClick={() => router.push(`/country/${user.country}`)}
+                      />
+                    </span>
                   </span>
                 </ListItem>
               )}

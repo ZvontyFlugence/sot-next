@@ -65,18 +65,20 @@ export default function CitizenRankings({ countries }: ICitizenRankings) {
 
   return user ? (
     <Layout user={user}>
-      <h1 className='flex justify-between pl-4 pr-20'>
+      <h1 className='flex items-center justify-between pl-4 pr-20'>
         <span className='text-2xl font-semibold text-accent'>Citizen Rankings</span>
         <div className='flex justify-end items-center gap-4'>
           <Select selected={(router.query?.country as string) ?? 'global'} onChange={updateCountry}>
             {([null] as any[]).concat(countries).map((c, i) => (
               <Select.Option key={i} value={c ? `${c._id}` : 'global'}>
                 {c ? (
-                  <>
+                  <div className='flex items-center gap-2'>
+                    <span className='sot-flag-wrap'>
+                      <i className={`sot-flag sot-flag-${c.flag_code} h-9`} />
+                    </span>
                     {c.name}
-                    <i className={`ml-2 flag-icon flag-icon-${c.flag_code} rounded shadow-md`} />
-                  </>
-                ) : <>Global</>}
+                  </div>
+                ) : <p className='text-center'>Global</p>}
               </Select.Option>
             ))}
           </Select>
@@ -114,7 +116,9 @@ export default function CitizenRankings({ countries }: ICitizenRankings) {
                   </Td>
                   <Td>
                     <div className='flex items-center cursor-pointer text-4xl' onClick={() => router.push(`/country/${us.country._id}`)}>
-                      <i className={`flag-icon flag-icon-${us.country.flag_code} rounded shadow-md`} title={us.country.name} />
+                      <span className='sot-flag-wrap'>
+                        <i className={`sot-flag sot-flag-${us.country.flag_code} h-14`} title={us.country.name} />
+                      </span>
                     </div>
                   </Td>
                   <Td className='text-xl font-semibold'>{us[(router.query?.stat as string) ?? 'xp']}</Td>

@@ -63,7 +63,7 @@ async function post(user_id: number, data: ICreateCompanyReq): Promise<ActionRes
         ret.status_code = 400;
         ret.payload.error = 'Insufficient Funds';
         throw new Error(ret.payload.error);
-      } else if (data.type === 0 || typeof data.type !== 'number') {
+      } else if (data.type < 0 || data.type > 6 || typeof data.type !== 'number') {
         ret.status_code = 400;
         ret.payload.error = 'Invalid Company Type';
         throw new Error(ret.payload.error);
@@ -95,7 +95,7 @@ async function post(user_id: number, data: ICreateCompanyReq): Promise<ActionRes
       }
 
       ret.status_code = 200;
-      ret.payload = { success: true, message: 'Company Created', company_id: createdComp };
+      ret.payload = { success: true, message: 'Company Created', company_id: createdComp._id };
     });
   } catch (e: any) {
     // Temp logging

@@ -32,20 +32,22 @@ const CompanyHeader: React.FC<ICompHeader> = ({ company, locationInfo, ceoInfo, 
                 Type:&nbsp;
                 <i className={company_item.image} title={company_item.name} />
               </p>
-              <p className='ml-8'>
+              <p className='flex items-center ml-8'>
                 <span className='mr-2'>Location:</span>
-                <span className='cursor-pointer mr-2' onClick={() => router.push(`/region/${company.location}`)}>
+                <span className='flex link mr-2' onClick={() => router.push(`/region/${company.location}`)}>
                   {locationInfo.region_name},
                 </span>
-                <span className='cursor-pointer' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
+                <span className='flex items-center link' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
                   {locationInfo.owner_name}
-                  <span className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`}></span>
+                  <span className='sot-flag-wrap ml-2'>
+                    <i className={`sot-flag sot-flag-${locationInfo.owner_flag} h-7`} />
+                  </span>
                 </span>
               </p>
             </p>
             <span className='flex flex-row items-center mt-4'>
                 <span className='mr-2'>CEO:</span>
-                <span className='flex flex-row items-center cursor-pointer' onClick={() => router.push(`/profile/${ceoInfo.ceo_id}`)}>
+                <span className='flex flex-row items-center link' onClick={() => router.push(`/profile/${ceoInfo.ceo_id}`)}>
                   <Avatar size='sm' name={ceoInfo.ceo_name} src={ceoInfo.ceo_image} />
                   <span className='ml-2'>{ceoInfo.ceo_name}</span>
                 </span>
@@ -106,7 +108,7 @@ const CompanyHeader: React.FC<ICompHeader> = ({ company, locationInfo, ceoInfo, 
                 </span>
                 <span className='cursor-pointer' onClick={() => router.push(`/country/${locationInfo.owner_id}`)}>
                   {locationInfo.owner_name}
-                  <span className={`ml-2 flag-icon flag-icon-${locationInfo.owner_flag} rounded shadow-md`}></span>
+                  <span className={`ml-2 sot-flag sot-flag-${locationInfo.owner_flag}`}></span>
                 </span>
               </p>
             </div>

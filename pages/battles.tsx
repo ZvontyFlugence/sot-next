@@ -63,7 +63,7 @@ export default function Battles({ countries, battles, ...props }: IBattles) {
           {countries.map((country: ICountry, i: number) => (
             <Select.Option key={i} value={country._id}>
               <div className='flex items-center gap-2'>
-                <i className={`flag-icon flag-icon-${country.flag_code}`} />
+                <i className={`sot-flag sot-flag-${country.flag_code}`} />
                 {country.name}
               </div>
             </Select.Option>

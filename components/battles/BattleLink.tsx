@@ -59,7 +59,7 @@ export default function BattleLink({ battle, attacker, defender, regionName, ...
   return (
     <div className='flex items-center gap-12 p-4 border border-gray-300 border-opacity-25 rounded shadow-md'>
       <div className='flex items-center gap-2 text-2xl'>
-        <i className={`flag-icon flag-icon-${attacker?.flag_code}`} />
+        <i className={`sot-flag sot-flag-${attacker?.flag_code}`} />
         {attacker?.name}
       </div>
       <div className='flex flex-1 flex-col gap-2'>
@@ -72,7 +72,7 @@ export default function BattleLink({ battle, attacker, defender, regionName, ...
         <span className='text-center'>{isDone ? 'Finished' : `${ formatDistanceStrict(new Date(battle.end), new Date())} remaining`}</span>
       </div>
       <div className='flex items-center gap-2 text-2xl'>
-        <i className={`flag-icon flag-icon-${defender?.flag_code}`} />
+        <i className={`sot-flag sot-flag-${defender?.flag_code}`} />
         {defender?.name}
       </div>
       {!props.hideBtn && (

@@ -8,6 +8,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   switch (req.method) {
     case 'GET': {
       const { id } = req.query;
+      console.log('ID:', id);
       let company: ICompany = await Company.findOne({ _id: Number.parseInt(id as string) }).exec();
       let location: IRegion = await Region.findOne({ _id: company.location }).exec();
       let owner: ICountry = await Country.findOne({ _id: location.owner }).exec();

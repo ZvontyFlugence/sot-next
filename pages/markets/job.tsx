@@ -63,11 +63,11 @@ const JobMarket: React.FC<IJobMarket> = (props) => {
       <h1 className='flex justify-between pl-4 pr-8'>
         <span className='text-2xl font-semibold text-accent'>Job Market</span>
         <div>
-          <Select onChange={(val) => setCountry(val as number)}>
+          <Select selected={country} onChange={(val) => setCountry(val as number)}>
             {props.countries.map((country, i) => (
               <Select.Option value={country._id} key={i}>
                 {country.name}
-                <i className={`ml-2 flag-icon flag-icon-${country.flag_code} rounded shadow-md`} />
+                <i className={`ml-2 sot-flag sot-flag-${country.flag_code}`} />
               </Select.Option>
             ))}
           </Select>

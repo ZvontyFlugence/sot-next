@@ -42,7 +42,7 @@ export default function DoWLawForm({ country, setCountry }: IDoWLawForm) {
             <Select.Option key={i} value={c._id}>
               <span className='flex items-center gap-2'>
                 {c.name}
-                <i className={`flag-icon flag-icon-${c.flag_code} rounded shadow-md`} title={c.name} />
+                <i className={`sot-flag sot-flag-${c.flag_code}`} title={c.name} />
               </span>
             </Select.Option>
           ))}
