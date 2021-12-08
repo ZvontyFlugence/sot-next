@@ -188,3 +188,40 @@ input[type="file"]::file-selector-button:hover {
   color: hsla(176, 57%, 58%, 1) !important;
   stroke: hsla(176, 57%, 58%, 1) !important;
 }
+
+.sot-flag-wrap {
+  filter: drop-shadow(2px 2px 3px black);
+}
+
+.sot-flag {
+  min-height: 1.75rem;
+  max-height: 4rem;
+  width: auto;
+  padding: 0px;
+  margin: 0px auto;
+  vertical-align: middle;
+}
+
+.sot-flag-usa {
+  content: url(/assets/flags/usa.svg);
+}
+
+.sot-flag-can {
+  content: url(/assets/flags/can.svg);
+}
+
+.sot-flag-mex {
+  content: url(/assets/flags/mex.svg);
+}
+
+.sot-flag-irl {
+  content: url(/assets/flags/irl.svg);
+}
+
+.sot-flag-gbr {
+  content: url(/assets/flags/gbr.svg);
+}
+
+.sot-flag-fra {
+  content: url(/assets/flags/fra.svg);
+}
